@@ -1,5 +1,17 @@
+/*
+ * Author: Mark Hofmeister 
+ * Created: 1/13/2022
+ * Last Updated: 1/15/2022
+ * Description: This code will use Arduino's MKR WiFi 1010 microcontroller platform to: 
+ *              1. Initialize a digital output pin
+ *              2. Connect to WiFi through Arduino's WiFiNINA library
+ *              3. Report information about the WiFi network to Serial output
+ *              4. Send an HTTP request to Adafruit IO's API and push data to a feed in a group
+ *              5. Store Adafruit IO data and control digital pin output based on data values.
+ * 
+ */
 
-#include <ArduinoJson.h>  
+#include <ArduinoJson.h>            //Necessary to make API request 
 
 /////////////////////////
 #include <WiFiNINA.h>
@@ -7,14 +19,15 @@
 
 char ssid[] = SECRET_SSID;         // your network SSID (name)
 char pass[] = SECRET_PASS;         // your network password (use for WPA, or use as key for WEP)
-int status = WL_IDLE_STATUS;
+int status = WL_IDLE_STATUS;       // used to report Wifi connectivity information
 char server[] = "io.adafruit.com"; // name address for Adafruit IOT Cloud
 
 unsigned long lastConnectionTime = 0;              // last time you connected to the server, in milliseconds
-const unsigned long postingInterval = 7000;       // delay between updates, in milliseconds
-int state = 2;
-int digi_pin = 0;
-int light_pin = 1;
+const unsigned long postingInterval = 10000;       // delay between updates, in milliseconds
+
+int state = 2;        //Describes state of digital pin output. 0 = LOW, 1 = HIGH, 2 = LOW/unknown/transitive.
+int digi_pin = 0;     //Pin to output a value to the Littlebit
+int light_pin = 1;    //Pin to output signal to external LED, reflecting HIGH or LOW digi_pin output.
 
 // Initialize the client library
 WiFiClient client;
@@ -24,24 +37,21 @@ void setup() {
   Serial.begin(9600);
   //while (!Serial); // wait for serial port to connect. Needed for native USB port only
 
-  pinMode(digi_pin, INPUT);
+  pinMode(digi_pin, INPUT);       //assign pins to be either inputs to be read or voltage outputs
   pinMode(light_pin, OUTPUT);
 
-  connectToWIFI();
+  connectToWIFI();                //Function to connect to WiFi, instantiated below.
  
 }
 
 void loop() {
 
- // if 7 seconds have passed since your last connection,
+ // if 10 seconds have passed since your last connection,
   // then connect again and send data:
-  if (millis() - lastConnectionTime > postingInterval) 
+  if (millis() - lastConnectionTime > postingInterval)          
   {
     state = digitalRead(digi_pin);
-
-    
-    
-    httpRequest(); // send data to Cloud
+    httpRequest(); //Function to request a connection to Adafruit IO, instantiated below.
   }
   
 }
@@ -82,10 +92,10 @@ void httpRequest()
 
  String strToUpload;
   if (state == 0) {
-      strToUpload = "Light OFF";
+      strToUpload = LOW_MESSAGE;
       digitalWrite(light_pin, HIGH);
     } else if (state == 1) {
-      strToUpload = "Light ON";
+      strToUpload = HIGH_MESSAGE;
       digitalWrite(light_pin, LOW);
     } else {
       strToUpload = "Light...unknown?";
@@ -100,9 +110,9 @@ void httpRequest()
   location["lon"] = 0;
   location["ele"] = 0;
   
-  JsonArray feeds = doc.createNestedArray("feeds");
-  JsonObject feed1 = feeds.createNestedObject();
-  feed1["key"] = "IoT_Testing_Push_2.0"; 
+  JsonArray feeds = doc.createNestedArray("feeds");       //Create JSON nested array for group
+  JsonObject feed1 = feeds.createNestedObject();          //Fill first array index with feed1 
+  feed1["key"] = "IoT_Testing_Push_2.0";
   feed1["value"] = strToUpload;
 
   Serial.print(strToUpload);
@@ -117,6 +127,9 @@ void httpRequest()
     Serial.println("connected to server");
     // Make a HTTP request:
     client.println("POST /api/v2/" IO_USERNAME "/groups/" IO_GROUP "/data HTTP/1.1"); 
+
+    //Calls Adafruit IO's API to upload the string decided by the conditional 
+    
     client.println("Host: io.adafruit.com");  
     client.println("Connection: close");  
     client.print("Content-Length: ");  

@@ -1,46 +1,50 @@
 
 /*
+ * Author: Mark Hofmeister 
+ * Created: 1/13/2022
+ * Last Updated: 1/15/2022
+ * Description: This code will use Arduino's MKR WiFi 1010 microcontroller platform to: 
+ *              1. Initialize a digital output pin
+ *              2. Connect to WiFi through Arduino's WiFiNINA library
+ *              3. Report information about the WiFi network to Serial output
+ *              4. Send an HTTP request to Adafruit IO's API and retrieve feed data
+ *              5. Store Adafruit IO data and control digital pin output based on data values.
  * 
-  Adapted from @avilmaru
-
-  Will use task creation/deletion on AOM Google Tasks to trigger a TASK_CREATED or TASK_COMPLETED message 
  */
 
-#include <ArduinoJson.h>  
-
+#include <ArduinoJson.h>            //Necessary to make API request 
 
 /////////////////////////
-#include <WiFiNINA.h>
-#include "arduino_secrets_mine.h" 
+#include <WiFiNINA.h>               //library to connect Arduino to wifi and to Adafruit IO
+#include "arduino_secrets_mine.h"   //header file containing private information
 
 char ssid[] = SECRET_SSID;         // your network SSID (name)
 char pass[] = SECRET_PASS;         // your network password (use for WPA, or use as key for WEP)
-int status = WL_IDLE_STATUS;
+int status = WL_IDLE_STATUS;       // used to report Wifi connectivity information
 char server[] = "io.adafruit.com"; // name address for Adafruit IOT Cloud
 
 ///////////////////////////
 
-// Initialize the client library
+// Initialize the client library. The Arduino is a "client" of the WiFi when it connects to it.
 WiFiClient client;
 
-int state = 2;
-int digi_pin = 0;
+int state = 2;        //Describes state of digital pin output. 0 = LOW, 1 = HIGH, 2 = LOW/unknown/transitive.
+int digi_pin = 0;     //Pin to output a value to the Littlebit
 
 void setup() {
-
-  Serial.begin(9600);
-  //while (!Serial);   // wait for serial port to connect. Needed for native USB port only
+  Serial.begin(9600);           //Begins Serial monitor for debugging purposes.
   
-  pinMode(digi_pin, OUTPUT);     // Relay
+  pinMode(digi_pin, OUTPUT);     // commands the digital pin to output a signal, rather than receive one.
       
-  ConectToWIFI();
+  ConectToWIFI();               //Function to connect to WiFi, instantiated below.
   
 }
 
 void loop() {
 
-    httpRequest();
-    if (state == 1)  {
+    httpRequest();              //Function to request a connection to Adafruit IO, instantiated below.
+    
+    if (state == 1)  {                                //Adjust digital output depending on state
       digitalWrite(digi_pin, HIGH);   //Turn on light
       //Serial.println("Drove HIGH");
     }
@@ -49,37 +53,15 @@ void loop() {
     else
       digitalWrite(digi_pin, LOW);   //Turn off light
 
+    Serial.print("State: ");
     Serial.println(state);
-   // int sensorValue = digitalRead(2);
-   // Serial.println(sensorValue);
  
 }
 
-// this method makes a HTTP connection to the server:
+// this method makes a HTTP connection to the server and communicates with Adafruit IO through Adafruit's API (Application Programming Interface)
 void httpRequest() 
 {
-
-  // JSon
   
-/*
- * GET: /api/v2/AOM_IoT/feeds/iot-testing-1-dot-0/data/last
-{
-  "id": "string",
-  "value": "string",
-  "feed_id": 0,
-  "group_id": 0,
-  "expiration": "string",
-  "lat": 0,
-  "lon": 0,
-  "ele": 0,
-  "completed_at": "string",
-  "created_at": "string",
-  "updated_at": "string",
-  "created_epoch": 0
-}
- */
-
-
   // close any connection before send a new request.
   // This will free the socket on the Nina module
   client.stop();
@@ -89,9 +71,11 @@ void httpRequest()
   {
     
       Serial.println("connected to server");
+      
       // Make a HTTP request:
-      //client.println("GET /api/v2/"IO_USERNAME"/feeds/IoT_Testing_1.0/data/last HTTP/1.1");     //Retrieves 
-        client.println("GET /api/v2/"IO_USERNAME"/feeds/"IO_FEED_KEY"/data/last HTTP/1.1");     //Retrieves 
+      client.println("GET /api/v2/"IO_USERNAME"/feeds/"IO_FEED_KEY"/data/last HTTP/1.1");     
+        
+      //Calls Adafruit IO's API to retrieve the last data value recorded in a provided list
       
       client.println("Host: io.adafruit.com");  
       client.println("Connection: close");
@@ -145,9 +129,11 @@ void httpRequest()
 
       String val = String(value);
 
-       if (val == "TASK_COMPLETED") 
+      
+
+       if (val == "LOW_MESSAGE") 
           state = 0;   
-       else if (val == "TASK_CREATED")
+       else if (val == "HIGH_MESSAGE")
           state = 1;
        else
           state = 2;   
@@ -160,8 +146,6 @@ void httpRequest()
   }
 
 }
-
-
 
 
 

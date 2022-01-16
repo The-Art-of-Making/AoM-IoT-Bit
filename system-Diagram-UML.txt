@@ -1,0 +1,15 @@
+@startuml
+
+[Arduino MKR WiFi 1010] as Ard
+cloud "Web-Based Services" {
+  [Adafruit IO] as IO
+  [IFTTT (If This Then That)] as IFTTT
+  IO -right-> IFTTT
+  IFTTT -left-> IO
+}
+Ard -up-> IO : Connect through API
+() "Digital Signal" -right-> Ard
+
+
+
+@enduml
