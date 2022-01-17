@@ -23,7 +23,7 @@ int status = WL_IDLE_STATUS;       // used to report Wifi connectivity informati
 char server[] = "io.adafruit.com"; // name address for Adafruit IOT Cloud
 
 unsigned long lastConnectionTime = 0;              // last time you connected to the server, in milliseconds
-const unsigned long postingInterval = 10000;       // delay between updates, in milliseconds
+const unsigned long postingInterval = 2000;       // delay between updates, in milliseconds
 
 int state = 2;        //Describes state of digital pin output. 0 = LOW, 1 = HIGH, 2 = LOW/unknown/transitive.
 int digi_pin = 0;     //Pin to output a value to the Littlebit
@@ -112,7 +112,7 @@ void httpRequest()
   
   JsonArray feeds = doc.createNestedArray("feeds");       //Create JSON nested array for group
   JsonObject feed1 = feeds.createNestedObject();          //Fill first array index with feed1 
-  feed1["key"] = "IoT_Testing_Push_2.0";
+  feed1["key"] = "IoT_Testing_1.0";
   feed1["value"] = strToUpload;
 
   Serial.print(strToUpload);
