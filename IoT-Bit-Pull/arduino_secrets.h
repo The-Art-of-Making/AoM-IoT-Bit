@@ -44,4 +44,4 @@
  * must be "TASK_CREATED"
  */
 #define LOW_MESSAGE  ""
-#define HIGH_MESSAHE ""
+#define HIGH_MESSAGE ""

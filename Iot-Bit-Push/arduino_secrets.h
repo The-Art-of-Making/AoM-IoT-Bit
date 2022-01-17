@@ -27,14 +27,14 @@
 
 /* This is NOT your Adafruit IO password. Your Adafruit IO account has a unique key attached to it that serves 
  * as a security measure for sending data across WiFi and through the internet.
- * Details on accessing this key can be found   
+ * Details on accessing this key can be found in the instructions document  
  */
 #define IO_KEY       ""
 
 /* This is similar to your Adafruit key, but it is a key unique to a single group that you've created.
  * Details on accessing this key can be found.
  */
-#define IO_GROUP ""
+#define IO_GROUP     ""
 
 /* The two values below are the strings that will indicate to the IoT bit whether to output a low or high voltage.
  * They must be strings that match the value recorded in the Adafruit IO cloud exactly. 
@@ -44,4 +44,4 @@
  * must be "TASK_CREATED"
  */
 #define LOW_MESSAGE  ""
-#define HIGH_MESSAHE ""
+#define HIGH_MESSAGE ""

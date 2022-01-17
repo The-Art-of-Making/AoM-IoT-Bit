@@ -1,4 +1,3 @@
-
 /*
  * Author: Mark Hofmeister 
  * Created: 1/13/2022
@@ -73,7 +72,8 @@ void httpRequest()
       Serial.println("connected to server");
       
       // Make a HTTP request:
-      client.println("GET /api/v2/"IO_USERNAME"/feeds/"IO_FEED_KEY"/data/last HTTP/1.1");     
+       client.println("GET /api/v2/" IO_USERNAME "/feeds/" IO_FEED_KEY "/data/last HTTP/1.1");     
+       //client.println("GET /api/v2/" IO_USERNAME "/feeds/" IO_FEED_KEY "/data/last HTTP/1.1"); 
         
       //Calls Adafruit IO's API to retrieve the last data value recorded in a provided list
       
@@ -131,14 +131,13 @@ void httpRequest()
 
       
 
-       if (val == "LOW_MESSAGE") 
+       if (val == LOW_MESSAGE) 
           state = 0;   
-       else if (val == "HIGH_MESSAGE")
+       else if (val == HIGH_MESSAGE)
           state = 1;
        else
           state = 2;   
       
-    
   } else {
       // if you couldn't make a connection:
       Serial.println("connection failed");
