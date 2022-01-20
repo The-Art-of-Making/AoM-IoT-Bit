@@ -67,7 +67,7 @@ void loop()
       }
 
       /* Request a connection to Adafruit IO */
-      if (httpRequest(message))
+      if (httpRequest_POST(message))
       {
         /* Note the time that the connection was made */
         lastConnectionTime = millis();

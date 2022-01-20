@@ -43,41 +43,30 @@ void setup()
 void loop()
 {
 
-   /* If no activity for an entire posting interval, retry */
-    if (millis() - lastConnectionTime > postingInterval)          
-    {
-      
-      /* Read state from pin */
-      state = digitalRead(pin_in_value);
-      
-      /* Set local light based on state O */
-      if (state == 0) 
-      {
-        digitalWrite(pin_in_light, HIGH);
-        message = low_message;
-      } 
-      else if (state == 1) 
-      {
-        digitalWrite(pin_in_light, LOW);
-        message = high_message;
-      }
-      else
-      {
-        message = "UNKNOWN";
-      }
-
-      /* Request a connection to Adafruit IO */
-      if (httpRequest(message))
-      {
-        /* Note the time that the connection was made */
-        lastConnectionTime = millis();
-        Serial.println("Data upload suceeded!");
-      }
-      else
-      {
-        /* if you couldn't make a connection */
-        Serial.println("Data upload failed!");
-      }
-    }
+    /* Request a connection to Adafruit IO and ask for a GET request */
+    String recieved_message = http_Request_GET();
     
+    if (recieved_message != "NULL")
+    {
+      /* Note the time that the connection was made */
+      Serial.println("Data download suceeded!");
+    }
+    else
+    {
+      /* if you couldn't make a connection */
+      Serial.println("Data download failed!");
+    }
+
+    Serial.println("Recieved message: " + recieved_message);
+    
+    /* Set local light based on state O */
+    if (recieved_message == low_message) 
+    {
+      digitalWrite(pin_in_light, HIGH);
+    } 
+    else if (recieved_message == high_message) 
+    {
+      digitalWrite(pin_in_light, LOW);
+    }
+
 }

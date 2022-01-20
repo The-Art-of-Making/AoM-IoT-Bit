@@ -70,7 +70,90 @@ bool connectToWIFI()
     printWifiStatus();
 }
 
-bool httpRequest(String message)
+
+
+String http_Request_GET()
+{
+
+    /* Close any connection before send a new request. This will free the socket on the Nina module. */
+    client.stop();
+    
+    Serial.println("");
+    Serial.println("Attempting to connect to cloud server " + String(server) + "...");
+    
+    if (client.connect(server, 80)) 
+    {
+        Serial.println("Sucessfully connected to server " + String(server) + "!");
+  
+        Serial.println("Attempting to get message...");
+        
+        /* Make a HTTP request */
+        client.println("GET /api/v2/" + String(IO_USERNAME) + "/feeds/" + String(IO_FEED_KEY) + "/data/last HTTP/1.1");     
+          
+        /* Calls Adafruit IO's API to retrieve the last data value recorded in a provided list */
+        client.println("Host: " + String(server));
+        client.println("Connection: close");
+        client.println("Content-Type: application/json");  
+        client.println("X-AIO-Key: " IO_KEY); 
+        
+        /* Terminate headers with a blank line */
+        if (client.println() == 0)
+        {
+          Serial.println(F("Failed to send request"));
+          return "NULL";
+        }
+          
+        /* Check HTTP status */
+        char status[32] = {0};
+        client.readBytesUntil('\r', status, sizeof(status));
+        if (strcmp(status, "HTTP/1.1 200 OK") != 0)
+        {
+          Serial.print(F("Unexpected response: "));
+          Serial.println(status);
+          return "NULL";
+        }
+        
+        /* Skip HTTP headers */
+        char endOfHeaders[] = "\r\n\r\n";
+        if (!client.find(endOfHeaders)) {
+          Serial.println(F("Invalid response1"));
+          return "NULL";
+        }
+    
+        /* Skip Adafruit headers */
+        char endOfHeaders2[] = "\r";
+        if (!client.find(endOfHeaders2)) {
+          Serial.println(F("Invalid response2"));
+          return "NULL";
+        }
+    
+        /* Deserialize JSON */
+        const size_t capacity = JSON_OBJECT_SIZE(12) + 170;
+        
+        /* The JSON Document to Deserialize*/
+        StaticJsonDocument<capacity> doc;
+
+        DeserializationError deserializationError = deserializeJson(doc, client);
+        
+        if (deserializationError) {
+          Serial.print(F("deserializeJson() failed: "));
+          Serial.println(deserializationError.c_str());
+          return "NULL";
+        }
+        
+        const char* value = doc["value"];
+        String val = String(value);
+    
+        return val;
+    }
+    else
+    {
+        return "NULL";
+    }
+
+}
+
+bool http_Request_POST(String message)
 {
     const size_t capacity = JSON_ARRAY_SIZE(3) + 3*JSON_OBJECT_SIZE(2) + 2*JSON_OBJECT_SIZE(3) + 130;
 
@@ -104,7 +187,7 @@ bool httpRequest(String message)
       Serial.println("Attempting to send message: " + message);
       
       /* Make a HTTP request */
-      client.println("POST /api/v2/" IO_USERNAME "/groups/" IO_GROUP "/data HTTP/1.1"); 
+      client.println("POST /api/v2/" + String(IO_USERNAME) + "/groups/" + String(IO_GROUP) + "/data HTTP/1.1"); 
   
       /* Calls Adafruit IO's API to upload the string decided by the conditional */
       client.println("Host: " + String(server));
