@@ -7,9 +7,6 @@ char pass[]   = SECRET_PASS;                        // Your network password (us
 int status    = WL_IDLE_STATUS;                     // Used to report Wifi connectivity information
 char server[] = "io.adafruit.com";                  // Name address for Adafruit IOT Cloud
 
-unsigned long lastConnectionTime    = 0;            // Last time you connected to the server, in milliseconds
-const unsigned long postingInterval = 2000;         // Delay between updates, in milliseconds
-
 WiFiClient client;                                  // Initialize the client library
 
 
