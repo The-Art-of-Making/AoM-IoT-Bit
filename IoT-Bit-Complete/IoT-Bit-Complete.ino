@@ -31,7 +31,7 @@ void setup()
     Serial.begin(9600);
 
     /* while the serial stream is not open, do nothing */
-    while (!Serial);
+    //while (!Serial);
     
     /* Set all pin modes */
     pinMode(pin_post_mode_swt, INPUT);
@@ -44,6 +44,8 @@ void setup()
 
     Serial.println("Initializing connection to WIFI...");
 
+    delay(postingInterval);
+    
     /* Connect to WiFi */
     connectToWIFI();                               
 
