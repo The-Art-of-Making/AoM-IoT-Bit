@@ -22,9 +22,9 @@ int pin_out_value       = 1;                            // The pin for writing t
 int pin_post_mode_swt   = 2;                            // The pin for reading the POST switch status
 int pin_get_mode_swt    = 3;                            // The pin for reading the GET switch status
 
-int pin_conn_stat_LED   = 4;                            // The pin for outputing the connection status to an LED
-int pin_post_stat_LED   = 5;                            // The pin for outputing the POST status to an LED
-int pin_get_stat_LED    = 6;                            // The pin for outputing the GET status to an LED
+int pin_post_stat_LED   = 4;                            // The pin for outputing the POST status to an LED
+int pin_get_stat_LED    = 5;                            // The pin for outputing the GET status to an LED
+int pin_conn_stat_LED   = 6;                            // The pin for outputing the connection status to an LED
 
 String low_message      = "LOW";                        // The message sent that represents a low digital signal
 String high_message     = "HIGH";                       // The message sent that represents a high digital signal
