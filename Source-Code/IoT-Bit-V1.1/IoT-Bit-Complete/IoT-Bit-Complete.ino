@@ -14,17 +14,18 @@
 
 #include "Wifi_Setup.h"                                 // Header file for wifi setup functions
 
-int pin_potentiometer   = A6;                           // The pin for the anolog input of the potentiometer
+int pin_potentiometer   = A1;                           // The pin for the anolog input of the potentiometer
 
-int pin_in_value        = 0;                            // The pin for reading the message_to_send digital value
-int pin_out_value       = 1;                            // The pin for writing the message_recieved digital value
+int pin_in_value        = A2;                           // The pin for reading the message_to_send digital value
+int pin_out_value       = A3;                           // The pin for writing the message_recieved digital value
 
-int pin_post_mode_swt   = 2;                            // The pin for reading the POST switch status
+int pin_post_stat_LED   = 0;                            // The pin for outputing the POST status to an LED
+int pin_post_mode_swt   = 1;                            // The pin for reading the POST switch status
+
+int pin_get_stat_LED    = 2;                            // The pin for outputing the GET status to an LED
 int pin_get_mode_swt    = 3;                            // The pin for reading the GET switch status
 
-int pin_post_stat_LED   = 4;                            // The pin for outputing the POST status to an LED
-int pin_get_stat_LED    = 5;                            // The pin for outputing the GET status to an LED
-int pin_conn_stat_LED   = 6;                            // The pin for outputing the connection status to an LED
+int pin_conn_stat_LED   = 4;                            // The pin for outputing the connection status to an LED
 
 String low_message      = "LOW";                        // The message sent that represents a low digital signal
 String high_message     = "HIGH";                       // The message sent that represents a high digital signal
