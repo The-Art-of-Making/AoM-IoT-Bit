@@ -53,7 +53,7 @@ bool writeToFile(String fileName, String textToWrite)
     }
 }
 
-String readfromFile(String fileName)
+String readFromFile(String fileName)
 {
     /* If we cannot initialize the SD card then don't read */
     if (!initializeSD())
@@ -68,7 +68,7 @@ String readfromFile(String fileName)
     /* If the file opened read from it */
     if (currentFile)
     {
-      Serial.print("Reading from" + fileName + "...");
+      Serial.println("Reading from " + fileName + "...");
       /* Read from the file until there's nothing else in it */
       while (currentFile.available())
       {
@@ -81,7 +81,7 @@ String readfromFile(String fileName)
       Serial.println("done reading.");
       
       return contents;
-      Serial.println(contents);
+      
     }
     else
     {
