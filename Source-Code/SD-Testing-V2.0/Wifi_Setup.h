@@ -29,6 +29,7 @@ bool initializeCredentials()
     /* The expected contents of the secrets.txt file should look like this: */
     /* Format:  SECRET_SSID;SECRET_PASS;SERVER_NAME;IO_USERNAME;IO_GROUP;IO_FEED_KEY;IO_KEY */
     /* Example: Issam's iPhone;Pass123;io.adafruit.com;AOMUser1;AOMGroupA;AOMGroupAFeed1;AoMIoKeYsEcReT123 */
+    
 
     /* Split the data into its parts */
     
