@@ -72,7 +72,7 @@ String readfromFile(String fileName)
       /* Read from the file until there's nothing else in it */
       while (currentFile.available())
       {
-        contents.concat(currentFile.read());
+        contents.concat(currentFile.readString());
       }
       
       /* Close the file */
