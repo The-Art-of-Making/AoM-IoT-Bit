@@ -5,7 +5,7 @@ File currentFile;
 
 bool initializeSD()
 {
-    Serial.print("Initializing SD card...");
+    Serial.println("Initializing SD card...");
     
     if (!SD.begin(4))
     {
@@ -14,7 +14,7 @@ bool initializeSD()
     }
     else
     {
-      Serial.println("initialization done.");
+      Serial.println("initialization done!");
       return true;
     }
 }
