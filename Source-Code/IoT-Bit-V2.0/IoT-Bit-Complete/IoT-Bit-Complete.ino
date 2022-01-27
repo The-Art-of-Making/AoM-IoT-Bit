@@ -60,23 +60,24 @@ void setup()
     pinMode(pin_conn_stat_LED, OUTPUT);
     pinMode(pin_post_stat_LED, OUTPUT);
     pinMode(pin_get_stat_LED,  OUTPUT);
-
+    
     /* Attempt to read from secrets.txt */
     while (initializeCredentials() == false)
     {
-      for (int i = 0; i == 3; i++)
+      for (int i = 0; i < 3; i++)
       {        
-        Serial.println("Bad Credentials File!");
+        delay(200);
         digitalWrite(pin_get_stat_LED, HIGH);
         digitalWrite(pin_post_stat_LED, HIGH);
         digitalWrite(pin_conn_stat_LED, HIGH);
-        delay(500);
+        delay(200);
         
         digitalWrite(pin_get_stat_LED, LOW);
         digitalWrite(pin_post_stat_LED, LOW);
         digitalWrite(pin_conn_stat_LED, LOW);
-        delay(500);
       }
+      /* Give Them A Second */
+      delay(1000);
     }
     
 }

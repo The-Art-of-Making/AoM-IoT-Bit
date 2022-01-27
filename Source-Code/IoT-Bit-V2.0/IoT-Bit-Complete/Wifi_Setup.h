@@ -1,49 +1,131 @@
 #include <ArduinoJson.h>                            // Necessary to make API request 
 #include <WiFiNINA.h>                               // Library to connect Arduino to wifi and to Adafruit IO
-#include "MicroSD_IO.h"                                 // Header file for SD Card IO setup
+#include "MicroSD_IO.h"                             // Header file for SD Card IO setup
 
-char ssid[]      = SECRET_SSID;                     // Your network SSID (name)
-char pass[]      = SECRET_PASS;                     // Your network password (use for WPA, or use as key for WEP)
-int wifi_status  = WL_IDLE_STATUS;                  // Used to report Wifi connectivity information
-char server[]    = "io.adafruit.com";               // Name address for Adafruit IOT Cloud
+String ssid;                                        // Your network SSID (name)
+String pass;                                        // Your network password (use for WPA, or use as key for WEP)
+int wifi_status;                                    // Used to report Wifi connectivity information
+String server;                                      // Name of address for Adafruit IOT Cloud
 
+String adafruit_io_username;                        // The username attached to your Adafruit IO account
+String adafruit_io_group_key;                       // This is a unique key to a single group in Adafruit IO
+String adafruit_io_feed_key;                        // This is a unique key to a single feed in the above group
+String adafruit_io_key;                             // Unique key attached to it that serves as a security measure for sending data across WiFi and through the internet
+ 
 WiFiClient client;                                  // Initialize the client library
 
 bool initializeCredentials()
 {
     /* Attempt to read from secrets.txt */
-    String secrets = readfromFile(String "secrets.txt");
+    String secrets = readfromFile("secrets.txt");
+
+    ////Debugging Code
+    //Serial.println("(Debug) sectrets.txt contents read: " + secrets);
     
     if (secrets == "NULL")
     {
       return false;
     }
 
-    /* Todo For Mark */
+    /* The expected contents of the secrets.txt file should look like this: */
+    /* Format:  SECRET_SSID;SECRET_PASS;SERVER_NAME;IO_USERNAME;IO_GROUP;IO_FEED_KEY;IO_KEY */
+    /* Example: Issam's iPhone;Pass123;io.adafruit.com;AOMUser1;AOMGroupA;AOMGroupAFeed1;AoMIoKeYsEcReT123 */
     
+
+    /* Split the data into its parts */
+    
+    /* Buffer for security */
+    char buffer_secrets[secrets.length() + 1];
+    secrets.toCharArray(buffer_secrets, secrets.length() + 1);
+    
+    char * splitValue;
+
+    /* For only the first split, specify the char array to use */
+    splitValue = strtok(buffer_secrets,";");
+    if (splitValue == NULL) 
+    {
+      Serial.println("Cannot Split: failed to parse ssid");
+      return false;
+    }
+    ssid = String(splitValue);
+    
+    /* The splitter continues using the buffer_secrets */
+    splitValue = strtok(NULL, ";");
+    if (splitValue == NULL) 
+    {
+      Serial.println("Cannot Split: failed to parse pass");
+      return false;
+    }
+    pass = String(splitValue);
+    
+    /* The splitter continues using the buffer_secrets */
+    splitValue = strtok(NULL, ";");
+    if (splitValue == NULL) 
+    {
+      Serial.println("Cannot Split: failed to parse server");
+      return false;
+    }
+    server = String(splitValue);
+    
+    /* The splitter continues using the buffer_secrets */
+    splitValue = strtok(NULL, ";");
+    if (splitValue == NULL) 
+    {
+      Serial.println("Cannot Split: failed to parse adafruit_io_username");
+      return false;
+    }
+    adafruit_io_username = String(splitValue);
+    
+    /* The splitter continues using the buffer_secrets */
+    splitValue = strtok(NULL, ";");
+    if (splitValue == NULL) 
+    {
+      Serial.println("Cannot Split: failed to parse adafruit_io_group");
+      return false;
+    }
+    adafruit_io_group_key = String(splitValue);
+    
+    /* The splitter continues using the buffer_secrets */
+    splitValue = strtok(NULL, ";");
+    if (splitValue == NULL) 
+    {
+      Serial.println("Cannot Split: failed to parse adafruit_io_feed_key");
+      return false;
+    }
+    adafruit_io_feed_key = String(splitValue);
+    
+    /* The splitter continues using the buffer_secrets */
+    splitValue = strtok(NULL, ";");
+    if (splitValue == NULL) 
+    {
+      Serial.println("Cannot Split: failed to parse adafruit_io_key");
+      return false;
+    }
+    adafruit_io_key = String(splitValue);
 }
 
 void printWifiStatus() 
 {
-    Serial.println("Current Wifi Status:");
+    Serial.println("");
+    
+    Serial.println("**Current Wifi Status");
     
     /* Print the SSID of the network you're attached to */
-    Serial.print("SSID: ");
+    Serial.print("****SSID: ");
     Serial.println(WiFi.SSID());
   
     /* Print your board's IP address */
-    IPAddress ip = WiFi.localIP();
-    Serial.print("IP Address: ");
-    Serial.println(ip);
+    Serial.print("****IP Address: ");
+    Serial.println(WiFi.localIP());
   
     /* Print the received signal strength */
-    long rssi = WiFi.RSSI();
-    Serial.print("signal strength (RSSI):");
-    Serial.print(rssi);
+    Serial.print("****signal strength (RSSI):");
+    Serial.print(WiFi.RSSI());
     Serial.println(" dBm");
     
     Serial.println("");
 }
+
 bool wifi_connected()
 {
   wifi_status = WiFi.status();
@@ -74,24 +156,36 @@ bool connectToWIFI()
     {
       attempt_count += 1;
       
-      Serial.println("Attempt (" + String(attempt_count) + ") to connect to Wifi Network @ SSID: " + String(ssid) +"...");
+      Serial.println("Attempt (" + String(attempt_count) + ") to connect to Wifi Network @ SSID: " + ssid +"...");
       
-      /* Connect to WPA/WPA2 network. NOTE: Change this line if using open or WEP network */
-      wifi_status = WiFi.begin(ssid, pass);
+      /* Connect to WPA/WPA2 network. NOTE: Change the next lines if using open or WEP network */
+      
+      /* Buffer for security */
+      char buffer_ssid[ssid.length() + 1];
+      ssid.toCharArray(buffer_ssid, ssid.length() + 1);
+      
+      /* Buffer for security */
+      char buffer_pass[pass.length() + 1];
+      pass.toCharArray(buffer_pass, pass.length() + 1);
 
+      wifi_status = WiFi.begin( buffer_ssid, buffer_pass);
+
+      ////Debugging Code
+      //printWifiStatus();
+      
       /* Wait 10 seconds for connection */
       delay(10000);
     }
 
-    if (attempt_count <= 3)
+    if (attempt_count < 3)
     {
-      Serial.println("Sucessfully connected to Wifi Network @ SSID: " + String(ssid) + "!");
+      Serial.println("Sucessfully connected to Wifi Network @ SSID: " + ssid + "!");
       printWifiStatus();
       return true;
     }
     else
     {
-      Serial.println("Failed to connect to Wifi Network @ SSID: " + String(ssid) + "!");
+      Serial.println("Failed to connect to Wifi Network @ SSID: " + ssid + "!");
       return false;
     }
     
@@ -119,7 +213,7 @@ bool disconnectFromWIFI()
     /* Keep attempting to connect to the Wifi network */
     if (WiFi.status() == WL_CONNECTED)
     {
-      Serial.println("Disconnecting from Wifi @ SSID: " + String(ssid) +"...");
+      Serial.println("Disconnecting from Wifi @ SSID: " + ssid +"...");
       
       WiFi.end();
       response = true;
@@ -142,22 +236,26 @@ String http_Request_GET()
     client.stop();
     
     Serial.println("");
-    Serial.println("Attempting to connect to cloud server " + String(server) + "...");
+    Serial.println("Attempting to connect to cloud server " + server + "...");
     
-    if (client.connect(server, 80)) 
+    /* Buffer for security */
+    char buffer_server[server.length() + 1];
+    server.toCharArray(buffer_server, server.length() + 1);
+    
+    if (client.connect( buffer_server, 80))
     {
-        Serial.println("Sucessfully connected to server " + String(server) + "!");
+        Serial.println("Sucessfully connected to server " + server + "!");
   
         Serial.println("Attempting to get message...");
         
         /* Make a HTTP request */
-        client.println("GET /api/v2/" + String(IO_USERNAME) + "/feeds/" + String(IO_FEED_KEY) + "/data/last HTTP/1.1");     
+        client.println("GET /api/v2/" + adafruit_io_username + "/feeds/" + adafruit_io_feed_key + "/data/last HTTP/1.1");     
           
         /* Calls Adafruit IO's API to retrieve the last data value recorded in a provided list */
-        client.println("Host: " + String(server));
+        client.println("Host: " + server);
         client.println("Connection: close");
         client.println("Content-Type: application/json");  
-        client.println("X-AIO-Key: " IO_KEY); 
+        client.println("X-AIO-Key: " + adafruit_io_key); 
         
         /* Terminate headers with a blank line */
         if (client.println() == 0)
@@ -234,31 +332,35 @@ bool http_Request_POST(String message)
     
     /* Fill first array index with feed1 */
     JsonObject feed1 = feeds.createNestedObject();
-    feed1["key"] = "IoT_Testing_1.0";
+    feed1["key"] = String(adafruit_io_feed_key);
     feed1["value"] = message;
 
     /* Close any connection before send a new request. This will free the socket on the Nina module. */
     client.stop();
     
     Serial.println("");
-    Serial.println("Attempting to connect to cloud server " + String(server) + "...");
+    Serial.println("Attempting to connect to cloud server " + server + "...");
     
-    if (client.connect(server, 80)) 
+    /* Buffer for security */
+    char buffer_server[server.length() + 1];
+    server.toCharArray(buffer_server, server.length() + 1);
+    
+    if (client.connect(buffer_server, 80))
     {
-      Serial.println("Sucessfully connected to server " + String(server) + "!");
+      Serial.println("Sucessfully connected to server " + server + "!");
 
       Serial.println("Attempting to send message: " + message);
       
       /* Make a HTTP request */
-      client.println("POST /api/v2/" + String(IO_USERNAME) + "/groups/" + String(IO_GROUP) + "/data HTTP/1.1"); 
+      client.println("POST /api/v2/" + adafruit_io_username + "/groups/" + adafruit_io_group_key + "/data HTTP/1.1"); 
   
       /* Calls Adafruit IO's API to upload the string decided by the conditional */
-      client.println("Host: " + String(server));
+      client.println("Host: " + server);
       client.println("Connection: close");
       client.print("Content-Length: ");
       client.println(measureJson(doc));
       client.println("Content-Type: application/json");  
-      client.println("X-AIO-Key: " IO_KEY);
+      client.println("X-AIO-Key: " + adafruit_io_key);
   
       /* Terminate headers with a blank line */
       client.println();

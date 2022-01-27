@@ -5,7 +5,7 @@ File currentFile;
 
 bool initializeSD()
 {
-    Serial.print("Initializing SD card...");
+    Serial.println("Initializing SD card...");
     
     if (!SD.begin(4))
     {
@@ -14,7 +14,7 @@ bool initializeSD()
     }
     else
     {
-      Serial.println("initialization done.");
+      Serial.println("initialization done!");
       return true;
     }
 }
@@ -72,7 +72,7 @@ String readfromFile(String fileName)
       /* Read from the file until there's nothing else in it */
       while (currentFile.available())
       {
-        contents += (currentFile.read());
+        contents.concat(currentFile.readString());
       }
       
       /* Close the file */
@@ -81,7 +81,6 @@ String readfromFile(String fileName)
       Serial.println("done reading.");
       
       return contents;
-      Serial.println(contents);
     }
     else
     {
