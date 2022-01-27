@@ -19,7 +19,8 @@ bool initializeCredentials()
     /* Attempt to read from secrets.txt */
     String secrets = readfromFile("secrets.txt");
 
-    Serial.println("(Debug) sectrets.txt contents read: " + secrets);
+    ////Debugging Code
+    //Serial.println("(Debug) sectrets.txt contents read: " + secrets);
     
     if (secrets == "NULL")
     {
@@ -47,8 +48,7 @@ bool initializeCredentials()
       return false;
     }
     ssid = String(splitValue);
-
-    Serial.println("$SSID: " + ssid);
+    
     /* The splitter continues using the buffer_secrets */
     splitValue = strtok(NULL, ";");
     if (splitValue == NULL) 
@@ -57,7 +57,6 @@ bool initializeCredentials()
       return false;
     }
     pass = String(splitValue);
-    Serial.println("$PASS: " + pass);
     
     /* The splitter continues using the buffer_secrets */
     splitValue = strtok(NULL, ";");
@@ -67,7 +66,6 @@ bool initializeCredentials()
       return false;
     }
     server = String(splitValue);
-    Serial.println("$SERVER: " + server);
     
     /* The splitter continues using the buffer_secrets */
     splitValue = strtok(NULL, ";");
@@ -77,7 +75,6 @@ bool initializeCredentials()
       return false;
     }
     adafruit_io_username = String(splitValue);
-    Serial.println("$USER: " + adafruit_io_username);
     
     /* The splitter continues using the buffer_secrets */
     splitValue = strtok(NULL, ";");
@@ -87,7 +84,6 @@ bool initializeCredentials()
       return false;
     }
     adafruit_io_group_key = String(splitValue);
-    Serial.println("$GROUP: " + adafruit_io_group_key);
     
     /* The splitter continues using the buffer_secrets */
     splitValue = strtok(NULL, ";");
@@ -97,7 +93,6 @@ bool initializeCredentials()
       return false;
     }
     adafruit_io_feed_key = String(splitValue);
-    Serial.println("$Feed: " + adafruit_io_feed_key);
     
     /* The splitter continues using the buffer_secrets */
     splitValue = strtok(NULL, ";");
@@ -106,12 +101,13 @@ bool initializeCredentials()
       Serial.println("Cannot Split: failed to parse adafruit_io_key");
       return false;
     }
-    adafruit_io_key = String(splitValue);    
-    Serial.println("$KEY: " + adafruit_io_key);   
+    adafruit_io_key = String(splitValue);
 }
 
 void printWifiStatus() 
 {
+    Serial.println("");
+    
     Serial.println("**Current Wifi Status");
     
     /* Print the SSID of the network you're attached to */
@@ -172,13 +168,10 @@ bool connectToWIFI()
       char buffer_pass[pass.length() + 1];
       pass.toCharArray(buffer_pass, pass.length() + 1);
 
-      Serial.println(buffer_ssid);
-      
-      Serial.println(buffer_pass);
-      
       wifi_status = WiFi.begin( buffer_ssid, buffer_pass);
 
-      printWifiStatus();
+      ////Debugging Code
+      //printWifiStatus();
       
       /* Wait 10 seconds for connection */
       delay(10000);
