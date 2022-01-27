@@ -48,6 +48,7 @@ bool initializeCredentials()
     }
     ssid = String(splitValue);
 
+    Serial.println("$SSID: " + ssid);
     /* The splitter continues using the buffer_secrets */
     splitValue = strtok(NULL, ";");
     if (splitValue == NULL) 
@@ -56,6 +57,7 @@ bool initializeCredentials()
       return false;
     }
     pass = String(splitValue);
+    Serial.println("$PASS: " + pass);
     
     /* The splitter continues using the buffer_secrets */
     splitValue = strtok(NULL, ";");
@@ -65,6 +67,7 @@ bool initializeCredentials()
       return false;
     }
     server = String(splitValue);
+    Serial.println("$SERVER: " + server);
     
     /* The splitter continues using the buffer_secrets */
     splitValue = strtok(NULL, ";");
@@ -74,6 +77,7 @@ bool initializeCredentials()
       return false;
     }
     adafruit_io_username = String(splitValue);
+    Serial.println("$USER: " + adafruit_io_username);
     
     /* The splitter continues using the buffer_secrets */
     splitValue = strtok(NULL, ";");
@@ -83,6 +87,7 @@ bool initializeCredentials()
       return false;
     }
     adafruit_io_group_key = String(splitValue);
+    Serial.println("$GROUP: " + adafruit_io_group_key);
     
     /* The splitter continues using the buffer_secrets */
     splitValue = strtok(NULL, ";");
@@ -92,6 +97,7 @@ bool initializeCredentials()
       return false;
     }
     adafruit_io_feed_key = String(splitValue);
+    Serial.println("$Feed: " + adafruit_io_feed_key);
     
     /* The splitter continues using the buffer_secrets */
     splitValue = strtok(NULL, ";");
@@ -101,29 +107,29 @@ bool initializeCredentials()
       return false;
     }
     adafruit_io_key = String(splitValue);    
+    Serial.println("$KEY: " + adafruit_io_key);   
 }
 
 void printWifiStatus() 
 {
-    Serial.println("Current Wifi Status:");
+    Serial.println("**Current Wifi Status");
     
     /* Print the SSID of the network you're attached to */
-    Serial.print("SSID: ");
+    Serial.print("****SSID: ");
     Serial.println(WiFi.SSID());
   
     /* Print your board's IP address */
-    IPAddress ip = WiFi.localIP();
-    Serial.print("IP Address: ");
-    Serial.println(ip);
+    Serial.print("****IP Address: ");
+    Serial.println(WiFi.localIP());
   
     /* Print the received signal strength */
-    long rssi = WiFi.RSSI();
-    Serial.print("signal strength (RSSI):");
-    Serial.print(rssi);
+    Serial.print("****signal strength (RSSI):");
+    Serial.print(WiFi.RSSI());
     Serial.println(" dBm");
     
     Serial.println("");
 }
+
 bool wifi_connected()
 {
   wifi_status = WiFi.status();
@@ -168,11 +174,13 @@ bool connectToWIFI()
       
       wifi_status = WiFi.begin( buffer_ssid, buffer_pass);
 
+      printWifiStatus();
+      
       /* Wait 10 seconds for connection */
       delay(10000);
     }
 
-    if (attempt_count <= 3)
+    if (attempt_count < 3)
     {
       Serial.println("Sucessfully connected to Wifi Network @ SSID: " + ssid + "!");
       printWifiStatus();
@@ -327,7 +335,7 @@ bool http_Request_POST(String message)
     
     /* Fill first array index with feed1 */
     JsonObject feed1 = feeds.createNestedObject();
-    feed1["key"] = "IoT_Testing_1.0";
+    feed1["key"] = String(adafruit_io_feed_key);
     feed1["value"] = message;
 
     /* Close any connection before send a new request. This will free the socket on the Nina module. */
