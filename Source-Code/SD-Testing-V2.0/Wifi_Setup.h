@@ -170,7 +170,11 @@ bool connectToWIFI()
       
       /* Buffer for security */
       char buffer_pass[pass.length() + 1];
-      ssid.toCharArray(buffer_pass, pass.length() + 1);
+      pass.toCharArray(buffer_pass, pass.length() + 1);
+
+      Serial.println(buffer_ssid);
+      
+      Serial.println(buffer_pass);
       
       wifi_status = WiFi.begin( buffer_ssid, buffer_pass);
 
