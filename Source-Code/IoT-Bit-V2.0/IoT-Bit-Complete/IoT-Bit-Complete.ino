@@ -1,8 +1,8 @@
 /*
  * Authors: Mark Hofmeister, Issam Abushaban
- * Created: 1/24/2022
- * Last Updated: 1/24/2022
- * Version: V1.1
+ * Created: 1/29/2022
+ * Last Updated: 1/29/2022
+ * Version: V2.0
  * 
  * Description:
  *  This code will use Arduino's MKR WiFi 1010 microcontroller platform to:
@@ -59,7 +59,7 @@ void setup()
     pinMode(pin_get_stat_LED,  OUTPUT);
     
     /* Attempt to read from secrets.txt */
-    while (initializeCredentials() == false)
+    do
     {
       for (int i = 0; i < 3; i++)
       {        
@@ -73,12 +73,36 @@ void setup()
         digitalWrite(pin_post_stat_LED, LOW);
         digitalWrite(pin_conn_stat_LED, LOW);
       }
-      /* Give Them A Second */
+      
+      /* Give Them 5 seconds */
+      Serial.print("Checking For SD card in...");
+      Serial.print("5...");
+      delay(1000);
+      Serial.print("4...");
+      delay(1000);
+      Serial.print("3...");
+      delay(1000);
+      Serial.print("2...");
+      delay(1000);
+      Serial.print("1...");
+      delay(1000);
+      Serial.println("0");
       delay(1000);
     }
+    while(initializeCredentials() == false);
     
+    /* Let them know that the device is ready */
+    digitalWrite(pin_get_stat_LED, HIGH);
+    digitalWrite(pin_post_stat_LED, HIGH);
+    digitalWrite(pin_conn_stat_LED, HIGH);
+    delay(1000);
+    digitalWrite(pin_get_stat_LED, LOW);
+    digitalWrite(pin_post_stat_LED, LOW);
+    digitalWrite(pin_conn_stat_LED, LOW);
+    delay(1000);
 }
 
+   
 void loop()
 {
 

@@ -33,7 +33,7 @@ bool writeToFile(String fileName, String textToWrite)
     /* If the file opened write to it */
     if (currentFile)
     {
-      Serial.print("Writing to" + fileName + "...");
+      Serial.println("Writing to " + fileName + "...");
       
       currentFile.println(textToWrite);
       
@@ -68,7 +68,7 @@ String readfromFile(String fileName)
     /* If the file opened read from it */
     if (currentFile)
     {
-      Serial.print("Reading from" + fileName + "...");
+      Serial.println("Reading from " + fileName + "...");
       /* Read from the file until there's nothing else in it */
       while (currentFile.available())
       {

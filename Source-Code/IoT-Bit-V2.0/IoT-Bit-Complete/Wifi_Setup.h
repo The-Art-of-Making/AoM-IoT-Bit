@@ -7,7 +7,7 @@ unsigned long requestInterval = 2000;               // Programmable delay betwee
 String ssid;                                        // Your network SSID (name)
 String pass;                                        // Your network password (use for WPA, or use as key for WEP)
 int wifi_status;                                    // Used to report Wifi connectivity information
-String server;                                      // Name of address for Adafruit IOT Cloud
+String server = "io.adafruit.com";                  // Name of address for Adafruit IOT Cloud
 
 String adafruit_io_username;                        // The username attached to your Adafruit IO account
 String adafruit_io_group_key;                       // This is a unique key to a single group in Adafruit IO
@@ -30,8 +30,8 @@ bool initializeCredentials()
     }
 
     /* The expected contents of the secrets.txt file should look like this: */
-    /* Format:  REQUEST_RATE_SEC;SECRET_SSID;SECRET_PASS;SERVER_NAME;IO_USERNAME;IO_GROUP;IO_FEED_KEY;IO_KEY */
-    /* Example: 2;Issam's iPhone;Pass123;io.adafruit.com;AOMUser1;AOMGroupA;AOMGroupAFeed1;AoMIoKeYsEcReT123 */
+    /* Format:  REQUEST_RATE_SEC;SECRET_SSID;SECRET_PASS;IO_USERNAME;IO_GROUP;IO_FEED_KEY;IO_KEY */
+    /* Example: 2;Issam's iPhone;Pass123;AOMUser1;AOMGroupA;AOMGroupAFeed1;AoMIoKeYsEcReT123 */
     
 
     /* Split the data into its parts */
@@ -46,16 +46,39 @@ bool initializeCredentials()
     splitValue = strtok(buffer_secrets,";");
     if (splitValue == NULL) 
     {
-      Serial.println("Cannot Split: failed to parse ssid");
+      Serial.println("Cannot Split: failed to parse request Interval");
       return false;
     }
+
+    for(char c : String(splitValue))
+    {
+      if (!isDigit(c))
+      {
+        Serial.println("Cannot Split: failed to parse request Interval");
+        return false;
+      }
+    }
+    
     requestInterval = String(splitValue).toInt();
+    
+    /* Set the Request Interval based on the potentiometer [As of 01/27/22 range is 2 - 86400 seconds (1 day)] */
+    if(requestInterval < 2)
+    {
+      requestInterval = 2;
+    }
+    else if(requestInterval > 86400)
+    {
+      requestInterval = 86400;
+    }
+
+    /* Now we scale the request Interval up */
+    requestInterval *= 1000;
     
     /* The splitter continues using the buffer_secrets */
     splitValue = strtok(NULL, ";");
     if (splitValue == NULL) 
     {
-      Serial.println("Cannot Split: failed to parse pass");
+      Serial.println("Cannot Split: failed to parse ssid");
       return false;
     }
     ssid = String(splitValue);
@@ -68,16 +91,7 @@ bool initializeCredentials()
       return false;
     }
     pass = String(splitValue);
-    
-    /* The splitter continues using the buffer_secrets */
-    splitValue = strtok(NULL, ";");
-    if (splitValue == NULL) 
-    {
-      Serial.println("Cannot Split: failed to parse server");
-      return false;
-    }
-    server = String(splitValue);
-    
+
     /* The splitter continues using the buffer_secrets */
     splitValue = strtok(NULL, ";");
     if (splitValue == NULL) 
@@ -144,17 +158,7 @@ bool wifi_connected()
 }
 
 bool connectToWIFI()
-{
-    /* Set the Request Interval based on the potentiometer [As of 01/27/22 range is 2 - 86400 seconds (1 day)] */
-    if(requestInterval < 2)
-    {
-      requestInterval = 2;
-    }
-    else if(requestInterval > 86400)
-    {
-      requestInterval = 86400;
-    }
-    
+{   
     /* Check for the WiFi module */
     if (WiFi.status() == WL_NO_MODULE)
     {
