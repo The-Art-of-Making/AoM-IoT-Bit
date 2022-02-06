@@ -106,7 +106,10 @@ void setup()
 void loop()
 {
 
-  
+    Serial.println(digitalRead(pin_post_mode_swt));
+    
+    Serial.println(digitalRead(pin_get_mode_swt));
+    
     /* Determine if no desire to POST or GET. */
     if ((digitalRead(pin_post_mode_swt) == LOW) && (digitalRead(pin_get_mode_swt) == LOW))
     {      
@@ -144,8 +147,15 @@ void loop()
       if (digitalRead(pin_post_mode_swt) == HIGH)
       {
         digitalWrite(pin_post_stat_LED, HIGH);
-        if(!message_POST()) return;
-        digitalWrite(pin_post_stat_LED, LOW);
+        if(!message_POST()) 
+        {
+          digitalWrite(pin_post_stat_LED, LOW);
+          return;
+        }
+        else
+        {
+          digitalWrite(pin_post_stat_LED, LOW);
+        }
         
         delay(requestInterval);
       }
@@ -158,8 +168,15 @@ void loop()
       if (digitalRead(pin_get_mode_swt) == HIGH)
       {
         digitalWrite(pin_get_stat_LED, HIGH);
-        if(!message_GET()) return;
-        digitalWrite(pin_get_stat_LED, LOW);
+        if(!message_GET()) 
+        {
+          digitalWrite(pin_get_stat_LED, LOW);
+          return;
+        }
+        else
+        {
+          digitalWrite(pin_get_stat_LED, LOW);
+        }
         
         delay(requestInterval);
       }
