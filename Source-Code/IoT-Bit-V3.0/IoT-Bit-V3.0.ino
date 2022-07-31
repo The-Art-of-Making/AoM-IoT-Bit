@@ -41,8 +41,6 @@ String message_recieved = "UNKNOWN";                    // The message recieved
 
 unsigned long lastConnectionTime = 0;                   // Last time you connected to the server, in milliseconds
 
-
-
 void setup()
 {
     /* Begins Serial monitor for debugging purposes. */
@@ -102,7 +100,19 @@ void setup()
     digitalWrite(pin_conn_stat_LED, LOW);
     delay(1000);
 
+    /*
+     * Interrupts
+     * - POST_ISR = triggered whenever the input signal value changes 
+     * - POST_HIGH_LED_ISR = triggered whenever the post switch goes HIGH 
+     * - POST_LOW_LED_ISR = triggered whenever the post switch goes LOW
+     * - GET_HIGH_LED_ISR = triggered whenever the get switch goes HIGH
+     * - GET_LOW_LED_ISR = triggered whenever the get switch goes LOW
+     */
     attachInterrupt(digitalPinToInterrupt(pin_in_value), POST_ISR, CHANGE); 
+    attachInterrupt(digitalPinToInterrupt(pin_post_mode_swt), POST_HIGH_LED_ISR, RISING); 
+    attachInterrupt(digitalPinToInterrupt(pin_post_mode_swt), POST_LOW_LED_ISR, FALLING); 
+    attachInterrupt(digitalPinToInterrupt(pin_get_mode_swt), GET_HIGH_LED_ISR, RISING); 
+    attachInterrupt(digitalPinToInterrupt(pin_get_mode_swt), GET_LOW_LED_ISR, FALLING); 
 }
 
    
