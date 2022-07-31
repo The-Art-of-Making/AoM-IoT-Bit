@@ -200,21 +200,29 @@ bool message_POST()
         message_to_send = "UNKNOWN";
       }
 
-      /* Request a connection to Adafruit IO */
-      if (http_Request_POST(message_to_send))
-      {
-        /* Note the time that the connection was made */
-        lastConnectionTime = millis();
-        Serial.println("Data upload suceeded!");
-        return true;
+      bool postRequestSuccess;
+      
+      while(postRequestSuccess == false) {
+
+        postRequestSuccess = http_Request_POST(message_to_send); 
+       
+        /* Request a connection to Adafruit IO */
+        if (postRequestSuccess) {
+          
+          /* Note the time that the connection was made */
+          lastConnectionTime = millis();
+          Serial.println("Data upload suceeded!");
+          return true;
+        }
+        else
+        {
+          /* if you couldn't make a connection */
+          Serial.println("Data upload failed!");
+          blinkLED(pin_post_stat_LED);
+        }
       }
-      else
-      {
-        /* if you couldn't make a connection */
-        Serial.println("Data upload failed!");
-        return false;
-      }
-    }
+   }
+   return false;
 }
 
 bool message_GET()
