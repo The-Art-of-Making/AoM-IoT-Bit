@@ -27,11 +27,12 @@ int pin_conn_stat_LED   = 6;                            // The pin for outputing
 int pin_out_value       = 1;                            // The pin for writing the output signal
 int pin_in_value        = 0;                            // The pin for reading the input signal
 
-int pin_post_stat_LED   = A2;                           // The pin for outputing the POST status to an LED
 int pin_post_mode_swt   = A1;                           // The pin for reading the POST switch status
+int pin_get_mode_swt    = A2;                           // The pin for reading the GET switch status
 
+int pin_post_stat_LED   = A3;                           // The pin for outputing the POST status to an LED
 int pin_get_stat_LED    = A4;                           // The pin for outputing the GET status to an LED
-int pin_get_mode_swt    = A3;                           // The pin for reading the GET switch status
+
 
 String low_message      = "LOW";                        // The message sent that represents a low digital signal
 String high_message     = "HIGH";                       // The message sent that represents a high digital signal
@@ -100,6 +101,8 @@ void setup()
     digitalWrite(pin_post_stat_LED, LOW);
     digitalWrite(pin_conn_stat_LED, LOW);
     delay(1000);
+
+    attachInterrupt(digitalPinToInterrupt(pin_in_value), POST_ISR, CHANGE); 
 }
 
    
@@ -144,45 +147,50 @@ void loop()
       Serial.println("\nRequest Interval: " + String(requestInterval/1000) + "s");
       
       /* Determine the POST switch state and if the device should POST. */
-      if (digitalRead(pin_post_mode_swt) == HIGH)
+      /*if (digitalRead(pin_post_mode_swt) == HIGH)
       {
-        digitalWrite(pin_post_stat_LED, HIGH);
-        if(!message_POST()) 
-        {
-          digitalWrite(pin_post_stat_LED, LOW);
-          return;
-        }
-        else
-        {
-          digitalWrite(pin_post_stat_LED, LOW);
-        }
-        
-        delay(requestInterval);
+          digitalWrite(pin_post_stat_LED, HIGH);
+          if(!message_POST()) 
+          {
+            digitalWrite(pin_post_stat_LED, LOW);
+            return;
+          }
+          else
+          {
+            digitalWrite(pin_post_stat_LED, LOW);
+          }
+          
+          delay(requestInterval);
       }
       else if (digitalRead(pin_post_mode_swt) == LOW)
       {
-        digitalWrite(pin_post_stat_LED, LOW);
+          digitalWrite(pin_post_stat_LED, LOW);
       }
 
       /* Determine the GET switch state and if the device should GET. */    
       if (digitalRead(pin_get_mode_swt) == HIGH)
       {
-        digitalWrite(pin_get_stat_LED, HIGH);
-        if(!message_GET()) 
-        {
-          digitalWrite(pin_get_stat_LED, LOW);
-          return;
-        }
-        else
-        {
-          digitalWrite(pin_get_stat_LED, LOW);
-        }
-        
-        delay(requestInterval);
+          /* Disable interrupts so POST signal changes do not interfere with GET */
+          noInterrupts();
+          
+          digitalWrite(pin_get_stat_LED, HIGH);
+          if(!message_GET()) 
+          {
+            digitalWrite(pin_get_stat_LED, LOW);
+            return;
+          }
+          /*else
+          {
+            digitalWrite(pin_get_stat_LED, LOW);
+          }*/
+          delay(requestInterval);
+          
+          /* Re-enable interrupts once complete with GET sequence. */
+          interrupts();
       }
       else if (digitalRead(pin_get_mode_swt) == LOW)
       {
-        digitalWrite(pin_get_stat_LED, LOW);
+          digitalWrite(pin_get_stat_LED, LOW);
       }
       
     }
@@ -199,7 +207,7 @@ bool message_POST()
       /* Read state from pin */
       int pin_state = digitalRead(pin_in_value);
       
-      /* Set local light based on state O */
+      /* Set local light based on state */
       if (pin_state == 0) 
       {
         message_to_send = low_message;
@@ -270,5 +278,65 @@ void POST_ISR() {
   if(pin_post_mode_swt) {
     message_POST();
   }
+
+}
+
+void POST_HIGH_LED_ISR() {
+
+  /*Debounce the input signal */
+  static unsigned long last_interrupt_time = 0;
+  unsigned long interrupt_time = millis();
+  
+  // If interrupts come faster than 100ms, assume it's a bounce and ignore
+  if (interrupt_time - last_interrupt_time > 100) 
+  {
+    digitalWrite(pin_post_stat_LED, HIGH);
+  }
+  last_interrupt_time = interrupt_time;
+
+}
+
+void POST_LOW_LED_ISR() {
+
+  /*Debounce the input signal */
+  static unsigned long last_interrupt_time = 0;
+  unsigned long interrupt_time = millis();
+  
+  // If interrupts come faster than 100ms, assume it's a bounce and ignore
+  if (interrupt_time - last_interrupt_time > 100) 
+  {
+    digitalWrite(pin_post_stat_LED, LOW);
+  }
+  last_interrupt_time = interrupt_time;
+
+}
+
+void GET_HIGH_LED_ISR() {
+
+  /*Debounce the input signal */
+  static unsigned long last_interrupt_time = 0;
+  unsigned long interrupt_time = millis();
+  
+  // If interrupts come faster than 100ms, assume it's a bounce and ignore
+  if (interrupt_time - last_interrupt_time > 100) 
+  {
+    digitalWrite(pin_get_stat_LED, HIGH);
+  }
+  last_interrupt_time = interrupt_time;
+
+}
+
+void GET_LOW_LED_ISR() {
+
+  /*Debounce the input signal */
+  static unsigned long last_interrupt_time = 0;
+  unsigned long interrupt_time = millis();
+  
+  // If interrupts come faster than 100ms, assume it's a bounce and ignore
+  if (interrupt_time - last_interrupt_time > 100) 
+  {
+    digitalWrite(pin_get_stat_LED, LOW);
+  }
+  last_interrupt_time = interrupt_time;
 
 }
