@@ -156,55 +156,24 @@ void loop()
       /* Print out the request interval */
       Serial.println("\nRequest Interval: " + String(requestInterval/1000) + "s");
       
-      /* Determine the POST switch state and if the device should POST. */
-      /*if (digitalRead(pin_post_mode_swt) == HIGH)
-      {
-          digitalWrite(pin_post_stat_LED, HIGH);
-          if(!message_POST()) 
-          {
-            digitalWrite(pin_post_stat_LED, LOW);
-            return;
-          }
-          else
-          {
-            digitalWrite(pin_post_stat_LED, LOW);
-          }
-          
-          delay(requestInterval);
-      }
-      else if (digitalRead(pin_post_mode_swt) == LOW)
-      {
-          digitalWrite(pin_post_stat_LED, LOW);
-      }
-
+      /* Interrupts will handle the POST case */
       /* Determine the GET switch state and if the device should GET. */    
       if (digitalRead(pin_get_mode_swt) == HIGH)
       {
           /* Disable interrupts so POST signal changes do not interfere with GET */
           noInterrupts();
           
-          digitalWrite(pin_get_stat_LED, HIGH);
-          if(!message_GET()) 
+          while(!message_GET()) 
           {
-            digitalWrite(pin_get_stat_LED, LOW);
-            return;
+            blinkLED(pin_get_stat_LED);
+            delay(requestInterval);
           }
-          /*else
-          {
-            digitalWrite(pin_get_stat_LED, LOW);
-          }*/
-          delay(requestInterval);
-          
+                 
           /* Re-enable interrupts once complete with GET sequence. */
           interrupts();
       }
-      else if (digitalRead(pin_get_mode_swt) == LOW)
-      {
-          digitalWrite(pin_get_stat_LED, LOW);
-      }
       
     }
-  
 
 }
 
@@ -279,6 +248,13 @@ bool message_GET()
     return true;
 }
 
+void blinkLED(byte pinNum) {
+  digitalWrite(pinNum, LOW);
+  delay(500);
+  digitalWrite(pinNum, HIGH);
+  delay(500);
+}
+
 void POST_ISR() {
 
   /* Indicate that we have entered the POST interrupt service routine */
@@ -286,7 +262,7 @@ void POST_ISR() {
   
   /* Only post if POST switch is enabled*/
   if(pin_post_mode_swt) {
-    message_POST();
+    bool success = message_POST();
   }
 
 }
