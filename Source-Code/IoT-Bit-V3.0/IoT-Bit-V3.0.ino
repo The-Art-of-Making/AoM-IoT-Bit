@@ -265,6 +265,8 @@ void blinkLED(byte pinNum) {
 
 void POST_ISR() {
 
+  Serial.println("Entered POST ISR"); 
+
   /* Indicate that we have entered the POST interrupt service routine */
   Serial.println("POST ISR Entered."); 
   
@@ -276,6 +278,8 @@ void POST_ISR() {
 }
 
 void POST_HIGH_LED_ISR() {
+
+  Serial.println("Entered POST HIGH LED ISR"); 
 
   /*Debounce the input signal */
   static unsigned long last_interrupt_time = 0;
@@ -292,6 +296,8 @@ void POST_HIGH_LED_ISR() {
 
 void POST_LOW_LED_ISR() {
 
+  Serial.println("Entered POST LOW LED ISR"); 
+
   /*Debounce the input signal */
   static unsigned long last_interrupt_time = 0;
   unsigned long interrupt_time = millis();
@@ -307,6 +313,8 @@ void POST_LOW_LED_ISR() {
 
 void GET_HIGH_LED_ISR() {
 
+  Serial.println("Entered GET HIGH LED ISR"); 
+
   /*Debounce the input signal */
   static unsigned long last_interrupt_time = 0;
   unsigned long interrupt_time = millis();
@@ -321,6 +329,8 @@ void GET_HIGH_LED_ISR() {
 }
 
 void GET_LOW_LED_ISR() {
+
+  Serial.println("Entered GET LOW LED ISR"); 
 
   /*Debounce the input signal */
   static unsigned long last_interrupt_time = 0;
