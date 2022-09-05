@@ -108,11 +108,9 @@ void setup()
      * - GET_HIGH_LED_ISR = triggered whenever the get switch goes HIGH
      * - GET_LOW_LED_ISR = triggered whenever the get switch goes LOW
      */
-    attachInterrupt(digitalPinToInterrupt(pin_in_value), POST_ISR, CHANGE); 
-    attachInterrupt(digitalPinToInterrupt(pin_post_mode_swt), POST_HIGH_LED_ISR, RISING); 
-    attachInterrupt(digitalPinToInterrupt(pin_post_mode_swt), POST_LOW_LED_ISR, FALLING); 
-    attachInterrupt(digitalPinToInterrupt(pin_get_mode_swt), GET_HIGH_LED_ISR, RISING); 
-    attachInterrupt(digitalPinToInterrupt(pin_get_mode_swt), GET_LOW_LED_ISR, FALLING); 
+    attachInterrupt(digitalPinToInterrupt(pin_in_value), POST_ISR, CHANGE);  
+    attachInterrupt(digitalPinToInterrupt(pin_post_mode_swt), POST_LED_ISR, CHANGE); 
+    attachInterrupt(digitalPinToInterrupt(pin_get_mode_swt), GET_LED_ISR, CHANGE); 
 }
 
    
@@ -265,21 +263,30 @@ void blinkLED(byte pinNum) {
 
 void POST_ISR() {
 
-  Serial.println("Entered POST ISR"); 
-
+  bool success = false;
+  
   /* Indicate that we have entered the POST interrupt service routine */
   Serial.println("POST ISR Entered."); 
   
   /* Only post if POST switch is enabled*/
-  if(pin_post_mode_swt) {
-    bool success = message_POST();
+  if(digitalRead(pin_post_mode_swt) == HIGH) {
+
+    //record bool when POST message funcion called
+    success = message_POST();
+
+    //Report post status
+    if(success) {
+      Serial.println("Message posted successully.");
+    } else {
+      Serial.println("Message post failed.");
+    }
   }
 
 }
 
-void POST_HIGH_LED_ISR() {
+void POST_LED_ISR() {
 
-  Serial.println("Entered POST HIGH LED ISR"); 
+  Serial.println("Entered POST LED ISR"); 
 
   /*Debounce the input signal */
   static unsigned long last_interrupt_time = 0;
@@ -288,49 +295,20 @@ void POST_HIGH_LED_ISR() {
   // If interrupts come faster than 100ms, assume it's a bounce and ignore
   if (interrupt_time - last_interrupt_time > 100) 
   {
-    digitalWrite(pin_post_stat_LED, HIGH);
-  }
-  last_interrupt_time = interrupt_time;
-
-}
-
-void POST_LOW_LED_ISR() {
-
-  Serial.println("Entered POST LOW LED ISR"); 
-
-  /*Debounce the input signal */
-  static unsigned long last_interrupt_time = 0;
-  unsigned long interrupt_time = millis();
-  
-  // If interrupts come faster than 100ms, assume it's a bounce and ignore
-  if (interrupt_time - last_interrupt_time > 100) 
-  {
-    digitalWrite(pin_post_stat_LED, LOW);
+    if(digitalRead(pin_post_mode_swt) == HIGH) {
+      digitalWrite(pin_post_stat_LED, HIGH); 
+    }
+    else {
+      digitalWrite(pin_post_stat_LED, LOW); 
+    }
   }
   last_interrupt_time = interrupt_time;
 
 }
 
-void GET_HIGH_LED_ISR() {
+void GET_LED_ISR() {
 
-  Serial.println("Entered GET HIGH LED ISR"); 
-
-  /*Debounce the input signal */
-  static unsigned long last_interrupt_time = 0;
-  unsigned long interrupt_time = millis();
-  
-  // If interrupts come faster than 100ms, assume it's a bounce and ignore
-  if (interrupt_time - last_interrupt_time > 100) 
-  {
-    digitalWrite(pin_get_stat_LED, HIGH);
-  }
-  last_interrupt_time = interrupt_time;
-
-}
-
-void GET_LOW_LED_ISR() {
-
-  Serial.println("Entered GET LOW LED ISR"); 
+  Serial.println("Entered GET LED ISR"); 
 
   /*Debounce the input signal */
   static unsigned long last_interrupt_time = 0;
@@ -339,7 +317,12 @@ void GET_LOW_LED_ISR() {
   // If interrupts come faster than 100ms, assume it's a bounce and ignore
   if (interrupt_time - last_interrupt_time > 100) 
   {
-    digitalWrite(pin_get_stat_LED, LOW);
+    if(digitalRead(pin_get_mode_swt) == HIGH) {
+      digitalWrite(pin_get_stat_LED, HIGH); 
+    }
+    else {
+      digitalWrite(pin_get_stat_LED, LOW); 
+    }
   }
   last_interrupt_time = interrupt_time;
 
