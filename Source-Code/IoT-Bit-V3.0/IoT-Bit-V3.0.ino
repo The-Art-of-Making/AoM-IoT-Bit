@@ -187,6 +187,8 @@ void loop()
       
     }
 
+delay(500);
+
 }
 
 bool message_POST()
