@@ -109,8 +109,8 @@ void setup()
      * - GET_LED_ISR = triggered whenever the get switch goes changes state
      */
     attachInterrupt(digitalPinToInterrupt(pin_in_value), POST_ISR, CHANGE);  
-    attachInterrupt(digitalPinToInterrupt(pin_post_mode_swt), POST_LED_ISR, CHANGE); 
-    attachInterrupt(digitalPinToInterrupt(pin_get_mode_swt), GET_LED_ISR, CHANGE); 
+    //attachInterrupt(digitalPinToInterrupt(pin_post_mode_swt), POST_LED_ISR, CHANGE); 
+    //attachInterrupt(digitalPinToInterrupt(pin_get_mode_swt), GET_LED_ISR, CHANGE); 
 }
 
    
@@ -146,6 +146,13 @@ void loop()
       {
         /* Connection to WiFi established */
         digitalWrite(pin_conn_stat_LED, HIGH);
+
+        //Once a WiFi connection has been established, change status LEDs. 
+        if(digitalRead(pin_get_mode_swt) == HIGH) {
+            digitalWrite(pin_get_stat_LED, HIGH);
+        } else {
+            digitalWrite(pin_post_stat_LED, HIGH);
+        }
       }
     }
     else /* All other cases assume a connection to wifi. */
@@ -172,7 +179,7 @@ void loop()
       }
       
     }
-
+delay(500);
 }
 
 bool message_POST()
