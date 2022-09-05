@@ -22,6 +22,14 @@
  *  CS    - pin  4
  */
 
+ /** Process for LED indicating
+ *  WiFi disconnected: Neither POST nor GET LEDs blink, CONN stat LED off
+ *  WiFi connected: CONN stat LED changes to on 
+ *  POST ISR triggered, POST switch on, message post successful: POST LED will blink
+ *  GET switch on, message get successul: GET LED will blink
+ * 
+ */
+
 int pin_conn_stat_LED   = 6;                            // The pin for outputing the connection status to an LED
 
 int pin_out_value       = 1;                            // The pin for writing the output signal
@@ -31,10 +39,6 @@ int pin_post_mode_swt   = A1;                           // The pin for reading t
 int pin_get_mode_swt    = A2;                           // The pin for reading the GET switch status
 
 
-/** Process for LED indicating
- *  WiFi connected: Neither POST nor GET LEDs blink
- * 
- */
 int pin_post_stat_LED   = A3;                           // The pin for outputing the POST status to an LED
 int pin_get_stat_LED    = A4;                           // The pin for outputing the GET status to an LED
 
@@ -164,8 +168,6 @@ void loop()
       /* Determine the GET switch state and if the device should GET. */    
       if (digitalRead(pin_get_mode_swt) == HIGH)
       {
-          digitalWrite(pin_get_stat_LED, HIGH);
-          digitalWrite(pin_post_stat_LED, LOW);
           
           /* Disable interrupts so POST signal changes do not interfere with GET */
           noInterrupts();
@@ -173,17 +175,18 @@ void loop()
           while(!message_GET()) 
           {
             //Blinking means that there has been a problem getting the message 
-            blinkLED(pin_get_stat_LED);
             delay(requestInterval);
           }
                  
           /* Re-enable interrupts once complete with GET sequence. */
           interrupts();
+          
+          delay(requestInterval);
       }
       
       
     }
-delay(500);
+
 }
 
 bool message_POST()
@@ -243,6 +246,7 @@ bool message_GET()
     {
       /* Note the time that the connection was made */
       Serial.println("Data download succeeded!");
+      blinkLED(pin_get_stat_LED);
     }
     else
     {
@@ -274,15 +278,12 @@ bool message_GET()
  */
 void blinkLED(byte pinNum) {
   
-  int LEDDelayPeriod = 250;
+  int LEDDelayPeriod = 500;
   
-  for (int i = 0; i <=1; i++) {
     digitalWrite(pinNum, HIGH);
-    delay(LEDDelayPeriod);
+    delay(500);
     digitalWrite(pinNum, LOW);
-    delay(LEDDelayPeriod);
-  }
-  
+    delay(500);  
 }
 
 void POST_ISR() {
