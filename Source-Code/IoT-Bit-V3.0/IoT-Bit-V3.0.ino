@@ -30,6 +30,11 @@ int pin_in_value        = 0;                            // The pin for reading t
 int pin_post_mode_swt   = A1;                           // The pin for reading the POST switch status
 int pin_get_mode_swt    = A2;                           // The pin for reading the GET switch status
 
+
+/** Process for LED indicating
+ *  WiFi connected: Neither POST nor GET LEDs blink
+ * 
+ */
 int pin_post_stat_LED   = A3;                           // The pin for outputing the POST status to an LED
 int pin_get_stat_LED    = A4;                           // The pin for outputing the GET status to an LED
 
@@ -147,12 +152,6 @@ void loop()
         /* Connection to WiFi established */
         digitalWrite(pin_conn_stat_LED, HIGH);
 
-        //Once a WiFi connection has been established, change status LEDs. 
-        if(digitalRead(pin_get_mode_swt) == HIGH) {
-            digitalWrite(pin_get_stat_LED, HIGH);
-        } else {
-            digitalWrite(pin_post_stat_LED, HIGH);
-        }
       }
     }
     else /* All other cases assume a connection to wifi. */
@@ -165,11 +164,15 @@ void loop()
       /* Determine the GET switch state and if the device should GET. */    
       if (digitalRead(pin_get_mode_swt) == HIGH)
       {
+          digitalWrite(pin_get_stat_LED, HIGH);
+          digitalWrite(pin_post_stat_LED, LOW);
+          
           /* Disable interrupts so POST signal changes do not interfere with GET */
           noInterrupts();
           
           while(!message_GET()) 
           {
+            //Blinking means that there has been a problem getting the message 
             blinkLED(pin_get_stat_LED);
             delay(requestInterval);
           }
@@ -177,6 +180,7 @@ void loop()
           /* Re-enable interrupts once complete with GET sequence. */
           interrupts();
       }
+      
       
     }
 delay(500);
@@ -261,11 +265,24 @@ bool message_GET()
     return true;
 }
 
+/** 
+ *  Blinks LED twice, for a delay period specified by function variable
+ *  Precondition: LED is assumed to be LOW 
+ *  Postcondition: LED is LOW 
+ *  param: LED pin number 
+ *  return: none 
+ */
 void blinkLED(byte pinNum) {
-  digitalWrite(pinNum, LOW);
-  delay(500);
-  digitalWrite(pinNum, HIGH);
-  delay(500);
+  
+  int LEDDelayPeriod = 250;
+  
+  for (int i = 0; i <=1; i++) {
+    digitalWrite(pinNum, HIGH);
+    delay(LEDDelayPeriod);
+    digitalWrite(pinNum, LOW);
+    delay(LEDDelayPeriod);
+  }
+  
 }
 
 void POST_ISR() {
@@ -281,56 +298,13 @@ void POST_ISR() {
     //record bool when POST message funcion called
     success = message_POST();
 
-    //Report post status
+    //Report post status, blink LED if successful
     if(success) {
       Serial.println("Message posted successully.");
+      blinkLED(pin_post_stat_LED);
     } else {
       Serial.println("Message post failed.");
     }
   }
-
-}
-
-void POST_LED_ISR() {
-
-  Serial.println("Entered POST LED ISR"); 
-
-  /*Debounce the input signal */
-  static unsigned long last_interrupt_time = 0;
-  unsigned long interrupt_time = millis();
-  
-  // If interrupts come faster than ISR debounce delay interval, assume it's a bounce and ignore
-  if (interrupt_time - last_interrupt_time > ISR_debounce_delay) 
-  {
-    if(digitalRead(pin_post_mode_swt) == HIGH) {
-      digitalWrite(pin_post_stat_LED, HIGH); 
-    }
-    else {
-      digitalWrite(pin_post_stat_LED, LOW); 
-    }
-  }
-  last_interrupt_time = interrupt_time;
-
-}
-
-void GET_LED_ISR() {
-
-  Serial.println("Entered GET LED ISR"); 
-
-  /*Debounce the input signal */
-  static unsigned long last_interrupt_time = 0;
-  unsigned long interrupt_time = millis();
-  
-  // If interrupts come faster than ISR debounce delay interval, assume it's a bounce and ignore
-  if (interrupt_time - last_interrupt_time > ISR_debounce_delay) 
-  {
-    if(digitalRead(pin_get_mode_swt) == HIGH) {
-      digitalWrite(pin_get_stat_LED, HIGH); 
-    }
-    else {
-      digitalWrite(pin_get_stat_LED, LOW); 
-    }
-  }
-  last_interrupt_time = interrupt_time;
 
 }
