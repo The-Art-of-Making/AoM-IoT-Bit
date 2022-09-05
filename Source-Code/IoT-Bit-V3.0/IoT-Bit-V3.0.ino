@@ -41,6 +41,8 @@ String message_recieved = "UNKNOWN";                    // The message recieved
 
 unsigned long lastConnectionTime = 0;                   // Last time you connected to the server, in milliseconds
 
+int ISR_debounce_delay = 200;                           // Delay time for debouncing switches in ISRs, in milliseconds 
+
 void setup()
 {
     /* Begins Serial monitor for debugging purposes. */
@@ -102,11 +104,9 @@ void setup()
 
     /*
      * Interrupts
-     * - POST_ISR = triggered whenever the input signal value changes 
-     * - POST_HIGH_LED_ISR = triggered whenever the post switch goes HIGH 
-     * - POST_LOW_LED_ISR = triggered whenever the post switch goes LOW
-     * - GET_HIGH_LED_ISR = triggered whenever the get switch goes HIGH
-     * - GET_LOW_LED_ISR = triggered whenever the get switch goes LOW
+     * - POST_ISR = triggered whenever the input signal value changes state 
+     * - POST_LED_ISR = triggered whenever the post switch changes state
+     * - GET_LED_ISR = triggered whenever the get switch goes changes state
      */
     attachInterrupt(digitalPinToInterrupt(pin_in_value), POST_ISR, CHANGE);  
     attachInterrupt(digitalPinToInterrupt(pin_post_mode_swt), POST_LED_ISR, CHANGE); 
@@ -292,8 +292,8 @@ void POST_LED_ISR() {
   static unsigned long last_interrupt_time = 0;
   unsigned long interrupt_time = millis();
   
-  // If interrupts come faster than 100ms, assume it's a bounce and ignore
-  if (interrupt_time - last_interrupt_time > 100) 
+  // If interrupts come faster than ISR debounce delay interval, assume it's a bounce and ignore
+  if (interrupt_time - last_interrupt_time > ISR_debounce_delay) 
   {
     if(digitalRead(pin_post_mode_swt) == HIGH) {
       digitalWrite(pin_post_stat_LED, HIGH); 
@@ -314,8 +314,8 @@ void GET_LED_ISR() {
   static unsigned long last_interrupt_time = 0;
   unsigned long interrupt_time = millis();
   
-  // If interrupts come faster than 100ms, assume it's a bounce and ignore
-  if (interrupt_time - last_interrupt_time > 100) 
+  // If interrupts come faster than ISR debounce delay interval, assume it's a bounce and ignore
+  if (interrupt_time - last_interrupt_time > ISR_debounce_delay) 
   {
     if(digitalRead(pin_get_mode_swt) == HIGH) {
       digitalWrite(pin_get_stat_LED, HIGH); 

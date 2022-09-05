@@ -174,7 +174,7 @@ bool connectToWIFI()
       return false;
     }
 
-    /* Attempt to connect to the Wifi network 3 times */
+    /* Attempt to connect to the Wifi network 1 time */
     int attempt_count = 0;
     while ((wifi_status != WL_CONNECTED) && (attempt_count < 3))
     {
@@ -377,6 +377,7 @@ bool http_Request_POST(String message)
       
       /* Make a HTTP request */
       client.println("POST /api/v2/" + adafruit_io_username + "/groups/" + adafruit_io_group_key + "/data HTTP/1.1"); 
+      Serial.println("POST /api/v2/" + adafruit_io_username + "/groups/" + adafruit_io_group_key + "/data HTTP/1.1"); 
   
       /* Calls Adafruit IO's API to upload the string decided by the conditional */
       client.println("Host: " + server);
