@@ -1,0 +1,37 @@
+@startuml
+
+(*) --> "Enable Serial Monitor\nSet Pin Modes"
+--> "Attempt to read from SD Card"
+
+if "Credentials read successfully?" then
+   --> [Yes] "Read mode switches"
+   if "Both switches LOW?" then 
+      -down-> [Yes] "No desire to POST or GET"
+      --> "Disconnect from WiFi"
+      --> "Read mode switches"
+   else 
+      --> [No] "Desire to get/post data\nRead switch modes" 
+      if "Post Switch High?" then 
+         --> [Yes] "Assume POST"
+         --> "Set POST LED to HIGH"
+         --> "Post Signal"
+         --> "Read mode switches"
+      else 
+         --> [No] "Assume GET"
+         --> "Set GET LED to HIGH"
+         --> "Get Signal"
+         --> "Read mode switches"
+      endif
+   endif
+else 
+   -right-> [No] "Buffer Timer"
+   -up-> "Attempt to read from SD Card"
+endif 
+
+
+
+
+
+
+
+@enduml

@@ -1,8 +1,8 @@
 /*
  * Authors: Mark Hofmeister, Issam Abushaban
- * Created: 2/11/2022
- * Last Updated: 2/11/2022
- * Version: V2.0
+ * Created: 7/30/2022
+ * Last Updated: 7/30/2022
+ * Version: V3.0
  * 
  * Description:
  *  This code will use Arduino's MKR WiFi 1010 microcontroller platform to:
@@ -22,16 +22,26 @@
  *  CS    - pin  4
  */
 
+ /** Process for LED indicating
+ *  WiFi disconnected: Neither POST nor GET LEDs blink, CONN stat LED off
+ *  WiFi connected: CONN stat LED changes to on 
+ *  POST ISR triggered, POST switch on, message post successful: POST LED will blink
+ *  GET switch on, message get successul: GET LED will blink
+ * 
+ */
+
 int pin_conn_stat_LED   = 6;                            // The pin for outputing the connection status to an LED
 
-int pin_out_value       = 1;                           // The pin for writing the message_recieved digital value
-int pin_in_value        = 0;                           // The pin for reading the message_to_send digital value
+int pin_out_value       = 1;                            // The pin for writing the output signal
+int pin_in_value        = 0;                            // The pin for reading the input signal
 
-int pin_post_stat_LED   = A2;                           // The pin for outputing the POST status to an LED
 int pin_post_mode_swt   = A1;                           // The pin for reading the POST switch status
+int pin_get_mode_swt    = A2;                           // The pin for reading the GET switch status
 
-int pin_get_stat_LED    = A4;                            // The pin for outputing the GET status to an LED
-int pin_get_mode_swt    = A3;                            // The pin for reading the GET switch status
+
+int pin_post_stat_LED   = A3;                           // The pin for outputing the POST status to an LED
+int pin_get_stat_LED    = A4;                           // The pin for outputing the GET status to an LED
+
 
 String low_message      = "LOW";                        // The message sent that represents a low digital signal
 String high_message     = "HIGH";                       // The message sent that represents a high digital signal
@@ -40,7 +50,7 @@ String message_recieved = "UNKNOWN";                    // The message recieved
 
 unsigned long lastConnectionTime = 0;                   // Last time you connected to the server, in milliseconds
 
-
+int ISR_debounce_delay = 200;                           // Delay time for debouncing switches in ISRs, in milliseconds 
 
 void setup()
 {
@@ -100,12 +110,22 @@ void setup()
     digitalWrite(pin_post_stat_LED, LOW);
     digitalWrite(pin_conn_stat_LED, LOW);
     delay(1000);
+
+    /*
+     * Interrupts
+     * - POST_ISR = triggered whenever the input signal value changes state 
+     * - POST_LED_ISR = triggered whenever the post switch changes state
+     * - GET_LED_ISR = triggered whenever the get switch goes changes state
+     */
+    attachInterrupt(digitalPinToInterrupt(pin_in_value), POST_ISR, CHANGE);  
+    //attachInterrupt(digitalPinToInterrupt(pin_post_mode_swt), POST_LED_ISR, CHANGE); 
+    //attachInterrupt(digitalPinToInterrupt(pin_get_mode_swt), GET_LED_ISR, CHANGE); 
 }
 
    
 void loop()
 {
-
+  
     Serial.println(digitalRead(pin_post_mode_swt));
     
     Serial.println(digitalRead(pin_get_mode_swt));
@@ -135,6 +155,7 @@ void loop()
       {
         /* Connection to WiFi established */
         digitalWrite(pin_conn_stat_LED, HIGH);
+
       }
     }
     else /* All other cases assume a connection to wifi. */
@@ -143,50 +164,30 @@ void loop()
       /* Print out the request interval */
       Serial.println("\nRequest Interval: " + String(requestInterval/1000) + "s");
       
-      /* Determine the POST switch state and if the device should POST. */
-      if (digitalRead(pin_post_mode_swt) == HIGH)
-      {
-        digitalWrite(pin_post_stat_LED, HIGH);
-        if(!message_POST()) 
-        {
-          digitalWrite(pin_post_stat_LED, LOW);
-          return;
-        }
-        else
-        {
-          digitalWrite(pin_post_stat_LED, LOW);
-        }
-        
-        delay(requestInterval);
-      }
-      else if (digitalRead(pin_post_mode_swt) == LOW)
-      {
-        digitalWrite(pin_post_stat_LED, LOW);
-      }
-
+      /* Interrupts will handle the POST case */
       /* Determine the GET switch state and if the device should GET. */    
       if (digitalRead(pin_get_mode_swt) == HIGH)
       {
-        digitalWrite(pin_get_stat_LED, HIGH);
-        if(!message_GET()) 
-        {
-          digitalWrite(pin_get_stat_LED, LOW);
-          return;
-        }
-        else
-        {
-          digitalWrite(pin_get_stat_LED, LOW);
-        }
-        
-        delay(requestInterval);
-      }
-      else if (digitalRead(pin_get_mode_swt) == LOW)
-      {
-        digitalWrite(pin_get_stat_LED, LOW);
+          
+          /* Disable interrupts so POST signal changes do not interfere with GET */
+          noInterrupts();
+          
+          while(!message_GET()) 
+          {
+            //Blinking means that there has been a problem getting the message 
+            delay(requestInterval);
+          }
+                 
+          /* Re-enable interrupts once complete with GET sequence. */
+          interrupts();
+          
+          delay(requestInterval);
       }
       
+      
     }
-  
+
+delay(500);
 
 }
 
@@ -199,7 +200,7 @@ bool message_POST()
       /* Read state from pin */
       int pin_state = digitalRead(pin_in_value);
       
-      /* Set local light based on state O */
+      /* Set local light based on state */
       if (pin_state == 0) 
       {
         message_to_send = low_message;
@@ -213,21 +214,29 @@ bool message_POST()
         message_to_send = "UNKNOWN";
       }
 
-      /* Request a connection to Adafruit IO */
-      if (http_Request_POST(message_to_send))
-      {
-        /* Note the time that the connection was made */
-        lastConnectionTime = millis();
-        Serial.println("Data upload suceeded!");
-        return true;
+      bool postRequestSuccess;
+      
+      while(postRequestSuccess == false) {
+
+        postRequestSuccess = http_Request_POST(message_to_send); 
+       
+        /* Request a connection to Adafruit IO */
+        if (postRequestSuccess) {
+          
+          /* Note the time that the connection was made */
+          lastConnectionTime = millis();
+          Serial.println("Data upload suceeded!");
+          return true;
+        }
+        else
+        {
+          /* if you couldn't make a connection */
+          Serial.println("Data upload failed!");
+          blinkLED(pin_post_stat_LED);
+        }
       }
-      else
-      {
-        /* if you couldn't make a connection */
-        Serial.println("Data upload failed!");
-        return false;
-      }
-    }
+   }
+   return false;
 }
 
 bool message_GET()
@@ -239,6 +248,7 @@ bool message_GET()
     {
       /* Note the time that the connection was made */
       Serial.println("Data download succeeded!");
+      blinkLED(pin_get_stat_LED);
     }
     else
     {
@@ -259,4 +269,45 @@ bool message_GET()
     }
     
     return true;
+}
+
+/** 
+ *  Blinks LED twice, for a delay period specified by function variable
+ *  Precondition: LED is assumed to be LOW 
+ *  Postcondition: LED is LOW 
+ *  param: LED pin number 
+ *  return: none 
+ */
+void blinkLED(byte pinNum) {
+  
+  int LEDDelayPeriod = 500;
+  
+    digitalWrite(pinNum, HIGH);
+    delay(500);
+    digitalWrite(pinNum, LOW);
+    delay(500);  
+}
+
+void POST_ISR() {
+
+  bool success = false;
+  
+  /* Indicate that we have entered the POST interrupt service routine */
+  Serial.println("POST ISR Entered."); 
+  
+  /* Only post if POST switch is enabled*/
+  if(digitalRead(pin_post_mode_swt) == HIGH) {
+
+    //record bool when POST message funcion called
+    success = message_POST();
+
+    //Report post status, blink LED if successful
+    if(success) {
+      Serial.println("Message posted successully.");
+      blinkLED(pin_post_stat_LED);
+    } else {
+      Serial.println("Message post failed.");
+    }
+  }
+
 }
