@@ -32,8 +32,8 @@
 
 int pin_conn_stat_LED   = 6;                            // The pin for outputing the connection status to an LED
 
-int pin_out_value       = 0;                            // The pin for writing the output signal
-int pin_in_value        = 1;                            // The pin for reading the input signal
+int pin_out_value       = 1;                            // The pin for writing the output signal
+int pin_in_value        = 0;                            // The pin for reading the input signal
 
 int pin_post_mode_swt   = A1;                           // The pin for reading the POST switch status
 int pin_get_mode_swt    = A2;                           // The pin for reading the GET switch status
