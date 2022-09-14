@@ -293,6 +293,10 @@ void POST_ISR() {
   
   /* Indicate that we have entered the POST interrupt service routine */
   Serial.println("POST ISR Entered."); 
+
+  
+      digitalWrite(pin_post_stat_LED, HIGH);
+      
   
   /* Only post if POST switch is enabled*/
   if(digitalRead(pin_post_mode_swt) == HIGH) {
