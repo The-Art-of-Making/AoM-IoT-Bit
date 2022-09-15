@@ -85,6 +85,7 @@ void loop() {
   //post mode switch should be low
    while(digitalRead(pin_get_mode_swt) != LOW) {
     Serial.println("Flip that get mode switch to low, fool.");
+    delay(500);
   }
   Serial.println("Reading POST Switch state...");
   Serial.print("Get switch mode:   ");
