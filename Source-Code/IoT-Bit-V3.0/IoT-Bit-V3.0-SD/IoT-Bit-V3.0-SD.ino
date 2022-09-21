@@ -125,10 +125,10 @@ void setup()
    
 void loop()
 {
-  
-    Serial.println(digitalRead(pin_post_mode_swt));
-    
+    Serial.print("Get Mode Switch: " );
     Serial.println(digitalRead(pin_get_mode_swt));
+    Serial.print("Post Mode Switch: " );
+    Serial.println(digitalRead(pin_post_mode_swt));
     
     /* Determine if no desire to POST or GET. */
     if ((digitalRead(pin_post_mode_swt) == LOW) && (digitalRead(pin_get_mode_swt) == LOW))
