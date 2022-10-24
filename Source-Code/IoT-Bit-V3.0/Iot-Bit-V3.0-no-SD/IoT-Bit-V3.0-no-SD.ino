@@ -39,7 +39,7 @@ int pin_post_mode_swt   = A1;                           // The pin for reading t
 int pin_get_mode_swt    = A2;                           // The pin for reading the GET switch status
 
 
-int pin_post_stat_LED   = A4;                           // The pin for outputing the POST status to an LED
+int pin_post_stat_LED   = A3;                           // The pin for outputing the POST status to an LED
 int pin_get_stat_LED    = A6;                           // The pin for outputing the GET status to an LED
 
 
