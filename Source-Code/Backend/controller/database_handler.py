@@ -6,7 +6,9 @@ from mongoengine.fields import DateTimeField, IntField, StringField
 
 from logger import logger
 
-connect(host="")
+connect(
+    host="mongodb+srv://web:Vu1UnYgGLco60HV9@cluster0.n8kyi.mongodb.net/mqtt-dev?retryWrites=true&w=majority"
+)
 
 
 class users(Document):
@@ -41,7 +43,7 @@ class mqtt_servers(Document):
 
     user = StringField(required=True, unique=True, trim=True)
     uuid = StringField(required=True, unique=True, trim=True)
-    addr = StringField(required=True, trim=True)
+    addr = IntField(required=True)
     port = IntField(required=True)
     client_count = IntField(required=True)
 
@@ -49,6 +51,9 @@ class mqtt_servers(Document):
 def create_server(fields: dict = {}) -> bool:
     """Add document for new MQTT server to database"""
     # TODO verify and authenticate user
+    # add placeholders for addr, port, client_count
+    fields["addr"] = 0
+    fields["port"] = 0
     fields["client_count"] = 0
     server = mqtt_servers(**fields)
     try:
@@ -85,7 +90,7 @@ def update_server(uuid: str = None, fields: dict = None) -> bool:
 
 
 def delete_server(uuid: str = None) -> bool:
-    """Update document for MQTT server in database"""
+    """Delete document for MQTT server in database"""
     try:
         if uuid is not None:
             if mqtt_servers.objects(uuid=uuid).delete() != 1:
@@ -120,7 +125,7 @@ def get_client_server(uuid: str, key: str) -> Tuple[str, str]:
     return user, server_uuid
 
 
-def get_server_config(uuid: str) -> Tuple[str, int]:
+def get_server_config(uuid: str) -> Tuple[int, int]:
     """Get MQTT server address and port"""
     server = mqtt_servers.objects(uuid=uuid).first()
     if server is not None:

@@ -20,6 +20,9 @@ class ThreadHandler:
     def stop(self) -> None:
         self.running = False
 
+    def is_running(self) -> bool:
+        return self.running
+
     def main(self) -> None:
         self.target()
         while self.running:
