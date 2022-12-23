@@ -1,0 +1,8 @@
+version: "3.9"
+services:
+  nginx-mqtt:
+    build:
+      dockerfile: Dockerfile
+      context: ./
+    ports:
+      - "1883:1883"
