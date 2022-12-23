@@ -8,6 +8,10 @@ const ServerSchema = new Schema({
         unique: true,
         trim: true
     },
+    name: {
+        type: String,
+        required: true
+    },
     uuid: {
         type: String,
         required: true,
@@ -15,7 +19,7 @@ const ServerSchema = new Schema({
         trim: true
     },
     addr: {
-        type: Number,
+        type: String,
         required: true
     },
     port: {

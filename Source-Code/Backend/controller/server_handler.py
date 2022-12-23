@@ -1,8 +1,14 @@
 import paho.mqtt.client as mqtt
-from time import time
-from uuid import uuid4
+from time import sleep, time
 
 from database_handler import create_server, delete_server
+from kubernetes_handler import (
+    get_pods,
+    create_namespace,
+    delete_namespace,
+    create_deployment,
+    delete_deployment,
+)
 from logger import logger
 from thread_handler import ThreadHandler
 
@@ -20,8 +26,12 @@ class ServerHandler(ThreadHandler):
         inactivity_threshold: int = INACTIVITY_THRESHOLD,
     ):
         super().__init__(target=self.handler)
-        self.uuid = str(uuid4())
+        self.uuid = ""
         self.user = user
+        self.deployment_name = ""
+        self.server_info = {
+            "user": self.user
+        }  # TODO refactor class so uuid and user are accessed from server_info
         self.client = mqtt.Client()
         self.client.on_connect = self.on_connect
         self.client.on_message = self.on_message
@@ -67,31 +77,50 @@ class ServerHandler(ThreadHandler):
     def start_server(self) -> bool:
         """Start new MQTT server"""
         try:
-            server_info = {"user": self.user, "uuid": self.uuid}
-            if create_server(server_info):
-                # load config
-                # pass new uuid
-                # send signal to kubernetes to start container
-                # update document info (addr, port) if container started
-                # delete server document if failed to start container
+            create_namespace(self.user)
+            self.deployment_name = create_deployment(
+                "mqtt-deployment.yaml", namespace=self.user
+            )  # create Kubernetes deployment
+            sleep(0.1)  # Need time to create container?
+            # Get information from pods in deployment
+            pods = get_pods(namespace=self.user)
+            pod_count = 0
+            for pod in pods.items:
+                pod_count += 1
+                if pod_count > 1:  # each deployment should only have a single pod
+                    self.shutdown(handle_db=False)
+                    assert False
+                self.server_info["name"] = pod.metadata.name
+                self.server_info["uuid"] = pod.metadata.uid
+                self.server_info[
+                    "addr"
+                ] = ""  # pod.status.pod_ip, ip address is not immediately assigned
+                self.server_info["port"] = 1883  # TODO dynamically set port?
+                self.uuid = pod.metadata.uid
+            if create_server(self.server_info):  # Create database entry
                 logger.info(f"Server {self.uuid} started")
-                self.client.connect("localhost", 1883, 60)
+                # self.client.connect(
+                #     self.server_info["addr"], self.server_info["port"], 60
+                # )  # connect MQTT client
                 logger.info(f"Running server {self.uuid} handler")
                 self.start()
+            else:
+                self.shutdown(handle_db=False)
         except:
             logger.warning("Failed to start sever")
             return False
         return True
 
-    def shutdown(self):
+    def shutdown(self, handle_db: bool = True) -> None:
         """Stutdown MQTT server"""
-        # save config and states to db
-        # send signal to kubernetes to terminate container
         logger.info("Stopping server...")
         self.running = False
-        delete_server(self.uuid)
+        delete_deployment(self.deployment_name, namespace=self.user)
+        delete_namespace(self.user)
+        if handle_db:
+            delete_server(self.uuid)
 
-    def update_client_count(self, count) -> None:
+    def update_client_count(self, count: int) -> None:
         """Update client count if it changes and update last count update time"""
         if count != self.topics.get(CLIENTS_CONNECTED_TOPIC):
             self.topics[CLIENTS_CONNECTED_TOPIC] = count
@@ -111,5 +140,6 @@ class ServerHandler(ThreadHandler):
 
     def handler(self) -> None:
         """Main control loop"""
+        # TODO need new service to update server info as it is populated
         self.client.loop()
         self.check_inactive()

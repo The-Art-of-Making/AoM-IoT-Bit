@@ -1,3 +1,4 @@
+from os import environ
 from typing import Tuple
 
 from mongoengine import connect, Document
@@ -6,9 +7,12 @@ from mongoengine.fields import DateTimeField, IntField, StringField
 
 from logger import logger
 
-connect(
-    host="mongodb+srv://web:Vu1UnYgGLco60HV9@cluster0.n8kyi.mongodb.net/mqtt-dev?retryWrites=true&w=majority"
+host = environ.get(
+    "MONGOURI",
+    "",
 )
+
+connect(host=host)
 
 
 class users(Document):
@@ -34,7 +38,7 @@ class mqtt_clients(Document):
 
     user = StringField(required=True, trim=True)
     uuid = StringField(required=True, unique=True, trim=True)
-    key = StringField(required=True, unique=True, trim=True)
+    key = StringField(required=True, trim=True)
     ip_addr = StringField(trim=True)
 
 
@@ -42,8 +46,9 @@ class mqtt_servers(Document):
     """Define server schema"""
 
     user = StringField(required=True, unique=True, trim=True)
+    name = StringField(required=True)
     uuid = StringField(required=True, unique=True, trim=True)
-    addr = IntField(required=True)
+    addr = StringField(required=True)
     port = IntField(required=True)
     client_count = IntField(required=True)
 
@@ -51,9 +56,6 @@ class mqtt_servers(Document):
 def create_server(fields: dict = {}) -> bool:
     """Add document for new MQTT server to database"""
     # TODO verify and authenticate user
-    # add placeholders for addr, port, client_count
-    fields["addr"] = 0
-    fields["port"] = 0
     fields["client_count"] = 0
     server = mqtt_servers(**fields)
     try:
