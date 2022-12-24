@@ -1,7 +1,12 @@
-import paho.mqtt.client as mqtt
-from time import sleep, time
+"""Server Handler"""
 
-from database_handler import create_server, delete_server
+import paho.mqtt.client as mqtt
+from socket import create_connection
+from ssl import SSLContext, PROTOCOL_TLS_CLIENT
+from struct import pack, unpack
+from time import time
+
+from database_handler import create_server, update_server, delete_server
 from kubernetes_handler import (
     get_pods,
     create_namespace,
@@ -12,6 +17,19 @@ from kubernetes_handler import (
 from logger import logger
 from thread_handler import ThreadHandler
 
+"""Password server message format"""
+# Client format: 0x00 | 0X0A/0x0D | length | username | password
+# Server format: 0xFF | 0x0A/0x0D | 0x00/0x01
+# 0x00 : Client Header
+# 0xFF : Server Header
+# 0x0A/0x0D : Add/Delete password
+# length : combined length of username and password, does not include length byte itself, single byte cannot store values > 255
+# 0x00/0x01 : Success/Fail
+
+
+PASSWORD_SERVER_CERT_HOSTNAME = (
+    "delta12"  # hostname used to generate SSL certificate for password server TLS
+)
 INACTIVITY_THRESHOLD = 60  # shutdown MQTT server if more than a minute elapsed without multiple clients connected
 CLIENTS_CONNECTED_TOPIC = "$SYS/broker/clients/connected"  # number of connected clients
 
@@ -26,12 +44,8 @@ class ServerHandler(ThreadHandler):
         inactivity_threshold: int = INACTIVITY_THRESHOLD,
     ):
         super().__init__(target=self.handler)
-        self.uuid = ""
-        self.user = user
+        self.server_info = {"user": user}
         self.deployment_name = ""
-        self.server_info = {
-            "user": self.user
-        }  # TODO refactor class so uuid and user are accessed from server_info
         self.client = mqtt.Client()
         self.client.on_connect = self.on_connect
         self.client.on_message = self.on_message
@@ -40,10 +54,14 @@ class ServerHandler(ThreadHandler):
         self.last_client_count_update = time()
         self.start_server()
 
-    def __del__(self):
-        # avoid potential recursive loop?
-        # self.shutdown()
-        print("ServerHandler __del__")
+    def get_field(self, field: str):  # TODO return type annotation?
+        """Get server field info"""
+        self.server_info.get(field)
+
+    def update_field(self, field: str, value) -> None:
+        """Update server field value, can only be called after entry created in database"""
+        self.server_info[field] = value
+        update_server(self.get_field("uuid"), self.server_info)
 
     def on_connect(self, client: mqtt.Client, userdata, flags, rc) -> None:
         """Callback for when client receives a CONNACK response from server"""
@@ -77,32 +95,36 @@ class ServerHandler(ThreadHandler):
     def start_server(self) -> bool:
         """Start new MQTT server"""
         try:
-            create_namespace(self.user)
+            create_namespace(self.get_field("user"))
             self.deployment_name = create_deployment(
-                "mqtt-deployment.yaml", namespace=self.user
+                "mqtt-deployment.yaml", namespace=self.get_field("user")
             )  # create Kubernetes deployment
-            sleep(0.1)  # Need time to create container?
             # Get information from pods in deployment
-            pods = get_pods(namespace=self.user)
+            pods = get_pods(namespace=self.get_field("user"))
             pod_count = 0
             for pod in pods.items:
                 pod_count += 1
                 if pod_count > 1:  # each deployment should only have a single pod
                     self.shutdown(handle_db=False)
                     assert False
+                # Wait for pod to be created
+                while None in (
+                    pod.metadata.name,
+                    pod.metadata.uid,
+                    pod.metadata.uid,
+                    pod.status.pod_ip,
+                ):
+                    continue
                 self.server_info["name"] = pod.metadata.name
                 self.server_info["uuid"] = pod.metadata.uid
-                self.server_info[
-                    "addr"
-                ] = ""  # pod.status.pod_ip, ip address is not immediately assigned
+                self.server_info["addr"] = pod.status.pod_ip
                 self.server_info["port"] = 1883  # TODO dynamically set port?
-                self.uuid = pod.metadata.uid
             if create_server(self.server_info):  # Create database entry
-                logger.info(f"Server {self.uuid} started")
-                # self.client.connect(
+                logger.info(f"Starting server {self.uuid} and handler")
+                # TODO connect to mqtt client
+                #  self.client.connect(
                 #     self.server_info["addr"], self.server_info["port"], 60
                 # )  # connect MQTT client
-                logger.info(f"Running server {self.uuid} handler")
                 self.start()
             else:
                 self.shutdown(handle_db=False)
@@ -115,10 +137,68 @@ class ServerHandler(ThreadHandler):
         """Stutdown MQTT server"""
         logger.info("Stopping server...")
         self.running = False
-        delete_deployment(self.deployment_name, namespace=self.user)
-        delete_namespace(self.user)
+        delete_deployment(self.deployment_name, namespace=self.get_field("user"))
+        delete_namespace(self.get_field("user"))
         if handle_db:
             delete_server(self.uuid)
+
+    def add_password(
+        self,
+        username: str,
+        password: str,
+        hostname: str = PASSWORD_SERVER_CERT_HOSTNAME,
+        port: int = 9443,
+        cert: str = "cert.pem",
+    ) -> bool:
+        """Add password to MQTT server password file"""
+        context = SSLContext(PROTOCOL_TLS_CLIENT)
+        context.load_verify_locations(cert)
+
+        with create_connection((self.get_field("addr"), port)) as client:
+            with context.wrap_socket(client, server_hostname=hostname) as tls:
+                username_length = len(username)
+                password_length = len(password)
+                length = username_length + password_length
+                if length > 255:  # single byte used to encode length
+                    return False
+                send_data = pack(
+                    f"=3B{username_length}s{password_length}s",
+                    0x00,
+                    0x0A,
+                    length,
+                    username.encode(),
+                    password.encode(),
+                )
+                tls.sendall(send_data)
+                recv_data = tls.recv(1024)
+                server_header, operation, success = unpack("=3B", recv_data)
+                if server_header != 0xFF or operation != 0x0A or success != 0x00:
+                    return False
+        return True
+
+    def delete_password(
+        self,
+        username: str,
+        hostname: str = PASSWORD_SERVER_CERT_HOSTNAME,
+        port: int = 9443,
+        cert: str = "cert.pem",
+    ) -> bool:
+        """Remove password from MQTT server password file"""
+        context = SSLContext(PROTOCOL_TLS_CLIENT)
+        context.load_verify_locations(cert)
+
+        with create_connection((self.get_field("addr"), port)) as client:
+            with context.wrap_socket(client, server_hostname=hostname) as tls:
+                length = len(username)
+                if length > 255:  # single byte used to encode length
+                    return False
+                send_data = pack(f"=3B{length}s", 0x00, 0x0D, length, username.encode())
+                tls.sendall(send_data)
+                recv_data = tls.recv(1024)
+                server_header, operation, success = unpack("=3B", recv_data)
+                if server_header != 0xFF or operation != 0x0D or success != 0x00:
+                    return False
+        return True
 
     def update_client_count(self, count: int) -> None:
         """Update client count if it changes and update last count update time"""
@@ -140,6 +220,5 @@ class ServerHandler(ThreadHandler):
 
     def handler(self) -> None:
         """Main control loop"""
-        # TODO need new service to update server info as it is populated
         self.client.loop()
         self.check_inactive()

@@ -2,3 +2,4 @@ asyncio
 uuid
 mongoengine
 kubernetes
+flask

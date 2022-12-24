@@ -2,10 +2,12 @@
 Learn more at https://github.com/kubernetes-client/python"""
 
 from kubernetes import client, config
+from os import environ
 from typing import Tuple
 import yaml
 
-config.load_kube_config("kubeconfig.yaml")  # Load kubeconfig file for client use
+kube_config_file = environ.get("KUBECONFIG", "kubeconfig.yaml")
+config.load_kube_config(kube_config_file)  # Load kubeconfig file for client use
 # Instantiate necessary Kubernetes APIs
 k8s_core = client.CoreV1Api()
 k8s_apps = client.AppsV1Api()

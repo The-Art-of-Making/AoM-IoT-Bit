@@ -127,7 +127,7 @@ def get_client_server(uuid: str, key: str) -> Tuple[str, str]:
     return user, server_uuid
 
 
-def get_server_config(uuid: str) -> Tuple[int, int]:
+def get_server_connection(uuid: str) -> Tuple[int, int]:
     """Get MQTT server address and port"""
     server = mqtt_servers.objects(uuid=uuid).first()
     if server is not None:

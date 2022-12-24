@@ -16,8 +16,6 @@ port = int(environ.get("PORT", 9443))
 cert_file = environ.get("CERT", "cert.pem")
 key_file = environ.get("KEY", "key.pem")
 
-print(password_file, ip, port, cert_file, key_file)
-
 ph = PasswordHandler(password_file)
 
 # Create SSL context
@@ -52,10 +50,7 @@ signal(SIGTERM, handler)
 with context.wrap_socket(server, server_side=True) as tls:
     while True:
         connection, address = tls.accept()
-        print(f"Connected by {address}\n")
-
         data = connection.recv(1024)
-        print(f"Client Says: {data}")
 
         # Verify packet format and handle data
         if data[0] == 0x00:
@@ -64,15 +59,19 @@ with context.wrap_socket(server, server_side=True) as tls:
             if data[1] == 0x0A:
                 password = data[39 : 3 + length]
                 try:
+                    # password added successfully
                     ph.add_user(username, password)
                     send_response(connection, 0x0A, 0x00)
                 except:
+                    # error adding password
                     send_response(connection, 0x0A, 0x01)
             if data[1] == 0x0D:
                 try:
+                    # password deleted successfully
                     ph.delete_user(username)
                     send_response(connection, 0x0D, 0x00)
                 except:
+                    # error deleteing password
                     send_response(connection, 0x0D, 0x01)
         else:
             send_response(connection, 0x00, 0x01)
