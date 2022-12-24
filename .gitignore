@@ -8,4 +8,5 @@ __pycache__
 *.log
 node_modules
 .vscode
+tests
 

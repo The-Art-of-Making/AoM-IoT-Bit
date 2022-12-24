@@ -1,0 +1,11 @@
+version: "3.9"
+services:
+  nginx:
+    build:
+      dockerfile: Dockerfile
+      context: ./
+    ports:
+      - "1883:1883"
+    env:
+      - MQTT_LOOKUP_HOST=""
+      - MQTT_LOOKUP_PORT=5000

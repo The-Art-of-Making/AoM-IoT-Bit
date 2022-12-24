@@ -1,0 +1,27 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: mqtt-reverse-proxy-deployment
+  labels:
+    app: mqtt-reverse-proxy
+spec:
+  replicas: 2
+  selector:
+    matchLabels:
+      app: mqtt-reverse-proxy
+  template:
+    metadata:
+      labels:
+        app: mqtt-reverse-proxy
+    spec:
+      containers:
+        - name: mqtt-reverse-proxy-nginx
+          image: d3lta12/mqtt-reverse-proxy-nginx:public
+          imagePullPolicy: Always
+          ports:
+            - containerPort: 1883
+          env:
+            - name: "MQTT_LOOKUP_HOST"
+              value: ""
+            - name: "MQTT_LOOKUP_PORT"
+              value:
