@@ -1,0 +1,31 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: controller-deployment
+  labels:
+    app: controller
+spec:
+  replicas: 3
+  selector:
+    matchLabels:
+      app: controller
+  template:
+    metadata:
+      labels:
+        app: controller
+    spec:
+      containers:
+        - name: mqtt-controller-application
+          image: d3lta12/mqtt-controller-application:public
+          imagePullPolicy: Always
+          ports:
+            - containerPort: 10080
+          env:
+            - name: "MONGOURI"
+              value: ""
+            - name: "KUBECONFIG"
+              value: ""
+            - name: HOST
+              value: "0.0.0.0"
+            - name: PORT
+              value: 10080

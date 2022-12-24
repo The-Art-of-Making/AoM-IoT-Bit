@@ -13,6 +13,9 @@ class Controller(ThreadHandler):
     def __init__(self):
         super().__init__(target=self.controller)
         self.new_user_servers = Queue()  # stores users needing new servers
+        self.users = (
+            set()
+        )  # set to store users with servers, check to prevent duplicates
         self.servers = {}
         self.start()
         logger.info("Controller started")
@@ -24,12 +27,12 @@ class Controller(ThreadHandler):
         self.servers.clear()
         logger.info("Controller stopped")
 
-    def start_server(self, user: str) -> str:
+    def start_server(self, user: str) -> None:
         """Start a new server and add to servers dictionary"""
-        server = ServerHandler(user)
-        uuid = server.get_field("uuid")
-        self.servers[uuid] = server
-        return uuid
+        if user not in self.users:
+            server = ServerHandler(user)
+            uuid = server.get_field("uuid")
+            self.servers[uuid] = server
 
     def handle_client_connect(
         self, client_uuid: str, client_key: str
@@ -52,6 +55,7 @@ class Controller(ThreadHandler):
             return True, password
         else:
             self.new_user_servers.put(user)
+            self.users.add(user)
             return True, "Server is starting"
 
     def controller(self) -> None:
