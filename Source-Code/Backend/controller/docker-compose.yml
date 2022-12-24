@@ -1,0 +1,14 @@
+version: "3.9"
+services:
+  eclipse-mosquitto:
+    build:
+      dockerfile: Dockerfile
+      context: ./
+    ports:
+      - "80:8080"
+      # - "443:443" # TODO TLS support
+    environment:
+      - MONGOURI=""
+      - KUBECONFIG=""
+      - HOST=0.0.0.0
+      - PORT=8080

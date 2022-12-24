@@ -47,6 +47,9 @@ function getClientId(s) {
                     upstream = response_json.server
                     s.allow()
                 }
+                else {
+                    s.deny()
+                }
             })
     })
 }

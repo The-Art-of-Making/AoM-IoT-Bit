@@ -3,3 +3,4 @@ uuid
 mongoengine
 kubernetes
 flask
+waitress
