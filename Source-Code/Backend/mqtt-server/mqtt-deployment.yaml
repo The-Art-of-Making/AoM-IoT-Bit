@@ -15,7 +15,7 @@ spec:
         app: mqtt
     spec:
       containers:
-        - name: eclipse-mosquitto
+        - name: mqtt-server-eclipse-mosquitto
           image: d3lta12/mqtt-server-eclipse-mosquitto:public
           imagePullPolicy: Always
           ports:
