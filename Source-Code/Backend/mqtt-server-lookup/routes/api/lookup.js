@@ -7,7 +7,6 @@ const router = express.Router()
 
 router.get("/lookup", (req, res) => {
     const uuid = url.parse(req.url, true).query.uuid
-    console.log(uuid)
     Client.findOne({ uuid: uuid }).then(client => {
         if (!client) {
             return res.status(404).json({ error: "Client with UUID " + uuid + " Not Found" })
