@@ -2,6 +2,7 @@
 Learn more at https://github.com/kubernetes-client/python"""
 
 from kubernetes import client, config
+from kubernetes.stream import stream
 from os import environ
 from typing import Tuple
 import yaml
@@ -38,6 +39,28 @@ def get_pod_ips(namespace: str = "default") -> dict:
     for pod in pod_list.items:
         ips[pod.metadata.name] = pod.status.pod_ip
     return ips
+
+
+def pod_command(
+    name: str,
+    command: str,
+    namespace: str = "default",
+    stderr=True,
+    stdin=True,
+    stdout=True,
+    tty=True,
+):  # TODO type annotation
+    """Execute command in pod and return result"""
+    return stream(
+        k8s_core.connect_get_namespaced_pod_exec,
+        name,
+        namespace,
+        command=["/bin/sh", "-c", command],
+        stderr=stderr,
+        stdin=stdin,
+        stdout=stdout,
+        tty=tty,
+    )
 
 
 def create_namespace(name: str) -> bool:
