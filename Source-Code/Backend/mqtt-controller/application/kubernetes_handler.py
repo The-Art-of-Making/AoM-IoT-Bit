@@ -14,9 +14,17 @@ k8s_core = client.CoreV1Api()
 k8s_apps = client.AppsV1Api()
 
 
-def get_pods(namespace: str = "default"):  # TODO return type annotation
-    """Get all pods in namespace"""
-    return k8s_core.list_namespaced_pod(namespace)
+def get_pods(
+    namespace: str = "default", return_count: bool = False
+):  # TODO return type annotation
+    """Get all pods in namespace, also return number of pods in namespace if return_count is true"""
+    pods = k8s_core.list_namespaced_pod(namespace)
+    if return_count:
+        count = 0
+        for _ in pods.items:
+            count += 1
+        return pods, count
+    return pods
 
 
 def get_pod(name: str, namespace: str = "default"):  # TODO return type annotation
@@ -41,6 +49,18 @@ def get_pod_ips(namespace: str = "default") -> dict:
     return ips
 
 
+def is_pod_ready(name: str, namespace: str = "default") -> bool:
+    """Returns true if pod has name, uid, and ip"""
+    pod = get_pod(name, namespace=namespace)
+    if None in (
+        pod.metadata.name,
+        pod.metadata.uid,
+        pod.status.pod_ip,
+    ):
+        return False
+    return True
+
+
 def pod_command(
     name: str,
     command: str,
@@ -61,6 +81,15 @@ def pod_command(
         stdout=stdout,
         tty=tty,
     )
+
+
+def check_namespaces(name: str) -> bool:
+    """Check if namespace with name exists"""
+    namespaces = k8s_core.list_namespace()
+    for namespace in namespaces.items:
+        if namespace.metadata.name == name:
+            return True
+    return False
 
 
 def create_namespace(name: str) -> bool:
