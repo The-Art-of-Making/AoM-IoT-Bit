@@ -32,6 +32,7 @@ def connect():
 def handler(signal_received, frame):
     logger.info(f"Recd {signal_received} from {frame}")
     logger.info("SIGTERM or SIGINT or CTRL-C detected. Exiting gracefully")
+    controller.stop_controller()
     exit(0)
 
 
