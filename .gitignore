@@ -9,4 +9,5 @@ __pycache__
 node_modules
 .vscode
 test_*
+*.pem
 
