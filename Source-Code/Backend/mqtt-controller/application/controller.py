@@ -20,8 +20,9 @@ class Controller(ThreadHandler):
         self.start()
         logger.info("Controller started")
 
-    def __del__(self):
-        """Shutdown and delete servers"""
+    def stop_controller(self) -> None:
+        """Stop thread, shutdown and delete servers"""
+        self.stop()
         for _, server in self.servers.items():
             server.shutdown()
         self.servers.clear()
@@ -29,10 +30,9 @@ class Controller(ThreadHandler):
 
     def start_server(self, user: str) -> None:
         """Start a new server and add to servers dictionary"""
-        if user not in self.users:
-            server = ServerHandler(user)
-            uuid = server.get_field("uuid")
-            self.servers[uuid] = server
+        server = ServerHandler(user)
+        uuid = server.get_field("uuid")
+        self.servers[uuid] = server
 
     def handle_client_connect(
         self, client_uuid: str, client_key: str
@@ -52,10 +52,14 @@ class Controller(ThreadHandler):
             self.servers[server_uuid].add_password(
                 client_uuid, password
             )  # add new password
+            if user in self.users:
+                self.users.remove(user)
             return True, password
         else:
-            self.new_user_servers.put(user)
-            self.users.add(user)
+            # Check that client with same user has not already made request to start server
+            if user not in self.users:
+                self.new_user_servers.put(user)
+                self.users.add(user)
             return True, "Server is starting"
 
     def controller(self) -> None:
@@ -70,7 +74,10 @@ class Controller(ThreadHandler):
                 remove_servers.append(server_uuid)
         while len(remove_servers) > 0:
             server_uuid = remove_servers.popleft()
+            user = self.servers[server_uuid].get_field("user")
             del self.servers[server_uuid]
+            if user in self.users:
+                self.users.remove(user)
 
 
 if __name__ == "__main__":
