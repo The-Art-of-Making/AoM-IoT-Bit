@@ -6,6 +6,6 @@ services:
       context: ./
     ports:
       - "1883:1883"
-    env:
+    environment:
       - MQTT_LOOKUP_HOST=""
       - MQTT_LOOKUP_PORT=5000

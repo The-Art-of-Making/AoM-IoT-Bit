@@ -5,7 +5,7 @@ metadata:
   labels:
     app: mqtt-reverse-proxy
 spec:
-  replicas: 2
+  replicas: 1
   selector:
     matchLabels:
       app: mqtt-reverse-proxy
@@ -24,4 +24,4 @@ spec:
             - name: MQTT_LOOKUP_HOST
               value: "mqtt-server-lookup-service"
             - name: MQTT_LOOKUP_PORT
-              value: 5000
+              value: "5000"

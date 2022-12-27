@@ -1,7 +1,7 @@
-const MQTT_LOOKUP_HOST = process.env.MQTT_LOOKUP_HOST
-const MQTT_LOOKUP_PORT = process.env.MQTT_LOOKUP_PORT
+// const MQTT_LOOKUP_HOST = process.env.MQTT_LOOKUP_HOST
+// const MQTT_LOOKUP_PORT = process.env.MQTT_LOOKUP_PORT
 
-const mqtt_lookup_endpoint = "http://" + MQTT_LOOKUP_HOST + ":" + MQTT_LOOKUP_PORT + "/api/lookup"
+// const mqtt_lookup_endpoint = "http://" + MQTT_LOOKUP_HOST + ":" + MQTT_LOOKUP_PORT + "/api/lookup"
 
 var connected = false
 var upstream = ""
@@ -40,22 +40,33 @@ function getClientId(s) {
             return
         }
         client_id = data.substring(++bytes_pos, bytes_pos + client_id_length)
-        ngx.fetch(mqtt_lookup_endpoint + "?uuid=" + client_id)
-            .then(response => response.json())
-            .then(response_json => {
-                if (response_json.error) {
-                    s.deny()
-                    return
-                }
-                if (response_json.server) {
-                    connected = true;
-                    upstream = response_json.server
-                    s.allow()
-                }
-                else {
-                    s.deny()
-                }
-            })
+        upstream = client_id.substring(0, client_id.search("-ID-")) // upstream included at start of MQTT client id, delimnated by "-ID-"
+        if (!upstream.length > 0) {
+            s.deny()
+            return
+        }
+        connected = true
+        s.allow()
+        return
+        // TODO handle async verification s.on("upload", ...)
+        // ngx.fetch(mqtt_lookup_endpoint + "?uuid=" + client_id)
+        //     .then(response => response.json())
+        //     .then(response_json => {
+        //         if (response_json.error) {
+        //             s.deny()
+        //             return
+        //         }
+        //         if (response_json.server) {
+        //             connected = true;
+        //             upstream = response_json.server
+        //             s.allow()
+        //             return
+        //         }
+        //         else {
+        //             s.deny()
+        //             return
+        //         }
+        //     })
     })
 }
 
