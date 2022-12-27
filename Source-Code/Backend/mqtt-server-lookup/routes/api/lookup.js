@@ -15,7 +15,9 @@ router.get("/lookup", (req, res) => {
             if (!server) {
                 return res.status(500).json({ error: "No server exists for client with UUID " + uuid })
             }
-            return res.status(200).json({ server: server.addr + ":" + server.port })
+            const location = server.addr + ":" + server.port
+            res.header("X-Server", location)
+            return res.status(200).json({ server: location })
         })
     })
 })
