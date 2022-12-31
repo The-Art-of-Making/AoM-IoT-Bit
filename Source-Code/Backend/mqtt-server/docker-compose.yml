@@ -9,7 +9,7 @@ services:
       - "9001:9001"
       - "9443:9443"
     environment:
-      - PASSWD_FILE=/password
+      - PASSWD_FILE=/passwords
       - IP_ADDR=0.0.0.0
       - PORT=9443
       - CERT=cert.pem
