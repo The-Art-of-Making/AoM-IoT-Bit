@@ -7,8 +7,12 @@ from os import environ
 from typing import Tuple
 import yaml
 
-kube_config_file = environ.get("KUBECONFIG", "kubeconfig.yaml")
-config.load_kube_config(kube_config_file)  # Load kubeconfig file for client use
+KUBE_CONFIG_FILE = environ.get("KUBECONFIG", "kubeconfig.yaml")
+DEVELOPMENT = environ.get("DEVELOPMENT", "False")  # environ.get returns string
+if DEVELOPMENT == "True":
+    config.load_kube_config(KUBE_CONFIG_FILE)  # Load kubeconfig file for client use
+else:
+    config.load_incluster_config()  # load config inside cluster
 # Instantiate necessary Kubernetes APIs
 k8s_core = client.CoreV1Api()
 k8s_apps = client.AppsV1Api()

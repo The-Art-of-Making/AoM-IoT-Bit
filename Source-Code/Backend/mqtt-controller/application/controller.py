@@ -16,7 +16,7 @@ class Controller(ThreadHandler):
         self.users = (
             set()
         )  # set to store users with servers, check to prevent duplicates
-        self.servers = {}
+        self.servers = {}  # TODO self.servers and self.users need to be thread safe
         self.start()
         logger.info("Controller started")
 
@@ -30,6 +30,7 @@ class Controller(ThreadHandler):
 
     def start_server(self, user: str) -> None:
         """Start a new server and add to servers dictionary"""
+        # TODO replace user with user uuid
         server = ServerHandler(user)
         uuid = server.get_field("uuid")
         self.servers[uuid] = server
@@ -43,6 +44,7 @@ class Controller(ThreadHandler):
         )  # query db to verify device and get server associated with device account
         if user is None:
             return False, "Failed to authenticate"
+        # TODO check database for other servers for same user started by other controllers
         # check if server associated with device is running
         if server_uuid in self.servers:
             password = token_hex()  # generate new password

@@ -10,4 +10,5 @@ node_modules
 .vscode
 test_*
 *.pem
+*kubeconfig.yaml
 

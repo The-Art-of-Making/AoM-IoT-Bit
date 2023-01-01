@@ -1,6 +1,6 @@
-asyncio
-uuid
-mongoengine
-kubernetes
 flask
+kubernetes
+mongoengine
+paho-mqtt
+uuid
 waitress

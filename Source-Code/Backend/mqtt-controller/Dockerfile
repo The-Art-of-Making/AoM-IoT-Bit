@@ -4,4 +4,6 @@ WORKDIR /
 COPY application controller
 WORKDIR /controller
 RUN pip3 install -r requirements.txt
-ENTRYPOINT [ "waitress-serve --host $HOST --port $PORT app:app" ]
+RUN echo "#!/bin/bash" > entrypoint.sh
+RUN echo "waitress-serve --host \$HOST --port \$PORT app:app" >> entrypoint.sh
+ENTRYPOINT [ "sh", "entrypoint.sh" ]
