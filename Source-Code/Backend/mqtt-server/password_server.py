@@ -13,8 +13,8 @@ from password_handler import PasswordHandler
 password_file = environ.get("PASSWD_FILE", "/passwords")
 ip = environ.get("IP_ADDR", "0.0.0.0")
 port = int(environ.get("PORT", 9443))
-cert_file = environ.get("CERT", "cert.pem")
-key_file = environ.get("KEY", "key.pem")
+cert_file = environ.get("CERT", "/cert.pem")
+key_file = environ.get("KEY", "/key.pem")
 
 ph = PasswordHandler(password_file)
 
