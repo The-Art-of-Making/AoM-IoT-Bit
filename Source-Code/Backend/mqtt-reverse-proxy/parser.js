@@ -1,12 +1,11 @@
-// const MQTT_LOOKUP_HOST = process.env.MQTT_LOOKUP_HOST
-// const MQTT_LOOKUP_PORT = process.env.MQTT_LOOKUP_PORT
+// TODO inherit and access env vars from process
+const ip = 'mqtt-server-lookup-service';
 
-// const mqtt_lookup_endpoint = "http://" + MQTT_LOOKUP_HOST + ":" + MQTT_LOOKUP_PORT + "/api/lookup"
-const mqtt_lookup_endpoint = 'http://10.1.108.138:5000/api/lookup?uuid='
+const mqtt_lookup_endpoint = 'http://' + ip + ':5000/api/lookup?uuid=';
 
-var connected = false
-var upstream = ""
-var client_id = ""
+var connected = false;
+var upstream = '';
+var client_id = '';
 
 function getClientId(s) {
     s.on('upload', async function (data, flags) {

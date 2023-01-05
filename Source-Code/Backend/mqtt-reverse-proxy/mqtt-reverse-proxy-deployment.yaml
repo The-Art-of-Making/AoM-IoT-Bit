@@ -22,6 +22,8 @@ spec:
             - containerPort: 1883
           env:
             - name: MQTT_LOOKUP_HOST
-              value: "mqtt-server-lookup-service"
+              value: ""
             - name: MQTT_LOOKUP_PORT
               value: "5000"
+            - name: MQTT_PORT
+              value: "1883"
