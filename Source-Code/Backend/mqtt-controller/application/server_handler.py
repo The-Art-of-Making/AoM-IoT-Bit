@@ -16,6 +16,7 @@ from kubernetes_handler import (
 )
 from logger import logger
 from mqtt_client import MQTTClient
+from server_cache_handler import add_server_status, delete_server_status
 from thread_handler import ThreadHandler
 
 """Password server message format"""
@@ -32,7 +33,7 @@ PASSWORD_SERVER_CERT_HOSTNAME = (
     "delta12"  # hostname used to generate SSL certificate for password server TLS
 )
 CONTAINER_CERT_PATH = "/cert.pem"
-INACTIVITY_THRESHOLD = 60  # shutdown MQTT server if more than a minute elapsed without multiple clients connected
+INACTIVITY_THRESHOLD = 120  # shutdown MQTT server if more than 2 minutes elapsed without multiple clients connected
 CLIENTS_CONNECTED_TOPIC = "$SYS/broker/clients/connected"  # number of connected clients
 MQTT_DEPLOYMENT = "mqtt-deployment.yaml"
 
@@ -69,6 +70,7 @@ class ServerHandler(ThreadHandler):
         """Start new MQTT server"""
         try:
             logger.info("Starting server...")
+            add_server_status(self.get_field("user"), "STARTING")
             create_namespace(self.get_field("user"))
             # Wait for namespace to be created
             while not check_namespaces(self.get_field("user")):
@@ -124,22 +126,25 @@ class ServerHandler(ThreadHandler):
                 return False
             logger.info("Starting server handler...")
             # TODO make sure mqtt_client is connected before starting control loop
-            sleep(5)
+            sleep(5)  # temporary fix to ensure mqtt_client is connected
             self.start()
         except:
             logger.warning("Failed to start sever")
             return False
+        add_server_status(self.get_field("user"), "RUNNING")
         return True
 
     def shutdown(self, handle_db: bool = True) -> None:
         """Stutdown MQTT server"""
         logger.info("Stopping server...")
+        add_server_status(self.get_field("user"), "SHUTDOWN")
         self.running = False
         delete_deployment(self.deployment_name, namespace=self.get_field("user"))
         delete_namespace(self.get_field("user"))
         remove(self.cert)  # delete SSL certificate copied from container
         if handle_db:
             delete_server(self.get_field("uuid"))
+        delete_server_status(self.get_field("user"))
 
     def add_password(self, username: str, password: str):
         """Wrapper to add password to MQTT server"""

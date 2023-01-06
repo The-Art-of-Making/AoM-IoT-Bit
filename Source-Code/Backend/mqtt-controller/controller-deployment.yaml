@@ -1,11 +1,11 @@
 apiVersion: apps/v1
 kind: Deployment
 metadata:
-  name: controller-deployment
+  name: controller-deployment # TODO rename deployment and service to match convention
   labels:
     app: controller
 spec:
-  replicas: 3
+  replicas: 1 # TODO make sure any controller can check for server and add client password
   selector:
     matchLabels:
       app: controller
@@ -21,11 +21,11 @@ spec:
           ports:
             - containerPort: 10080
           env:
-            - name: "MONGOURI"
-              value: ""
-            - name: "KUBECONFIG"
+            - name: MONGOURI
               value: ""
             - name: HOST
               value: "0.0.0.0"
             - name: PORT
-              value: 10080
+              value: "10080"
+            - name: REDIS_ADDR
+              value: "mqtt-server-cache-service"

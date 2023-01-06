@@ -5,6 +5,7 @@ from typing import Tuple
 
 from database_handler import get_client_server
 from logger import logger
+from server_cache_handler import add_server_status, get_server_status
 from server_handler import ServerHandler
 from thread_handler import ThreadHandler
 
@@ -13,10 +14,7 @@ class Controller(ThreadHandler):
     def __init__(self):
         super().__init__(target=self.controller)
         self.new_user_servers = Queue()  # stores users needing new servers
-        self.users = (
-            set()
-        )  # set to store users with servers, check to prevent duplicates
-        self.servers = {}  # TODO self.servers and self.users need to be thread safe
+        self.servers = {}
         self.start()
         logger.info("Controller started")
 
@@ -45,8 +43,16 @@ class Controller(ThreadHandler):
         if user is None:
             return False, "Failed to authenticate"
         # TODO check database for other servers for same user started by other controllers
-        # check if server associated with device is running
-        if server_uuid in self.servers:
+        status = get_server_status(user)
+        # Start server if user does not already have one running
+        if status == "":
+            self.new_user_servers.put(user)
+            add_server_status(user, "WAITING")
+            return True, "Server is starting"
+        if status in ("WAITING", "STARTING"):
+            return True, "Server is starting"
+        # Add new client password if server is running
+        if status == "RUNNING":
             password = token_hex()  # generate new password
             self.servers[server_uuid].delete_password(
                 client_uuid
@@ -54,15 +60,12 @@ class Controller(ThreadHandler):
             self.servers[server_uuid].add_password(
                 client_uuid, password
             )  # add new password
-            if user in self.users:
-                self.users.remove(user)
             return True, password
-        else:
-            # Check that client with same user has not already made request to start server
-            if user not in self.users:
-                self.new_user_servers.put(user)
-                self.users.add(user)
-            return True, "Server is starting"
+        if status == "SHUTDOWN":
+            return False, "Server is shutting down"
+        if status == "ERROR":
+            return False, "Server encountered an error"
+        return False, "Encountered unknown error"
 
     def controller(self) -> None:
         """Main control loop to start servers and remove terminated servers"""
@@ -78,8 +81,6 @@ class Controller(ThreadHandler):
             server_uuid = remove_servers.popleft()
             user = self.servers[server_uuid].get_field("user")
             del self.servers[server_uuid]
-            if user in self.users:
-                self.users.remove(user)
 
 
 if __name__ == "__main__":
