@@ -1,0 +1,11 @@
+version: "3.9"
+services:
+  node:
+    build:
+      dockerfile: Dockerfile
+      context: ./
+    ports:
+      - "5001:5001"
+    environment:
+      - MONGOURI=${MONGOURI}
+      - PORT=5001

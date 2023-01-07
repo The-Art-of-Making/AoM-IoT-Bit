@@ -1,0 +1,27 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: web-user-auth-deployment
+  labels:
+    app: web-user-auth
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: web-user-auth
+  template:
+    metadata:
+      labels:
+        app: web-user-auth
+    spec:
+      containers:
+        - name: web-user-auth-node
+          image: d3lta12/web-user-auth-node:public
+          imagePullPolicy: Always
+          ports:
+            - containerPort: 5001
+          env:
+            - name: PORT
+              value: "5001"
+            - name: MONGOURI
+              value: ""
