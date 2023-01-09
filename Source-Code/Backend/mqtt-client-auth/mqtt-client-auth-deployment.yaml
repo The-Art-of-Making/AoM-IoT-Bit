@@ -1,0 +1,27 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: mqtt-client-auth-deployment
+  labels:
+    app: mqtt-client-auth
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: mqtt-client-auth
+  template:
+    metadata:
+      labels:
+        app: mqtt-client-auth
+    spec:
+      containers:
+        - name: mqtt-client-auth-node
+          image: d3lta12/mqtt-client-auth-node:public
+          imagePullPolicy: Always
+          ports:
+            - containerPort: 5000
+          env:
+            - name: PORT
+              value: "5000"
+            - name: MONGOURI
+              value: ""
