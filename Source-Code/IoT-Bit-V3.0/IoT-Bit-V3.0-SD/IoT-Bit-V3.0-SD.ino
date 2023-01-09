@@ -1,5 +1,5 @@
 /*
- * Authors: Mark Hofmeister, Issam Abushaban
+ * Authors: Mark Hofmeister, Issam Abushaban, Benjamin Esquires
  * Created: 7/30/2022
  * Last Updated: 9/9/2022
  * Version: V3.0
