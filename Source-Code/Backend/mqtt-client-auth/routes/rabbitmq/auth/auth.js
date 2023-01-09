@@ -2,6 +2,7 @@ const bcrypt = require("bcryptjs")
 const express = require("express")
 const Server = require("../../../models/Server")
 const Client = require("../../../models/Client")
+const validateClient = require("../../../validation/client")
 
 const router = express.Router()
 
@@ -11,6 +12,11 @@ const router = express.Router()
 // TODO validate username, password, etc. are not empty
 
 router.post("/user", (req, res) => {
+    // Check validation
+    const { errors, isValid } = validateClient(req.body)
+    if (!isValid) {
+        return res.status(400).json(errors)
+    }
     const username = req.body.username
     const password = req.body.password
     Client.findOne({ uuid: username }).then(client => {
