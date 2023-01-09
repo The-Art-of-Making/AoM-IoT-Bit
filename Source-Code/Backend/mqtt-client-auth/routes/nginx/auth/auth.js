@@ -1,5 +1,6 @@
 const bcrypt = require("bcryptjs")
 const express = require("express")
+const url = require("url")
 const Server = require("../../../models/Server")
 const Client = require("../../../models/Client")
 const validateClient = require("../../../validation/client")
@@ -7,13 +8,17 @@ const validateClient = require("../../../validation/client")
 const router = express.Router()
 
 router.get("/client", (req, res) => {
+    const username = url.parse(req.url, true).query.username
+    const password = url.parse(req.url, true).query.password
+    const data = {
+        username: username,
+        password: password
+    }
     // Check validation
-    const { errors, isValid } = validateClient(req.body)
+    const { errors, isValid } = validateClient(data)
     if (!isValid) {
         return res.status(400).json(errors)
     }
-    const username = req.body.username
-    const password = req.body.password
     Client.findOne({ username: username }).then(client => {
         if (!client) {
             return res.status(403).json({ error: "Failed to authenticate client " + username })

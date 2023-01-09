@@ -1,18 +1,17 @@
 // TODO inherit and access env vars from process
-const ip = 'mqtt-server-lookup-service';
+const ip = 'mqtt-client-auth-service';
+const port = '5000'
 
-const mqtt_lookup_endpoint = 'http://' + ip + ':5000/api/lookup?uuid=';
+const mqtt_client_auth_endpoint = 'http://' + ip + ':' + port + '/nginx/auth/client';
 
-var connected = false;
 var upstream = '';
-var client_id = '';
 
 function getClientId(s) {
     s.on('upload', async function (data, flags) {
-        if (connected) {
-            s.allow();
-            return;
-        }
+
+        var client_id;
+        var client_password;
+
         if (data.length == 0) {
             return
         }
@@ -20,8 +19,10 @@ function getClientId(s) {
             s.deny();
             return;
         }
+
         var remaining_length = 0;
         var bytes_pos;
+
         // get remaining length of packet, specified by next 1 to 4 bytes
         for (bytes_pos = 1; bytes_pos < 5; bytes_pos++) {
             var remaining_length_byte = data.charCodeAt(bytes_pos);
@@ -33,6 +34,8 @@ function getClientId(s) {
         }
         var protocol_name_length = (data.charCodeAt(bytes_pos) << 8) + (data.charCodeAt(++bytes_pos)); // next two bytes following remaining length encode protocol name length
         bytes_pos = bytes_pos + protocol_name_length + 4; // variable header ends after protocol name and 4 bytes for protocol level, connect flag, and keep alive
+
+        // Get client id
         var client_id_length = (data.charCodeAt(++bytes_pos) << 8) + (data.charCodeAt(++bytes_pos)); // client id length specified by first two bytes of payload
         // connection is denied if the client does not connect with a client id
         if (!client_id_length > 0) {
@@ -41,9 +44,25 @@ function getClientId(s) {
         }
         client_id = data.substring(++bytes_pos, bytes_pos + client_id_length);
 
+        // Skip MQTT username
+        bytes_pos += client_id_length;
+        var client_username_length = (data.charCodeAt(bytes_pos) << 8) + (data.charCodeAt(++bytes_pos)); // client password length specified by next two bytes of payload after client id
+        bytes_pos++;
+
+        // Get client password
+        bytes_pos += client_username_length;
+        var client_password_length = (data.charCodeAt(bytes_pos) << 8) + (data.charCodeAt(++bytes_pos)); // client password length specified by next two bytes of payload after client username
+        // connection is denied if the client does not connect with a client password
+        if (!client_password_length > 0) {
+            s.deny();
+            return;
+        }
+        client_password = data.substring(++bytes_pos, bytes_pos + client_password_length);
+
+        // make request to client auth service and get upstream server
         if (client_id.length > 0) {
             s.off('upload');
-            let reply = await ngx.fetch(mqtt_lookup_endpoint + client_id);
+            let reply = await ngx.fetch(mqtt_client_auth_endpoint + "?username=" + client_id + "&password=" + client_password);
             let json = await reply.json();
             upstream = json.server;
             (reply.status == 200) ? s.allow() : s.deny();

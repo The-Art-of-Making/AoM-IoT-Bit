@@ -20,10 +20,13 @@ spec:
           imagePullPolicy: Always
           ports:
             - containerPort: 1883
+            - containerPort: 9001
           env:
-            - name: MQTT_LOOKUP_HOST
+            - name: MQTT_AUTH_HOST
               value: ""
-            - name: MQTT_LOOKUP_PORT
+            - name: MQTT_AUTH_PORT
               value: "5000"
             - name: MQTT_PORT
               value: "1883"
+            - name: MQTT_WS_PORT
+              value: "9001"
