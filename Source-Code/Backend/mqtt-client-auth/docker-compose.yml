@@ -9,3 +9,7 @@ services:
     environment:
       - MONGOURI=${MONGOURI}
       - PORT=5000
+networks:
+  default:
+    name: rabbitnet
+    external: true

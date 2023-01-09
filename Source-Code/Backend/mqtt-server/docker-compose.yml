@@ -1,18 +1,15 @@
 version: "3.9"
 services:
-  eclipse-mosquitto:
+  rabbitmq:
     build:
       dockerfile: Dockerfile
       context: ./
     ports:
       - "1883:1883"
-      - "9001:9001"
-      - "9443:9443"
+      # - "15672:15672"  # management port
     environment:
-      - PASSWD_FILE=/passwords
-      - IP_ADDR=0.0.0.0
-      - PORT=9443
-      - CERT=cert.pem
-      - KEY=key.pem
-    # volumes:
-    #   - ./config:/mosquitto/config/.
+      - RABBITMQ_CONFIG_FILE=/etc/rabbitmq/rabbitmq.conf
+networks:
+  default:
+    name: rabbitnet
+    external: true

@@ -7,9 +7,7 @@ const validateClient = require("../../../validation/client")
 const router = express.Router()
 
 // server should always return HTTP 200 OK
-// allow/deny determined by body message
-
-// TODO validate username, password, etc. are not empty
+// allow/deny determined by request body
 
 router.post("/user", (req, res) => {
     // Check validation
@@ -19,23 +17,27 @@ router.post("/user", (req, res) => {
     }
     const username = req.body.username
     const password = req.body.password
-    Client.findOne({ uuid: username }).then(client => {
+    Client.findOne({ username: username }).then(client => {
         if (!client) {
-            return res.status(200).send({ deny: "" }) // deny
+            return res.status(200).send("deny") // deny
         }
         bcrypt.compare(password, client.password).then(isMatch => {
             if (!isMatch) {
-                return res.status(200).json({ deny: "" }) // deny
+                return res.status(200).send("deny") // deny
             }
-            return res.status(200).json({ allow: "" }) // allow
+            return res.status(200).send("allow") // allow
         })
     })
 })
+
+// TODO check requests from rabbitmq for the following
+// TODO validate username, password, etc. are not empty
 
 router.post("/vhost", (req, res) => {
     const username = req.body.username
     const vhost = req.body.vhost
     const ip = req.body.ip
+    return res.status(200).send("allow")
 })
 
 router.post("/resource", (req, res) => {
@@ -44,6 +46,7 @@ router.post("/resource", (req, res) => {
     const resource = req.body.resource
     const name = req.body.name
     const permission = req.body.permission
+    return res.status(200).send("allow")
 })
 
 router.post("/topic", (req, res) => {
@@ -53,6 +56,7 @@ router.post("/topic", (req, res) => {
     const name = req.body.name
     const permission = req.body.permission
     const routing_key = req.body.routing_key
+    return res.status(200).send("allow")
 })
 
 module.exports = router
