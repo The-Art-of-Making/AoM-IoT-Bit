@@ -1,24 +1,25 @@
 apiVersion: apps/v1
 kind: Deployment
 metadata:
-  name: mqtt-deployment
+  name: mqtt-server-deployment
   labels:
-    app: mqtt
+    app: mqtt-server
 spec:
   replicas: 1
   selector:
     matchLabels:
-      app: mqtt
+      app: mqtt-server
   template:
     metadata:
       labels:
-        app: mqtt
+        app: mqtt-server
     spec:
       containers:
-        - name: mqtt-server-eclipse-mosquitto
-          image: d3lta12/mqtt-server-eclipse-mosquitto:public
+        - name: mqtt-server-rabbitmq
+          image: d3lta12/mqtt-server-rabbitmq:public
           imagePullPolicy: Always
           ports:
             - containerPort: 1883
+            - containerPort: 5672
             - containerPort: 9001
-            - containerPort: 9443
+            # - containerPort: 15672

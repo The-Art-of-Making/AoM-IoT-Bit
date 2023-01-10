@@ -12,7 +12,7 @@ const ServerSchema = new Schema({
         type: String,
         required: true
     },
-    uuid: {
+    uid: {
         type: String,
         required: true,
         unique: true,
@@ -28,7 +28,8 @@ const ServerSchema = new Schema({
     },
     client_count: {
         type: Number,
-        required: true
+        required: true,
+        default: 0
     }
 })
 

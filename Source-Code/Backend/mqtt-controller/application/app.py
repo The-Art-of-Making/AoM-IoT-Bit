@@ -10,22 +10,26 @@ controller = Controller()
 
 @app.route("/", methods=["POST"])
 def connect():
+    response = {
+        "success": False,
+        "error": "Incorrect Client Username or Client Password",
+    }
     request_data = request.get_json()
-    response = {"success": False, "error": "Incorrect Client UUID and/or Client Key"}
     if not request_data:
-        response["error"] = "Missing Client UUID and Client Key"
-    if "client_uuid" not in request_data:
+        response["error"] = "Client Username and Client Password are required"
+    if "username" not in request_data:
         return jsonify(response)
-    if "client_key" not in request_data:
+    if "password" not in request_data:
         return jsonify(response)
+    # TODO authenticate client
     success, message = controller.handle_client_connect(
-        request_data["client_uuid"], request_data["client_key"]
+        request_data["username"], request_data["password"]
     )
     response["success"] = success
     response["error"] = message
     if success:
         del response["error"]
-        response["message"] = message
+        response["status"] = message
     return jsonify(response)
 
 

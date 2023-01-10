@@ -3,17 +3,27 @@
 import os
 import redis
 
-STATES = {"WAITING", "STARTING", "RUNNING", "SHUTDOWN", "ERROR"}
-
 redis_client = redis.Redis(
     host=os.environ.get("REDIS_ADDR", "localhost"),
     port=os.environ.get("REDIS_PORT", "6379"),
 )
 
 
+class States:
+    """Server states"""
+
+    WAITING = "WAITING"
+    STARTING = "STARTING"
+    RUNNING = "RUNNING"
+    SHUTDOWN = "SHUTDOWN"
+    ERROR = "ERROR"
+
+    STATES = {WAITING, STARTING, RUNNING, SHUTDOWN, ERROR}
+
+
 def add_server_status(user: str, server_status: str) -> bool:
     """Add user, server_status key-value pair to redis server cache to keep track of user server states"""
-    if server_status in STATES:
+    if server_status in States.STATES:
         return redis_client.set(str(user), str(server_status))
     return False
 

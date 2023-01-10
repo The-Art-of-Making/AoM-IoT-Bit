@@ -1,7 +1,5 @@
 flask
 kubernetes
 mongoengine
-paho-mqtt
 redis
-uuid
 waitress

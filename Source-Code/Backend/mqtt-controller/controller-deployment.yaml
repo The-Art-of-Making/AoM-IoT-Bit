@@ -1,18 +1,18 @@
 apiVersion: apps/v1
 kind: Deployment
 metadata:
-  name: controller-deployment # TODO rename deployment and service to match convention
+  name: mqtt-controller-deployment # TODO rename deployment and service to match convention
   labels:
-    app: controller
+    app: mqtt-controller
 spec:
   replicas: 1 # TODO make sure any controller can check for server and add client password
   selector:
     matchLabels:
-      app: controller
+      app: mqtt-controller
   template:
     metadata:
       labels:
-        app: controller
+        app: mqtt-controller
     spec:
       containers:
         - name: mqtt-controller-application
