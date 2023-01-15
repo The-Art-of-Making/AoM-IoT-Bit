@@ -22,7 +22,10 @@ spec:
             - containerPort: 10080
           env:
             - name: MONGOURI
-              value: ""
+              valueFrom:
+                secretKeyRef:
+                  name: mongo-uri
+                  key: MONGOURI
             - name: HOST
               value: "0.0.0.0"
             - name: PORT

@@ -24,4 +24,7 @@ spec:
             - name: PORT
               value: "5001"
             - name: MONGOURI
-              value: ""
+              valueFrom:
+                secretKeyRef:
+                  name: mongo-uri
+                  key: MONGOURI
