@@ -11,7 +11,7 @@ node_modules
 test_*
 *.pem
 *kubeconfig.yaml
-
+mongo_uri_secret.yaml
 
 # Various Altium files
 *.PrjPCBStructure

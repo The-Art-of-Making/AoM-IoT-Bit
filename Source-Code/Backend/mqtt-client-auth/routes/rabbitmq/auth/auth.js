@@ -1,6 +1,5 @@
 const bcrypt = require("bcryptjs")
 const express = require("express")
-const Server = require("../../../models/Server")
 const Client = require("../../../models/Client")
 const validateClient = require("../../../validation/client")
 
