@@ -1,8 +1,9 @@
 """Server Handler"""
 from os import environ
+from time import sleep
 
 from database_handler import MQTTServer
-from kubernetes_handler import Pod, Deployment
+from kubernetes_handler import Pod, Deployment, Namespace
 from logger import logger
 from server_cache_handler import (
     States,
@@ -32,7 +33,7 @@ class ServerHandler(ThreadHandler):
         self.user = user
         self.deployment_name = ""
         self.inactivity_threshold = inactivity_threshold
-        self.start()
+        self.start(loop=False)
 
     def get_field(self, field: str):  # TODO return type annotation?
         """Get server field info"""
@@ -48,7 +49,7 @@ class ServerHandler(ThreadHandler):
         try:
             logger.info("Starting new server for user " + self.user)
             # Check if server for user alread exists in cache
-            if get_server_status(self.user) != "":
+            if get_server_status(self.user) != States.WAITING:
                 logger.info("Server already exists for user " + self.user)
                 return False
             # Add server status in cache
@@ -67,6 +68,10 @@ class ServerHandler(ThreadHandler):
             for pod in pods.items:
                 name = pod.metadata.name
                 ready_pod = Pod.get_pod(name, namespace=self.user)
+                # Ensure pod has IP addr
+                while ready_pod.status.pod_ip is None:
+                    sleep(0.1)
+                    ready_pod = Pod.get_pod(name, namespace=self.user)
                 self.server_info["name"] = ready_pod.metadata.name
                 self.server_info["uid"] = ready_pod.metadata.uid
                 self.server_info["addr"] = ready_pod.status.pod_ip
@@ -91,15 +96,16 @@ class ServerHandler(ThreadHandler):
         user: str, deployment_name: str, uid: str, handle_db: bool = True
     ) -> bool:
         """Shutdown MQTT server"""
-        logger.info("Stopping server...")
+        logger.info("Stopping server for user " + user)
         try:
             add_server_status(user, States.SHUTDOWN)
             Deployment.delete_deployment(deployment_name, namespace=user)
-            Deployment.delete_namespace(user)
+            Namespace.delete_namespace(user)
             if handle_db:
                 MQTTServer.delete_server(uid)
             delete_server_status(user)
         except:
             logger.warning("Failed to stop server for user " + user)
             return False
+        logger.info("Successfully stopped server for user " + user)
         return True

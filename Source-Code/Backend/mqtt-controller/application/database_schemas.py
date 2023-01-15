@@ -1,4 +1,4 @@
-from mongoengine import Document, EmbeddedDocument
+from mongoengine import Document, EmbeddedDocument, EmbeddedDocumentField
 from mongoengine.fields import DateTimeField, IntField, MapField, StringField
 
 # TODO generate python schemas from javascript schemas
@@ -41,7 +41,7 @@ class mqtt_devices(Document):
     number = IntField(required=True)
     io = StringField(required=True, choices=["input", "output"])
     signal = StringField(required=True, choices=["digital", "analog"])
-    actions = MapField(required=False)
+    actions = MapField(EmbeddedDocumentField(device_action), required=False)
 
 
 class mqtt_servers(Document):

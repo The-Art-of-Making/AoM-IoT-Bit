@@ -21,7 +21,9 @@ class Controller(ThreadHandler):
         """Stop thread, shutdown and delete servers"""
         self.stop()
         for _, server in self.servers.items():
-            server.shutdown()
+            server.shutdown(
+                server.user, server.deployment_name, server.get_field("uid")
+            )
         self.servers.clear()
         logger.info("Controller stopped")
 
@@ -53,7 +55,8 @@ class Controller(ThreadHandler):
         """Main control loop to start servers and remove terminated servers"""
         # Start new user servers
         while not self.new_user_servers.empty():
-            self.start_server(self.new_user_servers.get())
+            user = self.new_user_servers.get()
+            self.start_server(user)
         sleep(0.5)
 
 

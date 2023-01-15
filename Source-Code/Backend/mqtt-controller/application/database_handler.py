@@ -63,10 +63,10 @@ class MQTTServer:
         return True
 
     @staticmethod
-    def delete_server(uid: str = None) -> bool:
+    def delete_server(uid: str = "") -> bool:
         """Delete document for MQTT server in database"""
         try:
-            if uid is not None:
+            if len(uid) > 0:
                 if mqtt_servers.objects(uid=uid).delete() != 1:
                     logger.warning("Failed to delete server in database")
                     return False
