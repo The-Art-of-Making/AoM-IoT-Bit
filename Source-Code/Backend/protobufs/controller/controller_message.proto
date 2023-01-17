@@ -1,0 +1,31 @@
+syntax = "proto3";
+
+package aom.iot.controller;
+
+import "device.proto";
+
+enum Type {
+    CHECK = 0;
+    GET_SERVER_CONFIG = 1;
+    DEVICE_CONFIG = 2;
+}
+
+message ServerInfo {
+    string user = 2;
+    string name = 3;
+    string uid = 4;
+    double client_count_timestamp= 5;
+    uint32 client_count = 6;
+}
+
+message DeviceConfig {
+    aom.iot.device.DeviceInfo device_info = 1;
+    aom.iot.device.Device device = 2;
+}
+
+message ControllerMessage {
+    Type type = 1;
+    double timestamp = 2;
+    ServerInfo server_info = 3;
+    DeviceConfig device_config = 4;
+}

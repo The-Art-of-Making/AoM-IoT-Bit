@@ -1,0 +1,35 @@
+syntax = "proto3";
+
+package aom.iot.device;
+
+message DeviceInfo {
+    string client_username = 1;
+    uint32 number = 2;
+}
+
+enum IO {
+    INPUT = 0;
+    OUTPUT = 1;
+}
+
+enum Signal {
+    DIGITAL = 0;
+    ANALOG = 1;
+}
+
+message Action {
+    string name = 1;
+    string trigger_topic = 2;
+    string trigger_state = 3;
+    uint32 response = 4;
+}
+
+message Device {
+    string user = 1;
+    string client_name = 2;
+    DeviceInfo device_info = 3;
+    string name = 4;
+    IO io = 5;
+    Signal signal = 6;
+    repeated Action actions = 7;
+}

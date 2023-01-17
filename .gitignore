@@ -3,15 +3,31 @@
 **/*.mov
 **/*.mp4
 
+# Test files
+test_*
+
+# Vscode settings
+.vscode
+
+# Python
 env
 __pycache__
 *.log
+*.bak
+*.dwl
+*.dwl2
+
+# Node.js
 node_modules
-.vscode
-test_*
-*.pem
+
+# Kubernetes
 *kubeconfig.yaml
 mongo_uri_secret.yaml
+
+# Protobufs
+*_pb2.py
+*.pb.c
+*.pb.h
 
 # Various Altium files
 *.PrjPCBStructure
@@ -38,11 +54,5 @@ History
 #Exports, but not manual ones
 exports/*
 !exports/manual
-
-#Python stuff
-scripts/__pycache__/
-*.bak
-*.dwl
-*.dwl2
 
 *.MOV
