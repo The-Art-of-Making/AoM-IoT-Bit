@@ -25,7 +25,7 @@ bool initializeCredentials()
   String secrets = readfromFile("secrets.txt");
 
   ////Debugging Code
-  // Serial.println("(Debug) sectrets.txt contents read: " + secrets);
+  Serial.println("(Debug) sectrets.txt contents read: " + secrets);
 
   if (secrets == "NULL")
   {
