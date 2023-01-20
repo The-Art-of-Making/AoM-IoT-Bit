@@ -1,8 +1,8 @@
 /*
  * Authors: Mark Hofmeister, Issam Abushaban, Benjamin Esquires
  * Created: 7/30/2022
- * Last Updated: 9/9/2022
- * Version: V3.0
+ * Last Updated: 1/20/2023
+ * Version: V3.1
  * 
  * Description:
  *  This code will use Arduino's MKR WiFi 1010 microcontroller platform to:
@@ -50,7 +50,7 @@ String message_recieved = "UNKNOWN";                    // The message recieved
 
 unsigned long lastConnectionTime = 0;                   // Last time you connected to the server, in milliseconds
 
-int ISR_debounce_delay = 200;                           // Delay time for debouncing switches in ISRs, in milliseconds 
+int LEDDelayPeriod = 500;
 
 void setup()
 {
@@ -73,23 +73,23 @@ void setup()
     {
       for (int i = 0; i < 3; i++)
       {        
-        delay(200);
+        delay(100);
         digitalWrite(pin_get_stat_LED, HIGH);
         digitalWrite(pin_post_stat_LED, HIGH);
         digitalWrite(pin_conn_stat_LED, HIGH);
-        delay(200);
+        delay(100);
         
         digitalWrite(pin_get_stat_LED, LOW);
         digitalWrite(pin_post_stat_LED, LOW);
         digitalWrite(pin_conn_stat_LED, LOW);
       }
       
-      /* Give Them 5 seconds */
+      /* Give Them 3 seconds */
       Serial.print("Checking For SD card in...");
-      Serial.print("5...");
+      /*Serial.print("5...");
       delay(1000);
       Serial.print("4...");
-      delay(1000);
+      delay(1000);*/
       Serial.print("3...");
       delay(1000);
       Serial.print("2...");
@@ -114,12 +114,9 @@ void setup()
     /*
      * Interrupts
      * - POST_ISR = triggered whenever the input signal value changes state 
-     * - POST_LED_ISR = triggered whenever the post switch changes state
-     * - GET_LED_ISR = triggered whenever the get switch goes changes state
      */
     attachInterrupt(digitalPinToInterrupt(pin_in_value), POST_ISR, CHANGE);  
-    //attachInterrupt(digitalPinToInterrupt(pin_post_mode_swt), POST_LED_ISR, CHANGE); 
-    //attachInterrupt(digitalPinToInterrupt(pin_get_mode_swt), GET_LED_ISR, CHANGE); 
+
 }
 
    
@@ -129,20 +126,21 @@ void loop()
     Serial.println(digitalRead(pin_get_mode_swt));
     Serial.print("Post Mode Switch: " );
     Serial.println(digitalRead(pin_post_mode_swt));
-    
-    /* Determine if no desire to POST or GET. */
-    if ((digitalRead(pin_post_mode_swt) == LOW) && (digitalRead(pin_get_mode_swt) == LOW))
-    {      
-      /* Attempt to close connection */
-      Serial.println("Switches are turned off, disconnecting from any WIFI...");
-      disconnectFromWIFI();
-      
-      /* Connection to WiFi terminated */
-      digitalWrite(pin_conn_stat_LED, LOW);
-      digitalWrite(pin_post_stat_LED, LOW);
-      digitalWrite(pin_get_stat_LED, LOW);
-    }
-    else if (!wifi_connected()) /* Determine if wifi connection needs to be restablished. */
+
+    /* Removed disconnection from WiFi if no switch is flipped. This seems to cause more headaches. */
+          /* Determine if no desire to POST or GET. */
+          /*if ((digitalRead(pin_post_mode_swt) == LOW) && (digitalRead(pin_get_mode_swt) == LOW))
+          {      
+            // Attempt to close connection 
+            Serial.println("Switches are turned off, disconnecting from any WIFI...");
+            disconnectFromWIFI();
+            
+            // Connection to WiFi terminated 
+            digitalWrite(pin_conn_stat_LED, LOW);
+            digitalWrite(pin_post_stat_LED, LOW);
+            digitalWrite(pin_get_stat_LED, LOW);
+          }*/
+    if (!wifi_connected()) /* Determine if wifi connection needs to be restablished. */
     {
       /* Connection to WiFi terminated */
       digitalWrite(pin_conn_stat_LED, LOW);
@@ -231,7 +229,7 @@ bool message_POST()
         {
           /* if you couldn't make a connection */
           Serial.println("Data upload failed!");
-          blinkLED(pin_post_stat_LED);
+         
         }
       }
    }
@@ -247,7 +245,12 @@ bool message_GET()
     {
       /* Note the time that the connection was made */
       Serial.println("Data download succeeded!");
-      blinkLED(pin_get_stat_LED);
+
+      //Blink LED to indicate successful POST
+      digitalWrite(pin_get_stat_LED, HIGH);
+      delay(LEDDelayPeriod);
+      digitalWrite(pin_get_stat_LED, LOW);
+      delay(LEDDelayPeriod); 
     }
     else
     {
@@ -270,22 +273,6 @@ bool message_GET()
     return true;
 }
 
-/** 
- *  Blinks LED twice, for a delay period specified by function variable
- *  Precondition: LED is assumed to be LOW 
- *  Postcondition: LED is LOW 
- *  param: LED pin number 
- *  return: none 
- */
-void blinkLED(byte pinNum) {
-  
-  int LEDDelayPeriod = 500;
-  
-    digitalWrite(pinNum, HIGH);
-    delay(500);
-    digitalWrite(pinNum, LOW);
-    delay(500);  
-}
 
 void POST_ISR() {
 
@@ -303,7 +290,13 @@ void POST_ISR() {
     //Report post status, blink LED if successful
     if(success) {
       Serial.println("Message posted successully.");
-      blinkLED(pin_post_stat_LED);
+
+      //Blink LED to indicate successful POST
+      digitalWrite(pin_get_stat_LED, HIGH);
+      delay(LEDDelayPeriod);
+      digitalWrite(pin_get_stat_LED, LOW);
+      delay(LEDDelayPeriod); 
+      
     } else {
       Serial.println("Message post failed.");
     }
