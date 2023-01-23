@@ -1,3 +1,6 @@
+#include "Wifi_Setup.h"                                 // Header file for wifi setup functions
+
+
 int pin_conn_stat_LED   = 6;                            // The pin for outputing the connection status to an LED
 
 int pin_out_value       = 1;                            // The pin for writing the output signal
@@ -33,6 +36,11 @@ void setup() {
 }
 
 void loop() {
+
+  //Write all LEDs low. 
+  digitalWrite(pin_post_stat_LED, LOW);
+  digitalWrite(pin_get_stat_LED, LOW);
+  digitalWrite(pin_conn_stat_LED, LOW);
 
   delay(1000);
   //Blink each LED 3 times
@@ -79,6 +87,7 @@ void loop() {
   while(!getPressed) {
     if (digitalRead(pin_get_mode_swt)) {
       getPressed = true;
+      Serial.println("get mode switched to HIGH.");
     }
   }
 
@@ -97,11 +106,40 @@ void loop() {
   while(!postPressed) {
     if (digitalRead(pin_post_mode_swt)) {
       postPressed = true;
+      Serial.println("post mode switched to HIGH.");
     }
   }
+
+
+//Test SD card functionality 
+  do {
+
+    /* Give Them 3 seconds */
+      Serial.print("Checking For SD card in...");
+      Serial.print("3...");
+      delay(1000);
+      Serial.print("2...");
+      delay(1000);
+      Serial.print("1...");
+      delay(1000);
+      Serial.println("0");
+      delay(1000);
+    
+  }while(initializeCredentials() == false);
+
+  Serial.println("SD Card successfully initialized.");
+
+
+//Test WiFi functionality using SD card credentials
+  do {
+
+  Serial.println("Attempting to connect to WiFi...");
   
+  } while(!conectToWiFi());
 
-
-
+  if (wifi_connected) {
+    Serial.println("Connected to WiFi Successfully!");
+    digitalWrite(pin_conn_stat_LED, HIGH);
+  }
   
 }
