@@ -281,8 +281,14 @@ String http_Request_GET()
 
     Serial.println("Attempting to get message...");
 
+    //Serial.println("Feed Key:");
+    //Serial.println(adafruit_io_feed_key);
+    String adafruit_io_feed_key_appended = adafruit_io_group_key + "." + adafruit_io_feed_key;
+    //Serial.println("Fixed Feed Key:");
+    //Serial.println(adafruit_io_feed_key_appended);
+    
     /* Make a HTTP request */
-    client.println("GET /api/v2/" + adafruit_io_username + "/feeds/" + adafruit_io_feed_key + "/data/last HTTP/1.1");
+    client.println("GET /api/v2/" + adafruit_io_username + "/feeds/" + adafruit_io_feed_key_appended + "/data/last HTTP/1.1");
 
     /* Calls Adafruit IO's API to retrieve the last data value recorded in a provided list */
     client.println("Host: " + server);
