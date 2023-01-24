@@ -40,9 +40,9 @@ void loop() {
   //Write all LEDs low. 
   digitalWrite(pin_post_stat_LED, LOW);
   digitalWrite(pin_get_stat_LED, LOW);
-  digitalWrite(pin_conn_stat_LED, LOW);
+  digitalWrite(pin_conn_stat_LED, HIGH);
 
-  delay(1000);
+  delay(2000);
   //Blink each LED 3 times
   Serial.println("Blinking WiFi Connection LED...");
 
@@ -92,12 +92,12 @@ void loop() {
   }
 
   //post mode switch should be low
-   while(digitalRead(pin_get_mode_swt) != LOW) {
-    Serial.println("Flip that get mode switch to low, fool.");
+   while(digitalRead(pin_post_mode_swt) != LOW) {
+    Serial.println("Flip that post mode switch to low, fool.");
     delay(500);
   }
   Serial.println("Reading POST Switch state...");
-  Serial.print("Get switch mode:   ");
+  Serial.print("Post switch mode:   ");
   Serial.println(digitalRead(pin_post_mode_swt));
   delay(1000);
 
@@ -135,7 +135,7 @@ void loop() {
 
   Serial.println("Attempting to connect to WiFi...");
   
-  } while(!conectToWiFi());
+  } while(!connectToWIFI());
 
   if (wifi_connected) {
     Serial.println("Connected to WiFi Successfully!");
