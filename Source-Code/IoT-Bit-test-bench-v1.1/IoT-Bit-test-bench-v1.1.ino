@@ -40,9 +40,9 @@ void loop() {
   //Write all LEDs low. 
   digitalWrite(pin_post_stat_LED, LOW);
   digitalWrite(pin_get_stat_LED, LOW);
-  digitalWrite(pin_conn_stat_LED, HIGH);
+  digitalWrite(pin_conn_stat_LED, LOW);
 
-  delay(2000);
+  delay(1000);
   //Blink each LED 3 times
   Serial.println("Blinking WiFi Connection LED...");
 
