@@ -1,7 +1,8 @@
-const crypto = require("crypto")
+const bcrypt = require("bcryptjs")
 const express = require("express")
+const Client = require("../../../models/Client")
 const Controller = require("../../../models/Controller")
-const validateClient = require("../../../validation/client") // client and controller have same validation, i.e. username and password
+const validateClient = require("../../../validation/client")
 
 const router = express.Router()
 
@@ -16,15 +17,25 @@ router.post("/user", (req, res) => {
     }
     const username = req.body.username
     const password = req.body.password
-    Controller.findOne({ username: username }).then(controller => {
-        if (!controller) {
-            return res.status(200).send("deny")
+    Client.findOne({ username: username }).then(client => {
+        if (!client) {
+            Controller.findOne({ username: username }).then(controller => {
+                if (!controller) {
+                    return res.status(200).send("deny")
+                }
+                const password_hash = crypto.createHash("sha256").update(password).digest("hex")
+                if (password_hash !== controller.password) {
+                    return res.status(200).send("deny")
+                }
+                return res.status(200).send("allow")
+            })
         }
-        const password_hash = crypto.createHash("sha256").update(password).digest("hex")
-        if (password_hash !== controller.password) {
-            return res.status(200).send("deny")
-        }
-        return res.status(200).send("allow")
+        bcrypt.compare(password, client.password).then(isMatch => {
+            if (!isMatch) {
+                return res.status(200).send("deny")
+            }
+            return res.status(200).send("allow")
+        })
     })
 })
 
