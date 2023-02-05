@@ -3,6 +3,8 @@
 
 #include "MicroSD_IO.h" // Header file for SD Card IO setup
 
+#define SD_CARD
+
 String ssid; // Your network SSID (name)
 String pass; // Your network password (use for WPA, or use as key for WEP)
 
