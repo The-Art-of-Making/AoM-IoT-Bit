@@ -6,8 +6,10 @@ import "device.proto";
 
 enum Type {
     CHECK_SERVER = 0;
-    GET_SERVER_CONFIG = 1;
-    PUBLISH_DEVICE_CONFIG = 2;
+    START_SERVER = 1;
+    GET_SERVER_CONFIG = 2;
+    PUBLISH_DEVICE_CONFIG = 3;
+    SHUTDOWN_SERVER = 4;
 }
 
 message ServerInfo {
