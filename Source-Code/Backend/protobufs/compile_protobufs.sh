@@ -5,13 +5,18 @@ git submodule init
 
 echo "Compiling protobufs for python..."
 PYTHON_OUT_DIR=./python_out
+MQTT_CONTROLLER_PROTOBUFS=../mqtt-controller/application/protobufs
 if [ ! -d "$PYTHON_OUT_DIR" ]; then
     echo "Creating python_out directory"
     mkdir $PYTHON_OUT_DIR
 fi
+if [ ! -d "$MQTT_CONTROLLER_PROTOBUFS" ]; then
+    echo "Creating mqtt-controller/application/protobufs directory"
+    mkdir $MQTT_CONTROLLER_PROTOBUFS
+fi
 protoc -I ./device --python_out=$PYTHON_OUT_DIR ./device/device.proto
 protoc -I ./controller -I ./device --python_out=$PYTHON_OUT_DIR ./controller/controller_message.proto
-cp -r $PYTHON_OUT_DIR ../mqtt-controller/application/protobufs
+rm -Rf $MQTT_CONTROLLER_PROTOBUFS/* && cp -r $PYTHON_OUT_DIR/* $MQTT_CONTROLLER_PROTOBUFS/
 
 echo "Compiling protobufs for C (nanopb)..."
 C_OUT_DIR=./c_out
