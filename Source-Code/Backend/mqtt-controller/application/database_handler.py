@@ -2,7 +2,7 @@ from os import environ
 from mongoengine import connect
 from mongoengine.errors import ValidationError
 
-from database_schemas import mqtt_clients, mqtt_servers
+from database_schemas import mqtt_clients, mqtt_servers, mqtt_controllers
 from logger import logger
 
 host = environ.get(
@@ -28,7 +28,6 @@ class MQTTServer:
     @staticmethod
     def create_server(fields: dict = {}) -> bool:
         """Add document for new MQTT server to database"""
-        # TODO verify and authenticate user
         server = mqtt_servers(**fields)
         try:
             server.validate()
@@ -45,14 +44,28 @@ class MQTTServer:
         return True
 
     @staticmethod
-    def update_server(uid: str = None, fields: dict = None) -> bool:
+    def server_exists(user: str) -> bool:
+        """Check if MQTT server with user exists in database"""
+        if len(mqtt_servers.objects(user=user)) > 0:
+            return True
+        return False
+
+    @staticmethod
+    def get_server(user: str = ""):  # TODO return type annotation
+        """Get fields of user's MQTT server"""
+        if not len(user) > 0:
+            return None
+        return mqtt_servers.objects(user=user).first()
+
+    @staticmethod
+    def update_server(user: str = "", fields: dict = {}) -> bool:
         """Update document for MQTT server in database"""
         try:
-            if fields is not None:
+            if fields != {}:
+                set_fields = {}
                 for field, value in fields.items():
-                    del fields[field]
-                    fields["set__" + field] = value
-                if mqtt_servers.objects(uid=uid).update_one(**fields) != 1:
+                    set_fields["set__" + field] = value
+                if mqtt_servers.objects(user=user).update_one(**set_fields) != 1:
                     logger.warning("Failed to update server in database")
                     return False
                 logger.info("Server updated in database")
@@ -63,11 +76,11 @@ class MQTTServer:
         return True
 
     @staticmethod
-    def delete_server(uid: str = "") -> bool:
+    def delete_server(user: str = "") -> bool:
         """Delete document for MQTT server in database"""
         try:
-            if len(uid) > 0:
-                if mqtt_servers.objects(uid=uid).delete() != 1:
+            if len(user) > 0:
+                if mqtt_servers.objects(user=user).delete() != 1:
                     logger.warning("Failed to delete server in database")
                     return False
                 logger.info("Server deleted in database")
@@ -75,4 +88,40 @@ class MQTTServer:
             logger.warning("Failed to delete server in database")
             logger.warning(e)
             return False
+        return True
+
+
+class MQTTController:
+    """Operations for mqtt_controllers collection"""
+
+    @staticmethod
+    def add_controller(username: str, password: str) -> bool:
+        """Add document for new MQTT controller to database"""
+        controller = mqtt_controllers(**{"username": username, "password": password})
+        try:
+            controller.validate()
+            controller.save()
+            logger.info("New controller added to database")
+        except ValidationError as validation_error:
+            logger.warning("Failed to validate new controller")
+            logger.warning(validation_error)
+            return False
+        except Exception as e:
+            logger.warning("Failed to add new controller to database")
+            logger.warning(e)
+            return False
+        return True
+
+    @staticmethod
+    def delete_controller(username: str) -> bool:
+        """Delete document for MQTT controller in database"""
+        try:
+            if mqtt_controllers.objects(username=username).delete() != 1:
+                logger.warning("Failed to delete controller in database")
+                return False
+        except Exception as e:
+            logger.warning("Failed to delete controller in database")
+            logger.warning(e)
+            return False
+        logger.info("Controller deleted in database")
         return True

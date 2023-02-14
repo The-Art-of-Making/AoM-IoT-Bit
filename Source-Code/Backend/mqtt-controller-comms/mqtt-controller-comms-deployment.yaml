@@ -1,0 +1,22 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: mqtt-controller-comms-deployment
+  labels:
+    app: mqtt-controller-comms
+spec:
+  replicas: 1 # TODO deploy at 3 for clustering
+  selector:
+    matchLabels:
+      app: mqtt-controller-comms
+  template:
+    metadata:
+      labels:
+        app: mqtt-controller-comms
+    spec:
+      containers:
+        - name: rabbitmq
+          image: d3lta12/mqtt-controller-comms-rabbitmq:public
+          imagePullPolicy: Always
+          ports:
+            - containerPort: 5672

@@ -4,6 +4,19 @@ from mongoengine.fields import DateTimeField, IntField, MapField, StringField
 # TODO generate python schemas from javascript schemas
 
 
+class ServerStates:
+    """Server states"""
+
+    WAITING = "WAITING"
+    STARTING = "STARTING"
+    RUNNING = "RUNNING"
+    SHUTTING_DOWN = "SHUTTING DOWN"
+    SHUTDOWN = "SHUTDOWN"
+    ERROR = "ERROR"
+
+    STATES = [WAITING, STARTING, RUNNING, SHUTTING_DOWN, SHUTDOWN, ERROR]
+
+
 class web_users(Document):
     """Define user schema"""
 
@@ -48,8 +61,16 @@ class mqtt_servers(Document):
     """Define server schema"""
 
     user = StringField(required=True, unique=True, trim=True)
-    name = StringField(required=True)
-    uid = StringField(required=True, unique=True, trim=True)
-    addr = StringField(required=True)
-    port = IntField(required=True)
+    name = StringField()
+    status = StringField(required=True, choices=ServerStates.STATES)
+    uid = StringField(unique=True, trim=True)
+    addr = StringField()
+    port = IntField()
     client_count = IntField(required=True, default=0)
+
+
+class mqtt_controllers(Document):
+    """Define controller schema"""
+
+    username = StringField(required=True, unique=True, trim=True)
+    password = StringField(required=True, trim=True)

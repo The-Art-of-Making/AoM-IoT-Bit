@@ -1,5 +1,8 @@
 flask
 kubernetes
 mongoengine
+pika
+protobuf
 redis
+uuid
 waitress

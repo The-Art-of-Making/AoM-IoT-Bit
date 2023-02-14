@@ -1,0 +1,12 @@
+apiVersion: v1
+kind: Service
+metadata:
+  name: mqtt-controller-comms-service
+spec:
+  selector:
+    app: mqtt-controller-comms
+  ports:
+    - name: rabbitmq-port
+      protocol: TCP
+      port: 5672
+      targetPort: 5672

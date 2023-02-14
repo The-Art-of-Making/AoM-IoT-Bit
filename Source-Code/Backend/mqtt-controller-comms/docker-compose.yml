@@ -1,0 +1,14 @@
+version: "3.9"
+services:
+  rabbitmq:
+    build:
+      dockerfile: Dockerfile
+      context: ./
+    ports:
+      - "5672:5672"
+    # environment:
+      # - RABBITMQ_CONFIG_FILE=/etc/rabbitmq/rabbitmq.conf
+networks:
+  default:
+    name: rabbitnet
+    external: true

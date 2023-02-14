@@ -9,8 +9,9 @@ const validateRegisterInput = require("../validation/register")
 const validateLoginInput = require("../validation/login")
 const validateAccountInput = require("../validation/account")
 
-// Load User model
+// Load User and Server models
 const User = require("../models/User")
+const Server = require("../models/Server")
 
 router.post("/register", (req, res) => {
   // Form validation
@@ -35,7 +36,16 @@ router.post("/register", (req, res) => {
           newUser.password = hash
           newUser
             .save()
-            .then(user => res.status(201).json(user))
+            .then(user => {
+              const newServer = new Server({
+                user: user._id
+              })
+              newServer.save().catch(err => {
+                User.deleteOne({ _id: user._id })
+                return res.status(500).json({ serverError: "Server failed to update.", error: err })
+              })
+              return res.status(201).json(user)
+            })
             .catch(err => {
               return res.status(500).json({ serverError: "Server failed to update.", error: err })
             })

@@ -16,7 +16,12 @@ class RabbitMQHandler:
     """Connect and disconnect from a RabbitMQ cluster"""
 
     def __init__(
-        self, queue: str, username: str = "", password: str = "", heartbeat: int = 30
+        self,
+        queue: str,
+        username: str = "",
+        password: str = "",
+        heartbeat: int = 600,
+        blocked_connection_timeout: int = 300,
     ):
         self.queue = queue
         try:
@@ -27,6 +32,7 @@ class RabbitMQHandler:
                     # TODO fix plain authentication
                     # credentials=pika.PlainCredentials(self.username, self.password),
                     heartbeat=heartbeat,
+                    blocked_connection_timeout=blocked_connection_timeout,
                 )
             )
             self.rabbitmq_channel = self.rabbitmq_connection.channel()
@@ -51,10 +57,12 @@ class RabbitMQConsumer(RabbitMQHandler, ThreadHandler):
     """Threaded RabbitMQ Consumer"""
 
     def __init__(self, queue: str, username: str = "", password=""):
-        RabbitMQHandler.__init__(queue=queue, username=username, password=password)
-        ThreadHandler.__init__(target=self.consume)
+        RabbitMQHandler.__init__(
+            self, queue=queue, username=username, password=password
+        )
+        ThreadHandler.__init__(self, target=self.consume)
         self.messages = Queue()
-        self.start()
+        self.start(loop=False)
 
     def disconnect(self) -> bool:
         """Stop consumer and disconnect from RabbitMQ"""
@@ -74,6 +82,7 @@ class RabbitMQConsumer(RabbitMQHandler, ThreadHandler):
             on_message_callback=self.on_message_callback,
             auto_ack=True,
         )
+        self.rabbitmq_channel.start_consuming()
 
     def get_message(self) -> bytes:
         """Get message from message queue"""
@@ -86,8 +95,10 @@ class RabbitMQPublisher(RabbitMQHandler, ThreadHandler):
     """Threaded RabbitMQ Publisher"""
 
     def __init__(self, queue: str, username: str = "", password=""):
-        RabbitMQHandler.__init__(queue=queue, username=username, password=password)
-        ThreadHandler.__init__(target=self.publish)
+        RabbitMQHandler.__init__(
+            self, queue=queue, username=username, password=password
+        )
+        ThreadHandler.__init__(self, target=self.publish)
         self.messages = Queue()
         self.start()
 
@@ -98,11 +109,14 @@ class RabbitMQPublisher(RabbitMQHandler, ThreadHandler):
 
     def put_message(self, message: bytes) -> None:
         """Put message in message queue to be publised"""
+        logger.info(bytes(message))
         self.messages.put(bytes(message))
 
     def publish(self) -> None:
         """Publish messages from message queue to RabbitMQ"""
         if not self.messages.empty():
+            message = self.messages.get()
+            logger.info("Publishing message " + str(message))
             self.rabbitmq_channel.basic_publish(
-                exchange="", routing_key=self.queue, body=self.messages.get()
+                exchange="", routing_key=self.queue, body=message
             )

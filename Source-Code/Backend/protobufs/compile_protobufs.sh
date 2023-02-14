@@ -17,6 +17,7 @@ fi
 protoc -I ./device --python_out=$PYTHON_OUT_DIR ./device/device.proto
 protoc -I ./controller -I ./device --python_out=$PYTHON_OUT_DIR ./controller/controller_message.proto
 rm -Rf $MQTT_CONTROLLER_PROTOBUFS/* && cp -r $PYTHON_OUT_DIR/* $MQTT_CONTROLLER_PROTOBUFS/
+sed -i "s/import device_pb2 as device__pb2/import protobufs.device_pb2 as device__pb2/g" $MQTT_CONTROLLER_PROTOBUFS/controller_message_pb2.py
 
 echo "Compiling protobufs for C (nanopb)..."
 C_OUT_DIR=./c_out

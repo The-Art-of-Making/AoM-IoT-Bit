@@ -24,6 +24,7 @@ class Pod:
     """Operations for Pods"""
 
     # TODO return type annotation
+    @staticmethod
     def get_pods(namespace: str = "default", return_count: bool = False):
         """Get all pods in namespace, also return number of pods in namespace if return_count is true"""
         pods = k8s_core.list_namespaced_pod(namespace)
@@ -35,17 +36,21 @@ class Pod:
         return pods
 
     # TODO return type annotation
+    @staticmethod
     def get_pod(name: str, namespace: str = "default"):
         """Get pod by name in namespace"""
         return k8s_core.read_namespaced_pod(name, namespace)
 
+    @staticmethod
     def get_pod_names(namespace: str = "default") -> list:
         """Get list of pod names in namespace"""
         names = []
         pod_list = Pod.get_pods(namespace)
         for pod in pod_list.items:
             names.append(pod.metadata.name)
+        return names
 
+    @staticmethod
     def get_pod_ips(namespace: str = "default") -> dict:
         """Get list of IPs by pod name"""
         ips = {}
@@ -54,6 +59,7 @@ class Pod:
             ips[pod.metadata.name] = pod.status.pod_ip
         return ips
 
+    @staticmethod
     def is_pod_ready(name: str, namespace: str = "default") -> bool:
         """Returns true if pod has name, uid, and ip"""
         pod = Pod.get_pod(name, namespace=namespace)
@@ -66,6 +72,7 @@ class Pod:
         return True
 
     # TODO type annotation
+    @staticmethod
     def pod_command(
         name: str,
         command: str,
