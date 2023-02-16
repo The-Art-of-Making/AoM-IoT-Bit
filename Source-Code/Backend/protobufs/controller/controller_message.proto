@@ -20,14 +20,9 @@ message ServerInfo {
     uint32 client_count = 5;
 }
 
-message DeviceConfig {
-    aom.iot.device.DeviceInfo device_info = 1;
-    aom.iot.device.Device device = 2;
-}
-
 message ControllerMessage {
     Type type = 1;
     double timestamp = 2;
     ServerInfo server_info = 3;
-    DeviceConfig device_config = 4;
+    Device device = 4;
 }
