@@ -5,12 +5,12 @@ module.exports = function validateClient(data) {
     let errors = {}
 
     // Convert empty fields to an empty string to use validator functions
-    data.userID = !isEmpty(data.userID) ? data.userID : ""
+    data.user = !isEmpty(data.user) ? data.user : ""
     data.name = !isEmpty(data.name) ? data.name : ""
 
     // User ID check
-    if (Validator.isEmpty(data.userID)) {
-        errors.userID = "User ID is required"
+    if (Validator.isEmpty(data.user)) {
+        errors.user = "User is required"
     }
 
     // Name check

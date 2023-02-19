@@ -1,4 +1,3 @@
-// TODO simlink with web-user-auth
 const mongoose = require("mongoose")
 const Schema = mongoose.Schema
 
