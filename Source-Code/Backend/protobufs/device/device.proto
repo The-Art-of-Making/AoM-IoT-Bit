@@ -13,19 +13,22 @@ enum Signal {
 }
 
 message Action {
-    string name = 1;
-    string trigger_topic = 2;
-    string trigger_state = 3;
-    uint32 response = 4;
+    string user = 1;
+    string name = 2;
+    string uid = 3;
+    string trigger_topic = 4;
+    uint32 trigger_state = 5;
+    uint32 response = 6;
 }
 
 message Device {
     string user = 1;
-    string client_name = 2;
-    string client_username = 3;
-    string name = 4;
-    uint32 number = 5;
-    IO io = 6;
-    Signal signal = 7;
-    repeated Action action = 8;
+    string uid = 2;
+    string client_name = 3;
+    string client_username = 4;
+    string name = 5;
+    uint32 number = 6;
+    IO io = 7;
+    Signal signal = 8;
+    repeated Action actions = 9;
 }
