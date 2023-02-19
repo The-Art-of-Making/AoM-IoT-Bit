@@ -3,7 +3,13 @@ from mongoengine import connect
 from mongoengine.errors import ValidationError
 from mongoengine.queryset.queryset import QuerySet
 
-from database_schemas import mqtt_clients, mqtt_devices, mqtt_servers, mqtt_controllers
+from database_schemas import (
+    actions,
+    mqtt_clients,
+    mqtt_devices,
+    mqtt_servers,
+    mqtt_controllers,
+)
 from logger import logger
 
 host = environ.get(
@@ -21,6 +27,15 @@ class MQTTClient:
     def get_client_user(username: str) -> str:
         """Get ID of client's user"""
         return mqtt_clients.objects(username=username).first().user
+
+
+class Action:
+    """Operations for actions collection"""
+
+    @staticmethod
+    def get_actions(user: str = "") -> QuerySet:
+        """Get all of user's actions"""
+        return actions.objects(user=user)
 
 
 class MQTTDevice:
