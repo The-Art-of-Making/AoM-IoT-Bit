@@ -5,7 +5,7 @@ metadata:
   labels:
     app: mqtt-controller
 spec:
-  replicas: 1 # TODO verify multiple controllers can run simultanesouly so at least 3 can be clustered
+  replicas: 3
   selector:
     matchLabels:
       app: mqtt-controller
@@ -30,16 +30,14 @@ spec:
               value: "0.0.0.0"
             - name: PORT
               value: "10080"
-            # - name: REDIS_ADDR
-            #   value: "mqtt-server-cache-service"
             - name: RABBITMQ_ADDR
               value: "mqtt-controller-comms-service"
             - name: RABBITMQ_PORT
               value: "5672"
             - name: RABBITMQ_CONTROLLER_QUEUE
               value: "controller_messages"
-            - name: RABBITMQ_CONFIG_QUEUE
-              value: "config_messages"
+            - name: RABBITMQ_ACTION_QUEUE
+              value: "action_messages"
             # TODO fix PROTOCOL_BUFFERS_PYTHON_IMPLEMENTATION env var workaround
             - name: PROTOCOL_BUFFERS_PYTHON_IMPLEMENTATION
               value: "python"
