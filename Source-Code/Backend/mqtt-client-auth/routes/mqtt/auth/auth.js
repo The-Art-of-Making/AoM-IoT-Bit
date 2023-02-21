@@ -1,4 +1,5 @@
 const bcrypt = require("bcryptjs")
+const crypto = require("crypto")
 const express = require("express")
 const Client = require("../../../models/Client")
 const Controller = require("../../../models/Controller")
@@ -30,12 +31,14 @@ router.post("/user", (req, res) => {
                 return res.status(200).send("allow")
             })
         }
-        bcrypt.compare(password, client.password).then(isMatch => {
-            if (!isMatch) {
-                return res.status(200).send("deny")
-            }
-            return res.status(200).send("allow")
-        })
+        else {
+            bcrypt.compare(password, client.password).then(isMatch => {
+                if (!isMatch) {
+                    return res.status(200).send("deny")
+                }
+                return res.status(200).send("allow")
+            })
+        }
     })
 })
 
