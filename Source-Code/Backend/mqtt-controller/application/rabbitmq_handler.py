@@ -109,7 +109,6 @@ class RabbitMQPublisher(RabbitMQHandler, ThreadHandler):
 
     def put_message(self, message: bytes) -> None:
         """Put message in message queue to be publised"""
-        logger.info(bytes(message))
         self.messages.put(bytes(message))
 
     def publish(self) -> None:
