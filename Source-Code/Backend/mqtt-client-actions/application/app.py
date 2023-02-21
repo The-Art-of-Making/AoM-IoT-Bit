@@ -71,10 +71,11 @@ def handle_config_message(
             }
             publish_config_message = controller_message_pb2.ControllerMessage()
             ParseDict(device_config, publish_config_message)
-            for action in device_actions[device.uid]:
-                action_message = device_pb2.Action()
-                ParseDict(device_actions[device.uid][action], action_message)
-                publish_config_message.device.actions.append(action_message)
+            if device.uid in device_actions:
+                for action in device_actions[device.uid]:
+                    action_message = device_pb2.Action()
+                    ParseDict(device_actions[device.uid][action], action_message)
+                    publish_config_message.device.actions.append(action_message)
             rabbitmq_controller_publisher.put_message(
                 publish_config_message.SerializeToString()
             )
