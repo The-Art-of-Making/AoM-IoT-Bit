@@ -79,15 +79,16 @@ def update_config():
     return jsonify(response)
 
 
-def handler(signal_received, frame):
+def signal_handler(signal_received, frame):
+    """Perform graceful shutdown on SIGTERM or SIGINT"""
     logger.info(f"Recd {signal_received} from {frame}")
     logger.info("SIGTERM or SIGINT or CTRL-C detected. Exiting gracefully")
     controller.stop_controller()
     exit(0)
 
 
-signal(SIGINT, handler)
-signal(SIGTERM, handler)
+signal(SIGINT, signal_handler)
+signal(SIGTERM, signal_handler)
 
 
 if __name__ == "__main__":

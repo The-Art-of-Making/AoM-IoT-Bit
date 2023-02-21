@@ -57,7 +57,7 @@ def start_server_target(
             server_info["uid"] = ready_pod.metadata.uid
             server_info["addr"] = ready_pod.status.pod_ip
             server_info["port"] = 1883  # TODO dynamically set port?
-            if not MQTTServer.update_server(server_info):
+            if not MQTTServer.update_server(user=user, fields=server_info):
                 shutdown_server(user)
                 return False
     except:

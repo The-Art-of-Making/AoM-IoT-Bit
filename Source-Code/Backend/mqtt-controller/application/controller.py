@@ -1,20 +1,21 @@
 from google.protobuf.json_format import ParseDict
-from hashlib import sha256
 from os import environ
+import paho.mqtt.client as mqtt
 from secrets import token_hex
-from time import time
+from time import sleep, time
 from typing import Tuple
 from uuid import uuid4
 
 from database_handler import MQTTController, MQTTServer
 from logger import logger
+from mqtt_handler import MQTTPublisher
 import protobufs.controller_message_pb2 as controller_message_pb2  # TODO resolve PROTOCOL_BUFFERS_PYTHON_IMPLEMENTATION=python workaround
+from rabbitmq_handler import RabbitMQConsumer, RabbitMQPublisher
 from server_handler import start_server, shutdown_server, check_server
 from thread_handler import ThreadHandler
-from rabbitmq_handler import RabbitMQConsumer, RabbitMQPublisher
 
 controller_queue = environ.get("RABBITMQ_CONTROLLER_QUEUE", "controller_messages")
-config_queue = environ.get("RABBITMQ_CONFIG_QUEUE", "config_messages")
+action_queue = environ.get("RABBITMQ_ACTION_QUEUE", "action_messages")
 
 
 class Controller(ThreadHandler):
@@ -27,8 +28,7 @@ class Controller(ThreadHandler):
         # Add controller authentication info to database
         self.username = str(uuid4())
         self.password = token_hex()
-        password_hash = sha256(self.password.encode()).hexdigest()
-        if not MQTTController.add_controller(self.username, password_hash):
+        if not MQTTController.add_controller(self.username, self.password):
             logger.warning("Failed to add controller " + self.username + " to database")
 
         # Initialize RabbitMQ consumers and producers
@@ -38,8 +38,8 @@ class Controller(ThreadHandler):
         self.rabbitmq_controller_publisher = RabbitMQPublisher(
             queue=controller_queue, username=self.username, password=self.password
         )
-        self.rabbitmq_config_publisher = RabbitMQPublisher(
-            queue=config_queue, username=self.username, password=self.password
+        self.rabbitmq_action_publisher = RabbitMQPublisher(
+            queue=action_queue, username=self.username, password=self.password
         )
 
         # Start Controller thread
@@ -53,7 +53,7 @@ class Controller(ThreadHandler):
         # Stop and disconnect RabbitMQ consumers and publishers
         self.rabbitmq_controller_consumer.disconnect()
         self.rabbitmq_controller_publisher.disconnect()
-        self.rabbitmq_config_publisher.disconnect()
+        self.rabbitmq_action_publisher.disconnect()
 
         # Remove controller authentication info from database
         if not MQTTController.delete_controller(username=self.username):
@@ -115,8 +115,31 @@ class Controller(ThreadHandler):
         }
         get_config_message = controller_message_pb2.ControllerMessage()
         ParseDict(config_message, get_config_message)
-        self.rabbitmq_controller_publisher.put_message(
+        self.rabbitmq_action_publisher.put_message(
             get_config_message.SerializeToString()
+        )
+
+    def publish_device_config(
+        self, device_config_message: controller_message_pb2.ControllerMessage
+    ) -> None:
+        """Publish device configuration to topic on MQTT server"""
+        if device_config_message.type != controller_message_pb2.PUBLISH_DEVICE_CONFIG:
+            return
+        user = device_config_message.server_info.user
+        device = device_config_message.device
+        topic = (
+            "/" + device.client_username + "/devices/" + str(device.number) + "/config"
+        )
+        message = device_config_message.SerializeToString()
+        mqtt_server = MQTTServer.get_server(user=user)
+        logger.info(f"Attempting to publish config for device {device.uid}")
+        MQTTPublisher(
+            host=mqtt_server.addr,
+            port=mqtt_server.port,
+            topic=topic,
+            message=message,
+            username=self.username,
+            password=self.password,
         )
 
     def on_server_start(self, user: str = "") -> None:
@@ -151,7 +174,6 @@ class Controller(ThreadHandler):
         """Start new MQTT server for user"""
         if not len(user) > 0:
             return
-        # TODO add server status waiting in db
         start_server(
             user=user, callback=self.on_server_start, callback_kwargs={"user": user}
         )
@@ -207,7 +229,6 @@ class Controller(ThreadHandler):
         if controller_message.type == controller_message_pb2.CHECK_SERVER:
             self.controller_check_server(controller_message=controller_message)
         if controller_message.type == controller_message_pb2.PUBLISH_DEVICE_CONFIG:
-            # TODO publish device config to mqtt server
-            pass
+            self.publish_device_config(device_config_message=controller_message)
         if controller_message.type == controller_message_pb2.SHUTDOWN_SERVER:
             shutdown_server(controller_message.server_info.user)

@@ -1,8 +1,8 @@
 flask
 kubernetes
 mongoengine
+paho-mqtt
 pika
 protobuf
-redis
 uuid
 waitress
