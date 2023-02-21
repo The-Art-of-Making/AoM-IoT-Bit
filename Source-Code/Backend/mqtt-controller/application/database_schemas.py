@@ -1,4 +1,4 @@
-from mongoengine import Document, EmbeddedDocument, EmbeddedDocumentField
+from mongoengine import Document
 from mongoengine.fields import DateTimeField, IntField, MapField, StringField
 
 # TODO generate python schemas from javascript schemas
@@ -35,26 +35,28 @@ class mqtt_clients(Document):
     ip_addr = StringField(trim=True)
 
 
-class device_action(EmbeddedDocument):
-    """Define device action schema"""
+class actions(Document):
+    """Define action schema"""
 
-    action = StringField(required=True, trim=True)
+    user = StringField(required=True, trim=True)
+    name = StringField(required=True, trim=True)
+    uid = StringField(required=True, trim=True)
     trigger_topic = StringField(required=True)
     trigger_state = IntField(required=True)
-    response = IntField(required=True)
+    responses = MapField(IntField(), required=True)
 
 
 class mqtt_devices(Document):
     """Define device schema"""
 
     user = StringField(required=True, trim=True)
+    uid = StringField(required=True, trim=True, unique=True)
     client_name = StringField(required=True, trim=True)
     client_username = StringField(required=True, trim=True)
     name = StringField(required=True, trim=True)
     number = IntField(required=True)
     io = StringField(required=True, choices=["input", "output"])
     signal = StringField(required=True, choices=["digital", "analog"])
-    actions = MapField(EmbeddedDocumentField(device_action), required=False)
 
 
 class mqtt_servers(Document):

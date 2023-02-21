@@ -1,3 +1,4 @@
+from hashlib import sha256
 from os import environ
 from mongoengine import connect
 from mongoengine.errors import ValidationError
@@ -122,7 +123,9 @@ class MQTTController:
     @staticmethod
     def add_controller(username: str, password: str) -> bool:
         """Add document for new MQTT controller to database"""
-        controller = mqtt_controllers(**{"username": username, "password": password})
+        controller = mqtt_controllers(
+            **{"username": username, "password": sha256(password.encode()).hexdigest()}
+        )
         try:
             controller.validate()
             controller.save()

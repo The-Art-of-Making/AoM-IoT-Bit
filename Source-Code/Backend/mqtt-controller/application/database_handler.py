@@ -1,8 +1,16 @@
+from hashlib import sha256
 from os import environ
 from mongoengine import connect
 from mongoengine.errors import ValidationError
+from mongoengine.queryset.queryset import QuerySet
 
-from database_schemas import mqtt_clients, mqtt_servers, mqtt_controllers
+from database_schemas import (
+    actions,
+    mqtt_clients,
+    mqtt_devices,
+    mqtt_servers,
+    mqtt_controllers,
+)
 from logger import logger
 
 host = environ.get(
@@ -20,6 +28,24 @@ class MQTTClient:
     def get_client_user(username: str) -> str:
         """Get ID of client's user"""
         return mqtt_clients.objects(username=username).first().user
+
+
+class Action:
+    """Operations for actions collection"""
+
+    @staticmethod
+    def get_actions(user: str = "") -> QuerySet:
+        """Get all of user's actions"""
+        return actions.objects(user=user)
+
+
+class MQTTDevice:
+    """Operations for mqtt_devices collection"""
+
+    @staticmethod
+    def get_devices(user: str = "") -> QuerySet:
+        """Get all of user's devices"""
+        return mqtt_devices.objects(user=user)
 
 
 class MQTTServer:
@@ -97,7 +123,9 @@ class MQTTController:
     @staticmethod
     def add_controller(username: str, password: str) -> bool:
         """Add document for new MQTT controller to database"""
-        controller = mqtt_controllers(**{"username": username, "password": password})
+        controller = mqtt_controllers(
+            **{"username": username, "password": sha256(password.encode()).hexdigest()}
+        )
         try:
             controller.validate()
             controller.save()
