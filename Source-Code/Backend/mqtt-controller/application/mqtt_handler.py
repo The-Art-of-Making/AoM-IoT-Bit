@@ -14,6 +14,8 @@ class MQTTPublisher(ThreadHandler):
         port: int,
         topic: str,
         message: bytes,
+        qos: int = 1,
+        retain: bool = False,
         username: str = "",
         password: str = "",
         timeout: int = 15,
@@ -27,6 +29,10 @@ class MQTTPublisher(ThreadHandler):
         self.port = port
         self.topic = topic
         self.message = message
+        self.qos = qos
+        if self.qos not in (0, 1, 2):
+            self.qos = 1
+        self.retain = retain
         self.timeout = timeout
         self.attempts = attempts
         self.complete = False
@@ -36,7 +42,9 @@ class MQTTPublisher(ThreadHandler):
         """Callback to publish device config upon successfully connecting to MQTT server"""
         if result_code == 0:
             logger.info(f"Successfully connected to MQTT server")
-            client.publish(self.topic, payload=self.message)
+            client.publish(
+                self.topic, payload=self.message, qos=self.qos, retain=self.retain
+            )
             logger.info(
                 f"Successfully published message {self.message} to topic {self.topic}"
             )

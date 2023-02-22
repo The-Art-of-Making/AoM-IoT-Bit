@@ -138,8 +138,11 @@ class Controller(ThreadHandler):
             port=mqtt_server.port,
             topic=topic,
             message=message,
+            retain=True,
             username=self.username,
             password=self.password,
+            timeout=30,
+            attempts=5,
         )
 
     def on_server_start(self, user: str = "") -> None:
