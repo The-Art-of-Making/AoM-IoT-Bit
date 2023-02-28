@@ -8,7 +8,7 @@ from uuid import uuid4
 
 from database_handler import MQTTController, MQTTServer
 from logger import logger
-from mqtt_handler import MQTTPublisher
+from mqtt_handler import MQTTMessage, MQTTMultiPublisher
 import protobufs.controller_message_pb2 as controller_message_pb2  # TODO resolve PROTOCOL_BUFFERS_PYTHON_IMPLEMENTATION=python workaround
 from rabbitmq_handler import RabbitMQConsumer, RabbitMQPublisher
 from server_handler import start_server, shutdown_server, check_server
@@ -42,6 +42,11 @@ class Controller(ThreadHandler):
             queue=action_queue, username=self.username, password=self.password
         )
 
+        # Initialize MQTT Publisher
+        self.mqtt_publisher = MQTTMultiPublisher(
+            username=self.username, password=self.password
+        )
+
         # Start Controller thread
         self.start()
 
@@ -54,6 +59,10 @@ class Controller(ThreadHandler):
         self.rabbitmq_controller_consumer.disconnect()
         self.rabbitmq_controller_publisher.disconnect()
         self.rabbitmq_action_publisher.disconnect()
+
+        # Stop MQTT publisher
+        # TODO re publish all unpublished messages in MQTT publisher
+        self.mqtt_publisher.stop()
 
         # Remove controller authentication info from database
         if not MQTTController.delete_controller(username=self.username):
@@ -133,17 +142,14 @@ class Controller(ThreadHandler):
         message = device_config_message.SerializeToString()
         mqtt_server = MQTTServer.get_server(user=user)
         logger.info(f"Attempting to publish config for device {device.uid}")
-        MQTTPublisher(
+        mqtt_message = MQTTMessage(
             host=mqtt_server.addr,
             port=mqtt_server.port,
             topic=topic,
-            message=message,
+            payload=message,
             retain=True,
-            username=self.username,
-            password=self.password,
-            timeout=30,
-            attempts=5,
         )
+        self.mqtt_publisher.publish(mqtt_message)
 
     def on_server_start(self, user: str = "") -> None:
         """Publish GET_CONFIG message and CHECK_SERVER message on server start"""
