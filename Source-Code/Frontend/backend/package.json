@@ -1,0 +1,29 @@
+{
+  "name": "auth-template-backend",
+  "version": "1.0.0",
+  "description": "Backend for auth-template web app",
+  "main": "server.js",
+  "scripts": {
+    "frontend-install": "npm install --prefix ../frontend",
+    "start": "node server.js",
+    "backend": "nodemon server.js",
+    "frontend": "npm start --prefix ../frontend",
+    "dev": "concurrently \"npm run backend\" \"npm run frontend\""
+  },
+  "author": "delta-12",
+  "license": "ISC",
+  "dependencies": {
+    "bcryptjs": "^2.4.3",
+    "body-parser": "^1.20.0",
+    "concurrently": "^7.3.0",
+    "express": "^4.18.1",
+    "is-empty": "^1.2.0",
+    "jsonwebtoken": "^8.5.1",
+    "mongoose": "^6.5.4",
+    "nodemon": "^2.0.19",
+    "passport": "^0.6.0",
+    "passport-jwt": "^4.0.0",
+    "path": "^0.12.7",
+    "validator": "^13.7.0"
+  }
+}
