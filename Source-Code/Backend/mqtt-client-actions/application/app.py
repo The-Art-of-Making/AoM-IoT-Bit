@@ -3,6 +3,7 @@ from hashlib import sha256
 from os import environ
 from secrets import token_hex
 from signal import signal, SIGTERM, SIGINT
+from time import time
 from uuid import uuid4
 
 from database_handler import Action, MQTTController, MQTTDevice
@@ -53,6 +54,7 @@ def handle_config_message(
         for device in devices:
             device_config = {
                 "type": controller_message_pb2.PUBLISH_DEVICE_CONFIG,
+                "timestamp": time(),
                 "server_info": {"user": user},
                 "device": {
                     "user": user,
