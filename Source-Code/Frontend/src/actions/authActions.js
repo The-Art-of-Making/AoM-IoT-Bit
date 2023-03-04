@@ -13,7 +13,7 @@ import { trackPromise } from "react-promise-tracker"
 export const registerUser = (userData, navigate) => dispatch => {
   // add promise tracker for registering new user
   axios
-    .post("/api/users/register", userData)
+    .post("/web_users/register", userData)
     .then(res => navigate("/login")) // re-direct to login on successful register
     .catch(err =>
       dispatch({
@@ -26,7 +26,7 @@ export const registerUser = (userData, navigate) => dispatch => {
 // Login - get user token
 export const loginUser = userData => dispatch => {
   axios
-    .post("/api/users/login", userData)
+    .post("/web_users/login", userData)
     .then(res => {
       // Save to localStorage
       // Set token to localStorage
@@ -78,7 +78,7 @@ export const updateCurrentUser = decoded => {
 export const updateAccountInfo = userData => dispatch => {
   trackPromise(
     axios
-      .post("/api/users/updateAccountInfo", userData)
+      .post("/web_users/updateAccountInfo", userData)
       .then(res => {
         // Save to localStorage
         // Set token to localStorage
