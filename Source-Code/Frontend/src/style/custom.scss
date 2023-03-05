@@ -1,0 +1,17 @@
+$body-bg: #000e1d; // background
+$body-color: white;
+
+$theme-colors: (
+    "primary": #051527, // cards, navbar
+    "secondary": #5f7490, // sub text color
+    "success": #21c181,
+    "info": #9cc34a,
+    "warning": #ff5722,
+    "danger": #eb3838,
+    "light": #1974ce, // accents / buttons
+    "dark": #0d1d35 // card sub-background
+);
+
+@import "../../node_modules/bootstrap/scss/bootstrap.scss";
+
+// https://coolors.co/000e1d-051527-0d1d35-1974ce-5f7490-21c181-9cc34a-ff5722-eb3838

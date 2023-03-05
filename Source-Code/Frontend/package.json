@@ -30,8 +30,9 @@
     "test": "react-scripts test",
     "eject": "react-scripts eject",
     "backend-install": "npm install . --prefix ../Backend/web-user-auth",
+    "build-style": "npx sass src/style/custom.scss src/style/custom.css",
     "backend": "cd ../Backend/web-user-auth && npm run dev",
-    "frontend": "npm start",
+    "frontend": "npm run build-style && npm start",
     "dev": "concurrently \"npm run backend\" \"npm run frontend\""
   },
   "proxy": "http://localhost:5000",
@@ -52,5 +53,8 @@
       "last 1 firefox version",
       "last 1 safari version"
     ]
+  },
+  "devDependencies": {
+    "node-sass": "^7.0.3"
   }
 }

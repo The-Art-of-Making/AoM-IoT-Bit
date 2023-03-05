@@ -6,6 +6,7 @@ import { updateAccountInfo } from "../actions/authActions"
 import { LoadingIndicator } from "../components/LoadingIndicator"
 import ServerResponse from "../components/ServerResponse"
 import WithRouter from "../components/WithRouter"
+import Header from "../components/Header"
 
 class Account extends Component {
 
@@ -48,11 +49,12 @@ class Account extends Component {
 
     return (
       <div>
+        <Header />
         <hr className="my-5" style={{ visibility: "hidden" }}></hr>
         <form noValidate onSubmit={this.onSubmit}>
           <div className="container">
             <div className="d-flex justify-content-center h-100 row align-items-center">
-              <div className="col card p-3 m-3">
+              <div className="col card p-3 m-3 bg-primary">
                 <div className="card-header mb-3">Update Account Information</div>
                 <LoadingIndicator text="Updating Account Info..." />
                 {

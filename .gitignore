@@ -20,6 +20,10 @@ __pycache__
 # Node.js
 node_modules
 
+# Sass / Css
+custom.css
+custom.css.map
+
 # Kubernetes
 *kubeconfig.yaml
 mongo_uri_secret.yaml
