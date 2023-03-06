@@ -235,4 +235,85 @@ router.post("/delete_action", (req, res) => {
         })
 })
 
+router.post("/get_server", (req, res) => {
+    const user = req.body.user
+    if (!user) {
+        return res.status(400).json({ user: "User is required" })
+    }
+    User
+        .findOne({ _id: user })
+        .then(findUser => {
+            if (!findUser) {
+                return res.status(404).json({ error: "User " + user + " does not exist" })
+            }
+            else {
+                Server
+                    .findOne({ user: user })
+                    .then(server => {
+                        return res.status(200).json(server)
+                    })
+                    .catch(err => {
+                        return res.status(500).json({ error: err })
+                    })
+            }
+        })
+        .catch(err => {
+            return res.status(500).json({ error: err })
+        })
+})
+
+router.post("/get_clients", (req, res) => {
+    const user = req.body.user
+    if (!user) {
+        return res.status(400).json({ user: "User is required" })
+    }
+    User
+        .findOne({ _id: user })
+        .then(findUser => {
+            if (!findUser) {
+                return res.status(404).json({ error: "User " + user + " does not exist" })
+            }
+            else {
+                Client
+                    .find({ user: user })
+                    .then(clients => {
+                        return res.status(200).json(clients)
+                    })
+                    .catch(err => {
+                        return res.status(500).json({ error: err })
+                    })
+            }
+        })
+        .catch(err => {
+            return res.status(500).json({ error: err })
+        })
+})
+
+router.post("/get_devices", (req, res) => {
+    const user = req.body.user
+    if (!user) {
+        return res.status(400).json({ user: "User is required" })
+    }
+    User
+        .findOne({ _id: user })
+        .then(findUser => {
+            if (!findUser) {
+                return res.status(404).json({ error: "User " + user + " does not exist" })
+            }
+            else {
+                Device
+                    .find()
+                    .then(devices => {
+                        return res.status(200).json(devices)
+                    })
+                    .catch(err => {
+                        return res.status(500).json({ error: err })
+                    })
+            }
+        })
+        .catch(err => {
+            return res.status(500).json({ error: err })
+        })
+})
+
 module.exports = router

@@ -1,5 +1,5 @@
 {
-  "name": "auth-template",
+  "name": "aom-iot",
   "version": "0.1.0",
   "private": true,
   "dependencies": {
@@ -7,8 +7,7 @@
     "@testing-library/react": "^13.4.0",
     "@testing-library/user-event": "^13.5.0",
     "axios": "^0.27.2",
-    "bootstrap": "^5.2.0",
-    "bootswatch": "^5.2.0",
+    "bootstrap": "^5.2.3",
     "classnames": "^2.3.1",
     "concurrently": "^7.6.0",
     "is-empty": "^1.2.0",
@@ -35,7 +34,7 @@
     "frontend": "npm run build-style && npm start",
     "dev": "concurrently \"npm run backend\" \"npm run frontend\""
   },
-  "proxy": "http://localhost:5000",
+  "proxy": "http://localhost:5001",
   "eslintConfig": {
     "extends": [
       "react-app",

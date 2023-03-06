@@ -1,4 +1,5 @@
 const express = require("express")
+const cors = require("cors")
 const mongoose = require("mongoose")
 const bodyParser = require("body-parser")
 const mqtt_auth = require("./routes/mqtt/auth/auth")
@@ -8,6 +9,7 @@ const web_client = require("./routes/web/client/client")
 const db = process.env.MONGOURI || require("./config/keys").mongoURI
 
 const server = express()
+server.use(cors())
 
 mongoose
     .connect(

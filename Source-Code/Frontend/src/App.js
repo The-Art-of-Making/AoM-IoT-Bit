@@ -11,6 +11,11 @@ import Register from "./auth/Register"
 import Login from "./auth/Login"
 import Account from "./auth/Account"
 import Dashboard from "./pages/Dashboard"
+import Server from "./pages/Server"
+import Clients from "./pages/Clients"
+import Devices from "./pages/Devices"
+import Actions from "./pages/Actions"
+import Zones from "./pages/Zones"
 
 // Check for token to keep user logged in
 if (localStorage.jwtToken) {
@@ -42,6 +47,14 @@ export default class App extends Component {
             <Route path="/login" element={<Login />} />
             <Route path="/register" element={<Register />} />
             <Route
+              path="/account"
+              element={
+                <PrivateRoute>
+                  <Account />
+                </PrivateRoute>
+              }
+            />
+            <Route
               path="/dashboard"
               element={
                 <PrivateRoute>
@@ -50,10 +63,42 @@ export default class App extends Component {
               }
             />
             <Route
-              path="/account"
+              path="/server"
               element={
                 <PrivateRoute>
-                  <Account />
+                  <Server />
+                </PrivateRoute>
+              }
+            />
+            <Route
+              path="/clients"
+              element={
+                <PrivateRoute>
+                  <Clients />
+                </PrivateRoute>
+              }
+            />
+            <Route
+              path="/devices"
+              element={
+                <PrivateRoute>
+                  <Devices />
+                </PrivateRoute>
+              }
+            />
+            <Route
+              path="/actions"
+              element={
+                <PrivateRoute>
+                  <Actions />
+                </PrivateRoute>
+              }
+            />
+            <Route
+              path="/zones"
+              element={
+                <PrivateRoute>
+                  <Zones />
                 </PrivateRoute>
               }
             />
