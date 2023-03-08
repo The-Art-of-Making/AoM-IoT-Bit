@@ -16,7 +16,7 @@ export default function Header(props) {
                 </button>
                 <div className={"collapse navbar-collapse " + show}>
                     <ul className="navbar-nav me-auto">
-                        {location.pathname.split("/").slice(1).map(page => <NavbarLink key={page} page={page} />)}
+                        {(props.user) ? location.pathname.split("/").slice(1).map(page => <NavbarLink key={page} page={page} />) : null}
                     </ul>
                     {(props.user) ? <div className="d-flex">
                         <div className="btn-group m-1">
