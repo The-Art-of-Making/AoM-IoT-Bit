@@ -5,7 +5,7 @@ import { logoutUser } from "../actions/authActions"
 import axios from "axios"
 import Header from "../components/Header"
 import Sidebar from "../components/Sidebar"
-import DashboardCard from "../components/DashboardCard"
+import UnderConstruction from "../components/UnderContruction"
 
 class Server extends Component {
 
@@ -63,11 +63,7 @@ class Server extends Component {
                         <Header user={this.props.auth.user} onLogoutClick={this.onLogoutClick} />
                     </div>
                     <div className="container-fluid">
-                        <div className="row justify-content-center p-1 gap-1">
-                            <DashboardCard title="Server" textFormat={this.serverTextColor()} maxWidth="33%" stat={this.state.status} />
-                            <DashboardCard title="Clients" textFormat="text-light" maxWidth="33%" stat={4} />
-                            <DashboardCard title="Devices" textFormat="text-light" maxWidth="33%" stat={4} />
-                        </div>
+                        <UnderConstruction />
                     </div>
                 </div>
             </div>

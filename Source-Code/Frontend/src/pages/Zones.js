@@ -2,56 +2,15 @@ import { Component } from "react"
 import PropTypes from "prop-types"
 import { connect } from "react-redux"
 import { logoutUser } from "../actions/authActions"
-import axios from "axios"
 import Header from "../components/Header"
 import Sidebar from "../components/Sidebar"
-import DashboardCard from "../components/DashboardCard"
+import UnderConstruction from "../components/UnderContruction"
 
-class Server extends Component {
-
-    state = {
-        status: "",
-        activeClients: 0,
-        internalAddr: "",
-        deploymentName: "",
-        port: 0,
-        uid: "",
-        errors: {}
-    }
-
-    componentDidMount() {
-        this.getServer()
-    }
+class Zones extends Component {
 
     onLogoutClick = e => {
         e.preventDefault()
         this.props.logoutUser()
-    }
-
-    getServer() {
-        const reqData = { user: this.props.auth.user.id }
-        axios
-            .post("http://localhost:5000/web/client/get_server", reqData)
-            .then(res =>
-                this.setState({
-                    status: res.data.status
-                })
-            )
-            .catch(err =>
-                this.setState({
-                    errors: err.response.data
-                })
-            )
-    }
-
-    serverTextColor = () => {
-        if (this.state.server === "RUNNING") {
-            return "text-success"
-        }
-        if (this.state.server === "SHUTDOWN") {
-            return "text-danger"
-        }
-        return "text-warning"
     }
 
     render() {
@@ -63,11 +22,7 @@ class Server extends Component {
                         <Header user={this.props.auth.user} onLogoutClick={this.onLogoutClick} />
                     </div>
                     <div className="container-fluid">
-                        <div className="row justify-content-center p-1 gap-1">
-                            <DashboardCard title="Server" textFormat={this.serverTextColor()} maxWidth="33%" stat={this.state.status} />
-                            <DashboardCard title="Clients" textFormat="text-light" maxWidth="33%" stat={4} />
-                            <DashboardCard title="Devices" textFormat="text-light" maxWidth="33%" stat={4} />
-                        </div>
+                        <UnderConstruction />
                     </div>
                 </div>
             </div>
@@ -75,7 +30,7 @@ class Server extends Component {
     }
 }
 
-Server.propTypes = {
+Zones.propTypes = {
     logoutUser: PropTypes.func.isRequired,
     auth: PropTypes.object.isRequired
 }
@@ -86,4 +41,4 @@ const mapStateToProps = state => ({
 export default connect(
     mapStateToProps,
     { logoutUser }
-)(Server)
+)(Zones)
