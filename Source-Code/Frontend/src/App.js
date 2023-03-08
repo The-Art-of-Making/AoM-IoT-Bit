@@ -16,7 +16,9 @@ import Clients from "./pages/Clients/Clients"
 import AllClients from "./pages/Clients/AllClients"
 import NewClient from "./pages/Clients/NewClient"
 import Devices from "./pages/Devices"
-import Actions from "./pages/Actions"
+import Actions from "./pages/Actions/Actions"
+import AllActions from "./pages/Actions/AllActions"
+import NewAction from "./pages/Actions/NewAction"
 import Zones from "./pages/Zones"
 
 // Check for token to keep user logged in
@@ -117,8 +119,31 @@ export default class App extends Component {
                 <PrivateRoute>
                   <Actions />
                 </PrivateRoute>
-              }
-            />
+              }>
+              <Route
+                index element={
+                  <PrivateRoute>
+                    <AllActions />
+                  </PrivateRoute>
+                }
+              />
+              <Route
+                path="all_actions"
+                element={
+                  <PrivateRoute>
+                    <AllActions />
+                  </PrivateRoute>
+                }
+              />
+              <Route
+                path="new_action"
+                element={
+                  <PrivateRoute>
+                    <NewAction />
+                  </PrivateRoute>
+                }
+              />
+            </Route>
             <Route
               path="/zones"
               element={

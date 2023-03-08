@@ -27,6 +27,14 @@ export const RouteMapping = {
         to: "/actions",
         title: "Actions"
     },
+    all_actions: {
+        to: "/actions/all_actions",
+        title: "All Actions"
+    },
+    new_action: {
+        to: "/clients/new_action",
+        title: "New Action"
+    },
     zones: {
         to: "/zones",
         title: "Zones"

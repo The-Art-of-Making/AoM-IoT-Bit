@@ -1,9 +1,11 @@
 import { Component } from "react"
+import { Link } from "react-router-dom"
 import PropTypes from "prop-types"
 import { connect } from "react-redux"
 import { logoutUser } from "../../actions/authActions"
 import axios from "axios"
 import classnames from "classnames"
+import { checkIcon, deleteIcon } from "../../icons/icons"
 
 class NewClient extends Component {
 
@@ -48,7 +50,10 @@ class NewClient extends Component {
                                 <input className={classnames((errors.name !== undefined) ? "form-control is-invalid" : "form-control", { invalid: errors.name })} onChange={this.onChange} value={this.state.name} placeholder="Client Name" error={errors.name} id="name" type="text" />
                                 {(errors.name) ? <><small className="form-text text-danger">{errors.name}</small><br /></> : null}
                             </div>
-                            <button className="btn btn-success" type="submit">Add Client</button>
+                            <div className="d-flex flex-row-reverse">
+                                <button className="btn text-success" type="submit">{checkIcon} Add Client</button>
+                                <Link className="btn text-danger" to="/clients" style={{ textDecoration: "none" }}>{deleteIcon} Cancel</Link>
+                            </div>
                         </div>
                     </div>
                 </div>

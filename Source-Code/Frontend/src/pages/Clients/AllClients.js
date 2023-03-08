@@ -18,11 +18,6 @@ class AllClients extends Component {
         this.getDevices()
     }
 
-    componentWillUnmount() {
-        clearTimeout(this.getClientsIntervalID)
-        clearTimeout(this.getDevicesIntervalID)
-    }
-
     getClients() {
         const reqData = { user: this.props.auth.user.id }
         axios
@@ -37,7 +32,6 @@ class AllClients extends Component {
                     errors: err.response.data
                 })
             )
-        this.getClientsIntervalID = setTimeout(this.getClients.bind(this), 5000)
     }
 
     getDevices() {
@@ -54,16 +48,33 @@ class AllClients extends Component {
                     errors: err.response.data
                 })
             )
-        this.getDevicesIntervalID = setTimeout(this.getDevices.bind(this), 5000)
+    }
+
+    editClient = (client, name) => {
+        const updateClient = { user: this.props.auth.user.id, username: client, name: name }
+        axios
+            .post("http://localhost:5000/web/client/update", updateClient)
+            .then(res => {
+                this.getClients()
+                this.getDevices()
+                console.log(res)
+            })
+            .catch(err =>
+                this.setState({
+                    errors: err.response.data
+                })
+            )
     }
 
     deleteClient = client => {
         const reqData = { user: this.props.auth.user.id, username: client }
         axios
             .post("http://localhost:5000/web/client/delete", reqData)
-            .then(res =>
+            .then(res => {
+                this.getClients()
+                this.getDevices()
                 console.log(res)
-            )
+            })
             .catch(err =>
                 this.setState({
                     errors: err.response.data
@@ -74,7 +85,7 @@ class AllClients extends Component {
     render() {
         return (
             <div className="row justify-content-left p-1 gap-1">
-                {this.state.clients.map(client => <ClientCard key={client.username} client={client} devices={this.state.devices} deleteClient={this.deleteClient} />)}
+                {this.state.clients.map(client => <ClientCard key={client.username} client={client} devices={this.state.devices} editClient={this.editClient} deleteClient={this.deleteClient} />)}
                 <div className="card text-white bg-primary" style={{ maxWidth: "24.7%" }} >
                     <Link style={{ textDecoration: "none" }} to="new_client">
                         <div className="card-body bg-primary">

@@ -6,6 +6,7 @@ const User = require("../../../models/User")
 const Device = require("../../../models/Device")
 const Action = require("../../../models/Action")
 const validateRegisterClient = require("../../../validation/register_client")
+const validateUpdateClient = require("../../../validation/update_client")
 const validateDeleteClient = require("../../../validation/delete_client")
 const validateAddAction = require("../../../validation/add_action")
 const validateDeleteAction = require("../../../validation/delete_action")
@@ -94,6 +95,45 @@ router.post("/register", (req, res) => {
         })
         .catch(err => {
             console.log(err)
+            return res.status(500).json({ error: err })
+        })
+})
+
+router.post("/update", (req, res) => {
+    // Check validation
+    const { errors, isValid } = validateUpdateClient(req.body)
+    if (!isValid) {
+        return res.status(400).json(errors)
+    }
+    const username = req.body.username
+    User.findOne({ _id: req.body.user })
+        .then(user => {
+            if (!user) {
+                return res.status(404).json({ user: "User " + req.body.user + " does not exist" })
+            }
+            else {
+                Client.findOne({ username: username })
+                    .then(client => {
+                        if (!client) {
+                            return res.status(404).json({ client: "Client " + username + " does not exist" })
+                        }
+                        else {
+                            client.name = req.body.name
+                            client.save()
+                                .then(updatedClient => {
+                                    return res.status(200).json(updatedClient)
+                                })
+                                .catch(err => {
+                                    return res.status(500).json({ error: err })
+                                })
+                        }
+                    })
+                    .catch(err => {
+                        return res.status(500).json({ error: err })
+                    })
+            }
+        })
+        .catch(err => {
             return res.status(500).json({ error: err })
         })
 })
