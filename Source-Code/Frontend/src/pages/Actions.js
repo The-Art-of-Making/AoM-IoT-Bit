@@ -16,7 +16,7 @@ class Server extends Component {
         deploymentName: "",
         port: 0,
         uid: "",
-        error: {}
+        errors: {}
     }
 
     componentDidMount() {
@@ -39,7 +39,7 @@ class Server extends Component {
             )
             .catch(err =>
                 this.setState({
-                    error: err.response.data.error
+                    errors: err.response.data
                 })
             )
     }

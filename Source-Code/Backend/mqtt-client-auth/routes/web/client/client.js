@@ -55,7 +55,7 @@ router.post("/register", (req, res) => {
     User.findOne({ _id: req.body.user })
         .then(user => {
             if (!user) {
-                return res.status(404).json({ error: "User " + req.body.user + " does not exist" })
+                return res.status(404).json({ user: "User " + req.body.user + " does not exist" })
             }
             else {
                 // TODO add two devices
@@ -107,7 +107,7 @@ router.post("/delete", (req, res) => {
     User.findOne({ _id: req.body.user })
         .then(user => {
             if (!user) {
-                return res.status(404).json({ error: "User " + req.body.user + " does not exist" })
+                return res.status(404).json({ user: "User " + req.body.user + " does not exist" })
             }
             else {
                 // Delete client devices
@@ -115,7 +115,7 @@ router.post("/delete", (req, res) => {
                     .findOne({ user: req.body.user, username: req.body.username })
                     .then(client => {
                         if (!client) {
-                            return res.status(404).json({ error: "Client " + req.body.username + " does not exist" })
+                            return res.status(404).json({ client: "Client " + req.body.username + " does not exist" })
                         } else {
                             if (!deleteDevices(req.body.user, req.body.username)) {
                                 return res.status(500).json({ error: "Failed to delete devices for client " + req.body.username })
@@ -162,18 +162,18 @@ router.post("/add_action", (req, res) => {
         .findOne({ _id: user })
         .then(findUser => {
             if (!findUser) {
-                return res.status(404).json({ error: "User " + user + " does not exist" })
+                return res.status(404).json({ user: "User " + user + " does not exist" })
             }
             else {
                 Device
                     .find({ user: user })
                     .then(devices => {
                         if (!devices) {
-                            return res.status(404).json({ error: "Devices not found" })
+                            return res.status(404).json({ devices: "Devices not found" })
                         }
                         for (let i = 0; i < deviceUIDs.length; i++) {
                             if (!devices.find(device => device.uid == deviceUIDs[i])) {
-                                return res.status(404).json({ error: "Devices not found" })
+                                return res.status(404).json({ devices: "Devices not found" })
                             }
                         }
                         for (const uid in deviceResponses) {
@@ -216,7 +216,7 @@ router.post("/delete_action", (req, res) => {
         .findOne({ _id: user })
         .then(findUser => {
             if (!findUser) {
-                return res.status(404).json({ error: "User " + user + " does not exist" })
+                return res.status(404).json({ user: "User " + user + " does not exist" })
             }
             else {
                 Action
@@ -244,7 +244,7 @@ router.post("/get_server", (req, res) => {
         .findOne({ _id: user })
         .then(findUser => {
             if (!findUser) {
-                return res.status(404).json({ error: "User " + user + " does not exist" })
+                return res.status(404).json({ user: "User " + user + " does not exist" })
             }
             else {
                 Server
@@ -271,7 +271,7 @@ router.post("/get_clients", (req, res) => {
         .findOne({ _id: user })
         .then(findUser => {
             if (!findUser) {
-                return res.status(404).json({ error: "User " + user + " does not exist" })
+                return res.status(404).json({ user: "User " + user + " does not exist" })
             }
             else {
                 Client
@@ -298,7 +298,7 @@ router.post("/get_devices", (req, res) => {
         .findOne({ _id: user })
         .then(findUser => {
             if (!findUser) {
-                return res.status(404).json({ error: "User " + user + " does not exist" })
+                return res.status(404).json({ user: "User " + user + " does not exist" })
             }
             else {
                 Device

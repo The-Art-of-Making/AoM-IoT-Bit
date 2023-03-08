@@ -12,7 +12,9 @@ import Login from "./auth/Login"
 import Account from "./auth/Account"
 import Dashboard from "./pages/Dashboard"
 import Server from "./pages/Server"
-import Clients from "./pages/Clients"
+import Clients from "./pages/Clients/Clients"
+import AllClients from "./pages/Clients/AllClients"
+import NewClient from "./pages/Clients/NewClient"
 import Devices from "./pages/Devices"
 import Actions from "./pages/Actions"
 import Zones from "./pages/Zones"
@@ -76,8 +78,31 @@ export default class App extends Component {
                 <PrivateRoute>
                   <Clients />
                 </PrivateRoute>
-              }
-            />
+              }>
+              <Route
+                index element={
+                  <PrivateRoute>
+                    <AllClients />
+                  </PrivateRoute>
+                }
+              />
+              <Route
+                path="all_clients"
+                element={
+                  <PrivateRoute>
+                    <AllClients />
+                  </PrivateRoute>
+                }
+              />
+              <Route
+                path="new_client"
+                element={
+                  <PrivateRoute>
+                    <NewClient />
+                  </PrivateRoute>
+                }
+              />
+            </Route>
             <Route
               path="/devices"
               element={

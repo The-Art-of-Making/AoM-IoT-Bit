@@ -5,22 +5,23 @@ import { logoutUser } from "../actions/authActions"
 import axios from "axios"
 import Header from "../components/Header"
 import Sidebar from "../components/Sidebar"
-import DashboardCard from "../components/DashboardCard"
+import CardInfo from "../components/CardInfo"
 
 class Server extends Component {
 
     state = {
         status: "",
         activeClients: 0,
-        internalAddr: "",
-        deploymentName: "",
         port: 0,
-        uid: "",
-        error: {}
+        errors: {}
     }
 
     componentDidMount() {
         this.getServer()
+    }
+    
+    componentWillUnmount() {
+        clearTimeout(this.intervalID)
     }
 
     onLogoutClick = e => {
@@ -34,14 +35,17 @@ class Server extends Component {
             .post("http://localhost:5000/web/client/get_server", reqData)
             .then(res =>
                 this.setState({
-                    status: res.data.status
+                    status: res.data.status,
+                    activeClients: res.data.client_count,
+                    port: res.data.port
                 })
             )
             .catch(err =>
                 this.setState({
-                    error: err.response.data.error
+                    errors: err.response.data
                 })
             )
+        this.intervalID = setTimeout(this.getServer.bind(this), 5000)
     }
 
     serverTextColor = () => {
@@ -54,6 +58,37 @@ class Server extends Component {
         return "text-warning"
     }
 
+    onClick = e => {
+        e.preventDefault()
+        const reqData = { user: this.props.auth.user.id }
+        if (this.state.server === "SHUTDOWN")
+        {
+            axios
+            .post("http://localhost:10080/start_server", reqData)
+            .then(res =>
+                console.log(res)
+            )
+            .catch(err =>
+                this.setState({
+                    errors: err.response.data
+                })
+            )
+        }
+        else
+        {
+            axios
+            .post("http://localhost:10080/shutdown_server", reqData)
+            .then(res =>
+                console.log(res)
+            )
+            .catch(err =>
+                this.setState({
+                    errors: err.response.data
+                })
+            )
+        }
+    }
+
     render() {
         return (
             <div className="d-flex">
@@ -64,9 +99,28 @@ class Server extends Component {
                     </div>
                     <div className="container-fluid">
                         <div className="row justify-content-center p-1 gap-1">
-                            <DashboardCard title="Server" textFormat={this.serverTextColor()} maxWidth="33%" stat={this.state.status} />
-                            <DashboardCard title="Clients" textFormat="text-light" maxWidth="33%" stat={4} />
-                            <DashboardCard title="Devices" textFormat="text-light" maxWidth="33%" stat={4} />
+                            <div className="card text-white bg-primary mb-3">
+                                <div className="card-body bg-primary">
+                                    <div className="d-grid text-left p-3 rounded bg-dark" style={{ background: "#000e1d" }}>
+                                        <h4 className="card-title">Server</h4>
+                                        <hr />
+                                        <div className="d-flex mb-2">
+                                            <div className="form-check form-switch">
+                                                <input
+                                                    className={"form-check-input " + (this.state.status === "RUNNING" ? "bg-success" : "bg-secondary")}
+                                                    type="checkbox"
+                                                    onClick={this.onClick}
+                                                    checked={(this.state.status === "RUNNING" ? true : false)}
+                                                    disabled={(this.state.status !== "SHUTDOWN" && this.state.status !== "RUNNING" ? true : false)} />
+                                                <label className="form-check-label">{(this.state.status === "SHUTDOWN" ? "Start" : "Shutdown")}</label>
+                                            </div>
+                                        </div>
+                                        <CardInfo info="Status" value={this.state.status} textStyle={this.serverTextColor()} />
+                                        <CardInfo info="Address" value="server.aom-iot.io" textStyle="text-light" />
+                                        <CardInfo info="Port" value={this.state.port} textStyle="text-light" />
+                                    </div>
+                                </div>
+                            </div>
                         </div>
                     </div>
                 </div>

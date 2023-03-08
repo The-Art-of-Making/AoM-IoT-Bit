@@ -14,7 +14,7 @@ class Dashboard extends Component {
         server: "",
         clients: 0,
         devices: 0,
-        error: {}
+        errors: {}
     }
 
     componentDidMount() {
@@ -39,7 +39,7 @@ class Dashboard extends Component {
             )
             .catch(err =>
                 this.setState({
-                    error: err.response.data.error
+                    errors: err.response.data
                 })
             )
     }
@@ -55,7 +55,7 @@ class Dashboard extends Component {
             )
             .catch(err =>
                 this.setState({
-                    error: err.response.data.error
+                    errors: err.response.data
                 })
             )
     }
@@ -64,14 +64,15 @@ class Dashboard extends Component {
         const reqData = { user: this.props.auth.user.id }
         axios
             .post("http://localhost:5000/web/client/get_devices", reqData)
-            .then(res =>
+            .then(res => {
                 this.setState({
                     devices: res.data.length
                 })
-            )
+                console.log(res.data)
+            })
             .catch(err =>
                 this.setState({
-                    error: err.response.data.error
+                    errors: err.response.data
                 })
             )
     }
@@ -102,24 +103,24 @@ class Dashboard extends Component {
                             <div className="card text-white bg-primary" style={{ maxWidth: "50%" }}>
                                 <div className="card-header">{actionIcon} Actions</div>
                                 <div className="card-body bg-primary">
-                                    <div className="d-grid text-left p-3 rounded" style={{background: "#000e1d"}}>
-                                        <p className="card-text">Action 1</p>
-                                        <p className="card-text">Action 1</p>
-                                        <p className="card-text">Action 1</p>
-                                        <p className="card-text">Action 1</p>
+                                    <div className="d-grid text-left p-3 rounded" style={{ background: "#" }}>
+                                        <p className="card-text"><span className="text-light" style={{fontWeight: "bold"}}>&#8627;&ensp;</span>Action 1</p>
+                                        <p className="card-text"><span className="text-light" style={{fontWeight: "bold"}}>&#8627;&ensp;</span>Action 1</p>
+                                        <p className="card-text"><span className="text-light" style={{fontWeight: "bold"}}>&#8627;&ensp;</span>Action 1</p>
+                                        <p className="card-text"><span className="text-light" style={{fontWeight: "bold"}}>&#8627;&ensp;</span>Action 1</p>
                                     </div>
                                 </div>
                             </div>
                             <div className="card text-white bg-primary" style={{ maxWidth: "49%" }}>
                                 <div className="card-header">{zoneIcon} Zones</div>
                                 <div className="card-body bg-primary">
-                                    <div className="d-grid text-left p-3 rounded mb-2" style={{background: "#000e1d"}}>
+                                    <div className="d-grid text-left p-3 rounded mb-2" style={{ background: "#000e1d" }}>
                                         <p className="card-text">Zone 1</p>
                                     </div>
-                                    <div className="d-grid text-left p-3 rounded mb-2" style={{background: "#000e1d"}}>
+                                    <div className="d-grid text-left p-3 rounded mb-2" style={{ background: "#000e1d" }}>
                                         <p className="card-text">Zone 1</p>
                                     </div>
-                                    <div className="d-grid text-left p-3 rounded mb-2" style={{background: "#000e1d"}}>
+                                    <div className="d-grid text-left p-3 rounded mb-2" style={{ background: "#000e1d" }}>
                                         <p className="card-text">Zone 1</p>
                                     </div>
                                 </div>

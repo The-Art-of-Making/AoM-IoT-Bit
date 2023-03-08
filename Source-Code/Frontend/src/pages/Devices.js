@@ -5,22 +5,17 @@ import { logoutUser } from "../actions/authActions"
 import axios from "axios"
 import Header from "../components/Header"
 import Sidebar from "../components/Sidebar"
-import DashboardCard from "../components/DashboardCard"
+import DeviceCard from "../components/DeviceCard"
 
-class Server extends Component {
+class Devices extends Component {
 
     state = {
-        status: "",
-        activeClients: 0,
-        internalAddr: "",
-        deploymentName: "",
-        port: 0,
-        uid: "",
-        error: {}
+        devices: [],
+        errors: {}
     }
 
     componentDidMount() {
-        this.getServer()
+        this.getDevices()
     }
 
     onLogoutClick = e => {
@@ -28,33 +23,34 @@ class Server extends Component {
         this.props.logoutUser()
     }
 
-    getServer() {
+    getDevices() {
         const reqData = { user: this.props.auth.user.id }
         axios
-            .post("http://localhost:5000/web/client/get_server", reqData)
-            .then(res =>
+            .post("http://localhost:5000/web/client/get_devices", reqData)
+            .then(res => {
                 this.setState({
-                    status: res.data.status
+                    devices: res.data
                 })
-            )
+            })
             .catch(err =>
                 this.setState({
-                    error: err.response.data.error
+                    errors: err.response.data
                 })
             )
-    }
-
-    serverTextColor = () => {
-        if (this.state.server === "RUNNING") {
-            return "text-success"
-        }
-        if (this.state.server === "SHUTDOWN") {
-            return "text-danger"
-        }
-        return "text-warning"
     }
 
     render() {
+        const testDevice = {
+            "_id": "63f185ce26c85552f34f876d",
+            "user": "63eacf4612a1731b3d444b9f",
+            "uid": "device-c4c8e66b-709a-4757-8408-e20e81738e58",
+            "client_name": "Test Client",
+            "client_username": "client-30736f14-93f7-4fec-88e4-07c1381c378e",
+            "name": "Device 0",
+            "number": 0,
+            "io": "output",
+            "signal": "analog"
+        }
         return (
             <div className="d-flex">
                 <Sidebar currentItem="Devices" />
@@ -63,10 +59,9 @@ class Server extends Component {
                         <Header user={this.props.auth.user} onLogoutClick={this.onLogoutClick} />
                     </div>
                     <div className="container-fluid">
-                        <div className="row justify-content-center p-1 gap-1">
-                            <DashboardCard title="Server" textFormat={this.serverTextColor()} maxWidth="33%" stat={this.state.status} />
-                            <DashboardCard title="Clients" textFormat="text-light" maxWidth="33%" stat={4} />
-                            <DashboardCard title="Devices" textFormat="text-light" maxWidth="33%" stat={4} />
+                        <div className="row justify-content-left p-1 gap-1">
+                            {this.state.devices.map(device => <DeviceCard key={device.uid} device={device} />)}
+                            <DeviceCard device={testDevice} />
                         </div>
                     </div>
                 </div>
@@ -75,7 +70,7 @@ class Server extends Component {
     }
 }
 
-Server.propTypes = {
+Devices.propTypes = {
     logoutUser: PropTypes.func.isRequired,
     auth: PropTypes.object.isRequired
 }
@@ -86,4 +81,4 @@ const mapStateToProps = state => ({
 export default connect(
     mapStateToProps,
     { logoutUser }
-)(Server)
+)(Devices)

@@ -1,9 +1,10 @@
 import { useState } from "react"
-import { Link } from "react-router-dom"
+import { Link, useLocation } from "react-router-dom"
 import NavbarLink from "./NavbarLink"
 
 export default function Header(props) {
     const [show, setShow] = useState("show")
+    const location = useLocation()
     return (
         <nav className="navbar navbar-expand-lg navbar-dark bg-dark">
             <div className="container-fluid">
@@ -15,9 +16,7 @@ export default function Header(props) {
                 </button>
                 <div className={"collapse navbar-collapse " + show}>
                     <ul className="navbar-nav me-auto">
-                        <NavbarLink to="/" title="Page" />
-                        <NavbarLink to="/" title="History" />
-                        <NavbarLink to="/" title="Breadcrumbs" />
+                        {location.pathname.split("/").slice(1).map(page => <NavbarLink key={page} page={page} />)}
                     </ul>
                     {(props.user) ? <div className="d-flex">
                         <div className="btn-group m-1">
