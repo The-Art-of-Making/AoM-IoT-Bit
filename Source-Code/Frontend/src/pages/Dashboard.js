@@ -7,6 +7,7 @@ import Header from "../components/Header"
 import Sidebar from "../components/Sidebar"
 import DashboardCard from "../components/DashboardCard"
 import { actionIcon, zoneIcon } from "../icons/icons"
+import UnderConstruction from "../components/UnderContruction"
 
 class Dashboard extends Component {
 
@@ -14,6 +15,7 @@ class Dashboard extends Component {
         server: "",
         clients: 0,
         devices: 0,
+        actions: {},
         errors: {}
     }
 
@@ -21,6 +23,7 @@ class Dashboard extends Component {
         this.getServer()
         this.getClients()
         this.getDevices()
+        this.getActions()
     }
 
     onLogoutClick = e => {
@@ -68,8 +71,24 @@ class Dashboard extends Component {
                 this.setState({
                     devices: res.data.length
                 })
-                console.log(res.data)
             })
+            .catch(err =>
+                this.setState({
+                    errors: err.response.data
+                })
+            )
+    }
+
+    getActions() {
+        const reqData = { user: this.props.auth.user.id }
+        axios
+            .post("http://localhost:5000/web/client/get_actions", reqData)
+            .then(res => {
+                this.setState({
+                    actions: res.data
+                })
+            }
+            )
             .catch(err =>
                 this.setState({
                     errors: err.response.data
@@ -104,25 +123,14 @@ class Dashboard extends Component {
                                 <div className="card-header">{actionIcon} Actions</div>
                                 <div className="card-body bg-primary">
                                     <div className="d-grid text-left p-3 rounded" style={{ background: "#" }}>
-                                        <p className="card-text"><span className="text-light" style={{fontWeight: "bold"}}>&#8627;&ensp;</span>Action 1</p>
-                                        <p className="card-text"><span className="text-light" style={{fontWeight: "bold"}}>&#8627;&ensp;</span>Action 1</p>
-                                        <p className="card-text"><span className="text-light" style={{fontWeight: "bold"}}>&#8627;&ensp;</span>Action 1</p>
-                                        <p className="card-text"><span className="text-light" style={{fontWeight: "bold"}}>&#8627;&ensp;</span>Action 1</p>
+                                        {(this.state.actions.length > 0) ? this.state.actions.map(action => <p key={action.uid} className="card-text"><span className="text-light" style={{fontWeight: "bold"}}>&#8627;&ensp;</span>{action.name}</p>) : null}
                                     </div>
                                 </div>
                             </div>
                             <div className="card text-white bg-primary" style={{ maxWidth: "49%" }}>
                                 <div className="card-header">{zoneIcon} Zones</div>
                                 <div className="card-body bg-primary">
-                                    <div className="d-grid text-left p-3 rounded mb-2" style={{ background: "#000e1d" }}>
-                                        <p className="card-text">Zone 1</p>
-                                    </div>
-                                    <div className="d-grid text-left p-3 rounded mb-2" style={{ background: "#000e1d" }}>
-                                        <p className="card-text">Zone 1</p>
-                                    </div>
-                                    <div className="d-grid text-left p-3 rounded mb-2" style={{ background: "#000e1d" }}>
-                                        <p className="card-text">Zone 1</p>
-                                    </div>
+                                    <UnderConstruction height="20vh" />
                                 </div>
                             </div>
                         </div>

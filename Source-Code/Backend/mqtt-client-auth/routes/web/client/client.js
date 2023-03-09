@@ -320,6 +320,33 @@ router.post("/delete_action", (req, res) => {
         })
 })
 
+router.post("/get_actions", (req, res) => {
+    const user = req.body.user
+    if (!user) {
+        return res.status(400).json({ user: "User is required" })
+    }
+    User
+        .findOne({ _id: user })
+        .then(findUser => {
+            if (!findUser) {
+                return res.status(404).json({ user: "User " + user + " does not exist" })
+            }
+            else {
+                Action
+                    .find({ user: user })
+                    .then(actions => {
+                        return res.status(200).json(actions)
+                    })
+                    .catch(err => {
+                        return res.status(500).json({ error: err })
+                    })
+            }
+        })
+        .catch(err => {
+            return res.status(500).json({ error: err })
+        })
+})
+
 router.post("/get_server", (req, res) => {
     const user = req.body.user
     if (!user) {
