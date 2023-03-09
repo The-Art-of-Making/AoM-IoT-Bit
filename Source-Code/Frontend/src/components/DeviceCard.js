@@ -1,5 +1,6 @@
+import { useState } from "react"
 import CardInfo from "./CardInfo"
-import { editIcon } from "../icons/icons"
+import { editIcon, checkIcon } from "../icons/icons"
 
 const Gauge = (percent = 0, radius = 45, color = "#21c181") => {
     const strokeWidth = radius * 0.25
@@ -70,16 +71,47 @@ const analogControl = <>
 </>
 
 export default function DeviceCard(props) {
+    const [edit, setEdit] = useState(false)
+    const [name, setName] = useState(props.device.name)
+    const [io, setIO] = useState(props.device.io)
+    const [signal, setSignal] = useState(props.device.signal)
     return (
         <div className="card text-white bg-primary" style={{ maxWidth: (props.maxWidth ? props.maxWidth : "24.7%") }}>
             <div className="card-header d-flex justify-content-between align-items-center" style={{ fontWeight: "bold" }}>
-                {props.device.name}
-                <button className="btn text-light">{editIcon}</button>
+                {(edit) ? <input type="text" className="form-control border-secondary" onChange={e => setName(e.target.value)} value={name} placeholder={name}></input> : props.device.name}
+                {(edit)
+                    ? <>
+                        <div className="btn text-success" onClick={() => {
+                            props.editDevice(props.device.uid, name, io, signal)
+                            setEdit(false)
+                        }}>{checkIcon}</div>
+                    </>
+                    : <div className="btn text-light" onClick={() => setEdit(true)}>{editIcon}</div>
+                }
             </div>
             <div className="card-body bg-primary">
                 <CardInfo info="Client" value={props.device.client_name} textStyle="text-secondary" />
-                <CardInfo info="IO" value={props.device.io} textStyle="text-secondary" />
-                <CardInfo info="Type" value={props.device.signal} textStyle="text-secondary" />
+                <CardInfo info="Number" value={props.device.number} textStyle="text-secondary" />
+                {(edit)
+                    ? <div className="d-flex">
+                        <p className="card-text" style={{ fontWeight: "bold" }}>IO:&ensp;</p>
+                        <select className="form-control mb-2" onChange={e => setIO(e.target.value)} value={io}>
+                            <option key="input" value="input">input</option>
+                            <option key="output" value="output">output</option>
+                        </select>
+                    </div>
+                    : <CardInfo info="IO" value={props.device.io} textStyle="text-secondary" />
+                }
+                {(edit)
+                    ? <div className="d-flex">
+                        <p className="card-text" style={{ fontWeight: "bold" }}>Type:&ensp;</p>
+                        <select className="form-control mb-2" onChange={e => setSignal(e.target.value)} value={signal}>
+                            <option key="analog" value="analog">analog</option>
+                            <option key="digital" value="digital">digital</option>
+                        </select>
+                    </div>
+                    : <CardInfo info="Type" value={props.device.signal} textStyle="text-secondary" />
+                }
                 {(props.device.signal === "digital" ? digitalControl : analogControl)}
             </div>
         </div>

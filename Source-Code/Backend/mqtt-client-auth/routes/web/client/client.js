@@ -8,6 +8,7 @@ const Action = require("../../../models/Action")
 const validateRegisterClient = require("../../../validation/register_client")
 const validateUpdateClient = require("../../../validation/update_client")
 const validateDeleteClient = require("../../../validation/delete_client")
+const validateUpdateDevice = require("../../../validation/update_device")
 const validateAddAction = require("../../../validation/add_action")
 const validateDeleteAction = require("../../../validation/delete_action")
 
@@ -181,6 +182,50 @@ router.post("/delete", (req, res) => {
         })
         .catch(err => {
             console.log(err)
+            return res.status(500).json({ error: err })
+        })
+})
+
+router.post("/update_device", (req, res) => {
+    // Check validation
+    const { errors, isValid } = validateUpdateDevice(req.body)
+    if (!isValid) {
+        return res.status(400).json(errors)
+    }
+    const uid = req.body.uid
+    const name = req.body.name
+    const io = req.body.io
+    const signal = req.body.signal
+    User.findOne({ _id: req.body.user })
+        .then(user => {
+            if (!user) {
+                return res.status(404).json({ user: "User " + req.body.user + " does not exist" })
+            }
+            else {
+                Device.findOne({ uid: uid })
+                    .then(device => {
+                        if (!device) {
+                            return res.status(404).json({ device: "Device " + uid + " does not exist" })
+                        }
+                        else {
+                            device.name = name
+                            device.io = io
+                            device.signal = signal
+                            device.save()
+                                .then(updatedDevice => {
+                                    return res.status(200).json(updatedDevice)
+                                })
+                                .catch(err => {
+                                    return res.status(500).json({ error: err })
+                                })
+                        }
+                    })
+                    .catch(err => {
+                        return res.status(500).json({ error: err })
+                    })
+            }
+        })
+        .catch(err => {
             return res.status(500).json({ error: err })
         })
 })

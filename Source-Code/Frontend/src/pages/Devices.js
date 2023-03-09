@@ -39,18 +39,22 @@ class Devices extends Component {
             )
     }
 
+    editDevice = (uid, name, io, signal) => {
+        const updateDevice = { user: this.props.auth.user.id, uid: uid, name: name, io: io, signal: signal }
+        axios
+            .post("http://localhost:5000/web/client/update_device", updateDevice)
+            .then(res => {
+                this.getDevices()
+                console.log(res)
+            })
+            .catch(err =>
+                this.setState({
+                    errors: err.response.data
+                })
+            )
+    }
+
     render() {
-        const testDevice = {
-            "_id": "63f185ce26c85552f34f876d",
-            "user": "63eacf4612a1731b3d444b9f",
-            "uid": "device-c4c8e66b-709a-4757-8408-e20e81738e58",
-            "client_name": "Test Client",
-            "client_username": "client-30736f14-93f7-4fec-88e4-07c1381c378e",
-            "name": "Device 0",
-            "number": 0,
-            "io": "output",
-            "signal": "analog"
-        }
         return (
             <div className="d-flex">
                 <Sidebar currentItem="Devices" />
@@ -60,8 +64,7 @@ class Devices extends Component {
                     </div>
                     <div className="container-fluid">
                         <div className="row justify-content-left p-1 gap-1">
-                            {this.state.devices.map(device => <DeviceCard key={device.uid} device={device} />)}
-                            <DeviceCard device={testDevice} />
+                            {this.state.devices.map(device => <DeviceCard key={device.uid} device={device} editDevice={this.editDevice} />)}
                         </div>
                     </div>
                 </div>
