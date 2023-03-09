@@ -1,4 +1,5 @@
 import { useState } from "react"
+import classnames from "classnames"
 import CardInfo from "./CardInfo"
 import { editIcon, checkIcon } from "../icons/icons"
 
@@ -49,26 +50,40 @@ const Gauge = (percent = 0, radius = 45, color = "#21c181") => {
     )
 }
 
-const digitalControl = <>
-    <div className="bg-dark d-flex justify-content-center pt-3 rounded-top">
-        <h2>OFF</h2>
-    </div>
-    <div className="bg-dark d-flex justify-content-center pb-3 rounded-bottom">
-        <label className="switch align-self-center">
-            <input type="checkbox" />
-            <span className="slider round"></span>
-        </label>
-    </div>
-</>
+const digitalControl = io => {
+    return (
+        <>
+            <div className={classnames((io === "input") ? "rounded pb-2" : "rounded-top", "bg-dark d-flex justify-content-center pt-3")}>
+                <h2>OFF</h2>
+            </div>
+            {(io === "output")
+                ? <div className="bg-dark d-flex justify-content-center pb-3 rounded-bottom">
+                    <label className="switch align-self-center">
+                        <input type="checkbox" />
+                        <span className="slider round"></span>
+                    </label>
+                </div>
+                : null
+            }
+        </>
+    )
+}
 
-const analogControl = <>
-    <div className="bg-dark d-flex justify-content-center pt-3 rounded-top">
-        {Gauge(40)}
-    </div>
-    <div className="bg-dark d-flex justify-content-center px-2 rounded-bottom">
-        <input type="range" className="form-range"></input>
-    </div>
-</>
+const analogControl = io => {
+    return (
+        <>
+            <div className={classnames((io === "input") ? "rounded pb-2" : "rounded-top", "bg-dark d-flex justify-content-center pt-3")}>
+                {Gauge(40)}
+            </div>
+            {(io === "output")
+                ? <div className="bg-dark d-flex justify-content-center px-2 rounded-bottom">
+                    <input type="range" className="form-range"></input>
+                </div>
+                : null
+            }
+        </>
+    )
+}
 
 export default function DeviceCard(props) {
     const [edit, setEdit] = useState(false)
@@ -112,7 +127,7 @@ export default function DeviceCard(props) {
                     </div>
                     : <CardInfo info="Type" value={props.device.signal} textStyle="text-secondary" />
                 }
-                {(props.device.signal === "digital" ? digitalControl : analogControl)}
+                {(props.device.signal === "digital" ? digitalControl(io) : analogControl(io))}
             </div>
         </div>
     )
