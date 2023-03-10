@@ -1,6 +1,7 @@
 const express = require("express")
 const mongoose = require("mongoose")
 const passport = require("passport")
+const path = require("path")
 
 const users = require("./routes/users")
 
@@ -33,6 +34,12 @@ app.use(passport.initialize())
 require("./config/passport")(passport)
 // Routes
 app.use("/web_users/", users)
+
+// Set static folder
+app.use(express.static("../frontend/build"))
+app.get("*", (req, res) => {
+  res.sendFile(path.resolve(__dirname, "../frontend/build/index.html"))
+})
 
 const port = process.env.PORT || 5001
 
