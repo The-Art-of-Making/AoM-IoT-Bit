@@ -3,6 +3,7 @@ const crypto = require("crypto")
 const express = require("express")
 const Client = require("../../../models/Client")
 const Controller = require("../../../models/Controller")
+const User = require("../../../models/User")
 const validateClient = require("../../../validation/client")
 
 const router = express.Router()
@@ -22,13 +23,22 @@ router.post("/user", (req, res) => {
         if (!client) {
             Controller.findOne({ username: username }).then(controller => {
                 if (!controller) {
-                    return res.status(200).send("deny")
+                    User.findOne({ _id: username }).then(user => {
+                        if (!user) {
+                            return res.status(200).send("deny")
+                        }
+                        else {
+                            return res.status(200).send("allow")
+                        }
+                    })
                 }
-                const password_hash = crypto.createHash("sha256").update(password).digest("hex")
-                if (password_hash !== controller.password) {
-                    return res.status(200).send("deny")
+                else {
+                    const password_hash = crypto.createHash("sha256").update(password).digest("hex")
+                    if (password_hash !== controller.password) {
+                        return res.status(200).send("deny")
+                    }
+                    return res.status(200).send("allow")
                 }
-                return res.status(200).send("allow")
             })
         }
         else {
