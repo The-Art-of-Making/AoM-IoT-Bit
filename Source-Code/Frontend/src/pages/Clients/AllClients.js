@@ -4,6 +4,7 @@ import PropTypes from "prop-types"
 import { connect } from "react-redux"
 import axios from "axios"
 import ClientCard from "../../components/ClientCard"
+import { clientAuth } from "../../endpoints"
 
 class AllClients extends Component {
 
@@ -21,7 +22,7 @@ class AllClients extends Component {
     getClients() {
         const reqData = { user: this.props.auth.user.id }
         axios
-            .post("http://localhost:5000/web/client/get_clients", reqData)
+            .post(clientAuth + "/web/client/get_clients", reqData)
             .then(res =>
                 this.setState({
                     clients: res.data
@@ -37,7 +38,7 @@ class AllClients extends Component {
     getDevices() {
         const reqData = { user: this.props.auth.user.id }
         axios
-            .post("http://localhost:5000/web/client/get_devices", reqData)
+            .post(clientAuth + "/web/client/get_devices", reqData)
             .then(res =>
                 this.setState({
                     devices: res.data
@@ -53,7 +54,7 @@ class AllClients extends Component {
     editClient = (client, name) => {
         const updateClient = { user: this.props.auth.user.id, username: client, name: name }
         axios
-            .post("http://localhost:5000/web/client/update", updateClient)
+            .post(clientAuth + "/web/client/update", updateClient)
             .then(res => {
                 this.getClients()
                 this.getDevices()
@@ -69,7 +70,7 @@ class AllClients extends Component {
     deleteClient = client => {
         const reqData = { user: this.props.auth.user.id, username: client }
         axios
-            .post("http://localhost:5000/web/client/delete", reqData)
+            .post(clientAuth + "/web/client/delete", reqData)
             .then(res => {
                 this.getClients()
                 this.getDevices()

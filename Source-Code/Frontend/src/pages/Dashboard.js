@@ -8,6 +8,7 @@ import Sidebar from "../components/Sidebar"
 import DashboardCard from "../components/DashboardCard"
 import { actionIcon, zoneIcon } from "../icons/icons"
 import UnderConstruction from "../components/UnderContruction"
+import { clientAuth } from "../endpoints"
 
 class Dashboard extends Component {
 
@@ -34,7 +35,7 @@ class Dashboard extends Component {
     getServer() {
         const reqData = { user: this.props.auth.user.id }
         axios
-            .post("http://localhost:5000/web/client/get_server", reqData)
+            .post(clientAuth + "/web/client/get_server", reqData)
             .then(res =>
                 this.setState({
                     server: res.data.status
@@ -50,7 +51,7 @@ class Dashboard extends Component {
     getClients() {
         const reqData = { user: this.props.auth.user.id }
         axios
-            .post("http://localhost:5000/web/client/get_clients", reqData)
+            .post(clientAuth + "/web/client/get_clients", reqData)
             .then(res =>
                 this.setState({
                     clients: res.data.length
@@ -66,7 +67,7 @@ class Dashboard extends Component {
     getDevices() {
         const reqData = { user: this.props.auth.user.id }
         axios
-            .post("http://localhost:5000/web/client/get_devices", reqData)
+            .post(clientAuth + "/web/client/get_devices", reqData)
             .then(res => {
                 this.setState({
                     devices: res.data.length
@@ -82,7 +83,7 @@ class Dashboard extends Component {
     getActions() {
         const reqData = { user: this.props.auth.user.id }
         axios
-            .post("http://localhost:5000/web/client/get_actions", reqData)
+            .post(clientAuth + "/web/client/get_actions", reqData)
             .then(res => {
                 this.setState({
                     actions: res.data
@@ -123,7 +124,7 @@ class Dashboard extends Component {
                                 <div className="card-header">{actionIcon} Actions</div>
                                 <div className="card-body bg-primary">
                                     <div className="d-grid text-left p-3 rounded" style={{ background: "#" }}>
-                                        {(this.state.actions.length > 0) ? this.state.actions.map(action => <p key={action.uid} className="card-text"><span className="text-light" style={{fontWeight: "bold"}}>&#8627;&ensp;</span>{action.name}</p>) : null}
+                                        {(this.state.actions.length > 0) ? this.state.actions.map(action => <p key={action.uid} className="card-text"><span className="text-light" style={{ fontWeight: "bold" }}>&#8627;&ensp;</span>{action.name}</p>) : null}
                                     </div>
                                 </div>
                             </div>

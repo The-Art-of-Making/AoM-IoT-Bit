@@ -4,6 +4,7 @@ import { connect } from "react-redux"
 import { Link } from "react-router-dom"
 import axios from "axios"
 import ActionRow from "../../components/ActionRow"
+import { clientAuth } from "../../endpoints"
 
 class AllActions extends Component {
 
@@ -19,7 +20,7 @@ class AllActions extends Component {
     getActions() {
         const reqData = { user: this.props.auth.user.id }
         axios
-            .post("http://localhost:5000/web/client/get_actions", reqData)
+            .post(clientAuth + "/web/client/get_actions", reqData)
             .then(res => {
                 this.setState({
                     actions: res.data
@@ -36,7 +37,7 @@ class AllActions extends Component {
     deleteAction = action => {
         const reqData = { user: this.props.auth.user.id, uid: action }
         axios
-            .post("http://localhost:5000/web/client/delete_action", reqData)
+            .post(clientAuth + "/web/client/delete_action", reqData)
             .then(res => {
                 this.getActions()
                 console.log(res)

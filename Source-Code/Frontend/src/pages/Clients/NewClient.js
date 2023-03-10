@@ -6,6 +6,7 @@ import { logoutUser } from "../../actions/authActions"
 import axios from "axios"
 import classnames from "classnames"
 import { checkIcon, deleteIcon } from "../../icons/icons"
+import { clientAuth } from "../../endpoints"
 
 class NewClient extends Component {
 
@@ -20,14 +21,24 @@ class NewClient extends Component {
         })
     }
 
+    downloadConfigFile = (username, password) => {
+        const element = document.createElement("a");
+        const file = new Blob([username + ";" + password], { type: 'text/plain' });
+        element.href = URL.createObjectURL(file);
+        element.download = "secrets.txt";
+        document.body.appendChild(element);
+        element.click();
+    }
+
     onSubmit = e => {
         e.preventDefault()
         const newClient = { user: this.props.auth.user.id, name: this.state.name }
         axios
-            .post("http://localhost:5000/web/client/register", newClient)
-            .then(res =>
+            .post(clientAuth + "/web/client/register", newClient)
+            .then(res => {
+                this.downloadConfigFile(res.data.username, res.data.password)
                 console.log(res)
-            )
+            })
             .catch(err =>
                 this.setState({
                     errors: err.response.data

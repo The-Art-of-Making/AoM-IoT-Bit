@@ -6,6 +6,7 @@ import axios from "axios"
 import Header from "../components/Header"
 import Sidebar from "../components/Sidebar"
 import CardInfo from "../components/CardInfo"
+import { clientAuth, mqttController } from "../endpoints"
 
 class Server extends Component {
 
@@ -19,7 +20,7 @@ class Server extends Component {
     componentDidMount() {
         this.getServer()
     }
-    
+
     componentWillUnmount() {
         clearTimeout(this.intervalID)
     }
@@ -32,7 +33,7 @@ class Server extends Component {
     getServer() {
         const reqData = { user: this.props.auth.user.id }
         axios
-            .post("http://localhost:5000/web/client/get_server", reqData)
+            .post(clientAuth + "/web/client/get_server", reqData)
             .then(res =>
                 this.setState({
                     status: res.data.status,
@@ -49,10 +50,10 @@ class Server extends Component {
     }
 
     serverTextColor = () => {
-        if (this.state.server === "RUNNING") {
+        if (this.state.status === "RUNNING") {
             return "text-success"
         }
-        if (this.state.server === "SHUTDOWN") {
+        if (this.state.status === "SHUTDOWN") {
             return "text-danger"
         }
         return "text-warning"
@@ -61,31 +62,29 @@ class Server extends Component {
     onClick = e => {
         e.preventDefault()
         const reqData = { user: this.props.auth.user.id }
-        if (this.state.server === "SHUTDOWN")
-        {
+        if (this.state.status === "SHUTDOWN") {
             axios
-            .post("http://localhost:10080/start_server", reqData)
-            .then(res =>
-                console.log(res)
-            )
-            .catch(err =>
-                this.setState({
-                    errors: err.response.data
-                })
-            )
+                .post(mqttController + "/start_server", reqData)
+                .then(res =>
+                    console.log(res)
+                )
+                .catch(err =>
+                    this.setState({
+                        errors: err.response.data
+                    })
+                )
         }
-        else
-        {
+        else {
             axios
-            .post("http://localhost:10080/shutdown_server", reqData)
-            .then(res =>
-                console.log(res)
-            )
-            .catch(err =>
-                this.setState({
-                    errors: err.response.data
-                })
-            )
+                .post(mqttController + "/shutdown_server", reqData)
+                .then(res =>
+                    console.log(res)
+                )
+                .catch(err =>
+                    this.setState({
+                        errors: err.response.data
+                    })
+                )
         }
     }
 

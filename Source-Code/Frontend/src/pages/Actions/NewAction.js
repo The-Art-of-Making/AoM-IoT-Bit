@@ -6,6 +6,7 @@ import axios from "axios"
 import classnames from "classnames"
 import { checkIcon, deleteIcon } from "../../icons/icons"
 import ActionResponse from "../../components/ActionResponse"
+import { clientAuth } from "../../endpoints"
 
 class NewAction extends Component {
 
@@ -26,7 +27,7 @@ class NewAction extends Component {
     getDevices() {
         const reqData = { user: this.props.auth.user.id }
         axios
-            .post("http://localhost:5000/web/client/get_devices", reqData)
+            .post(clientAuth + "/web/client/get_devices", reqData)
             .then(res => {
                 this.setState({
                     devices: res.data,
@@ -108,7 +109,7 @@ class NewAction extends Component {
             deviceResponses: deviceResponses
         }
         axios
-            .post("http://localhost:5000/web/client/add_action", newAction)
+            .post(clientAuth + "/web/client/add_action", newAction)
             .then(res =>
                 console.log(res)
             )

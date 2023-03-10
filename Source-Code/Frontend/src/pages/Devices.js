@@ -6,6 +6,7 @@ import axios from "axios"
 import Header from "../components/Header"
 import Sidebar from "../components/Sidebar"
 import DeviceCard from "../components/DeviceCard"
+import { clientAuth } from "../endpoints"
 
 class Devices extends Component {
 
@@ -26,7 +27,7 @@ class Devices extends Component {
     getDevices() {
         const reqData = { user: this.props.auth.user.id }
         axios
-            .post("http://localhost:5000/web/client/get_devices", reqData)
+            .post(clientAuth + "/web/client/get_devices", reqData)
             .then(res => {
                 this.setState({
                     devices: res.data
@@ -42,7 +43,7 @@ class Devices extends Component {
     editDevice = (uid, name, io, signal) => {
         const updateDevice = { user: this.props.auth.user.id, uid: uid, name: name, io: io, signal: signal }
         axios
-            .post("http://localhost:5000/web/client/update_device", updateDevice)
+            .post(clientAuth + "/web/client/update_device", updateDevice)
             .then(res => {
                 this.getDevices()
                 console.log(res)
