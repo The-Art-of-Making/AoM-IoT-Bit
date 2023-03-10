@@ -19,7 +19,7 @@ spec:
           image: d3lta12/mqtt-controller-application:public
           imagePullPolicy: Always
           ports:
-            - containerPort: 10080
+            - containerPort: 18080
           env:
             - name: MONGOURI
               valueFrom:
@@ -29,7 +29,7 @@ spec:
             - name: HOST
               value: "0.0.0.0"
             - name: PORT
-              value: "10080"
+              value: "18080"
             - name: RABBITMQ_ADDR
               value: "mqtt-controller-comms-service"
             - name: RABBITMQ_PORT
