@@ -6,7 +6,9 @@ services:
       context: ./
     ports:
       - "1883:1883"
+      - "9001:9001"
     environment:
       - MQTT_LOOKUP_HOST=""
       - MQTT_LOOKUP_PORT=5000
       - MQTT_PORT=1883
+      - WS_PORT=9001

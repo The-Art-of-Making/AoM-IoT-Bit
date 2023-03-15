@@ -67,7 +67,8 @@ class mqtt_servers(Document):
     status = StringField(required=True, choices=ServerStates.STATES)
     uid = StringField(unique=True, trim=True)
     addr = StringField()
-    port = IntField()
+    port = IntField(default=1883)
+    wsPort = IntField(default=9001)
     client_count = IntField(required=True, default=0)
 
 

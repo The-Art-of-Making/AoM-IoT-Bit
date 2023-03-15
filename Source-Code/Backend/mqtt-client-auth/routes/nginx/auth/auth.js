@@ -31,7 +31,7 @@ router.get("/client", (req, res) => {
                         if (!server) {
                             return res.status(404).json({ error: "No server exists for user " + username })
                         }
-                        return res.status(200).json({ server: server.addr + ":" + server.port })
+                        return res.status(200).json({ server: server.addr + ":" + server.wsPort })
                     })
                 }
             })
