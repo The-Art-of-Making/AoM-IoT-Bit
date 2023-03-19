@@ -50,7 +50,7 @@ const Gauge = (percent = 0, radius = 45, color = "#21c181") => {
     )
 }
 
-const digitalControl = (io, state) => {
+const digitalControl = (io, state, publish, topic) => {
     return (
         <>
             <div className={classnames((io === "input") ? "rounded pb-2" : "rounded-top", "bg-dark d-flex justify-content-center pt-3")}>
@@ -59,7 +59,7 @@ const digitalControl = (io, state) => {
             {(io === "output")
                 ? <div className="bg-dark d-flex justify-content-center pb-3 rounded-bottom">
                     <label className="switch align-self-center">
-                        <input type="checkbox" checked={(parseInt(state) === 1) ? true : false} onChange={() => { }} />
+                        <input type="checkbox" checked={(parseInt(state) === 1) ? true : false} onChange={() => publish(topic, (parseInt(state) === 1) ? "0" : "1")} />
                         <span className="slider round" />
                     </label>
                 </div>
@@ -69,15 +69,16 @@ const digitalControl = (io, state) => {
     )
 }
 
-const analogControl = (io, state) => {
+const analogControl = (io, state, publish, topic) => {
+    const value = parseInt(state) / 4095
     return (
         <>
             <div className={classnames((io === "input") ? "rounded pb-2" : "rounded-top", "bg-dark d-flex justify-content-center pt-3")}>
-                {Gauge((parseInt(state) * 100 / 4095).toFixed(1))}
+                {Gauge((value * 100).toFixed(1))}
             </div>
             {(io === "output")
                 ? <div className="bg-dark d-flex justify-content-center px-2 rounded-bottom">
-                    <input type="range" className="form-range" />
+                    <input type="range" className="form-range" value={value * 100} onChange={e => publish(topic, (e.target.value / 100 * 4096).toString())} />
                 </div>
                 : null
             }
@@ -92,6 +93,7 @@ export default class DeviceCard extends Component {
         name: this.props.device.name,
         io: this.props.device.io,
         signal: this.props.device.signal,
+        cmdTopic: "/" + this.props.device.client_username + "/devices/" + this.props.device.number + "/cmd",
         deviceState: "0"
     }
 
@@ -117,7 +119,15 @@ export default class DeviceCard extends Component {
         return (
             <div className="card text-white bg-primary" style={{ maxWidth: (this.props.maxWidth ? this.props.maxWidth : "24.7%") }}>
                 <div className="card-header d-flex justify-content-between align-items-center" style={{ fontWeight: "bold" }}>
-                    {(this.state.edit) ? <input type="text" className="form-control border-secondary" onChange={this.onChange} value={this.state.name} placeholder={this.state.name}></input> : this.props.device.name}
+                    {(this.state.edit) ?
+                        <input
+                            type="text"
+                            className="form-control border-secondary"
+                            onChange={this.onChange}
+                            value={this.state.name}
+                            placeholder={this.state.name}
+                        />
+                        : this.props.device.name}
                     {(this.state.edit)
                         ? <>
                             <div className="btn text-success" onClick={() => {
@@ -151,7 +161,9 @@ export default class DeviceCard extends Component {
                         </div>
                         : <CardInfo info="Type" value={this.props.device.signal} textStyle="text-secondary" />
                     }
-                    {(this.props.device.signal === "digital" ? digitalControl(this.state.io, this.state.deviceState) : analogControl(this.state.io, this.state.deviceState))}
+                    {(this.props.device.signal === "digital" ?
+                        digitalControl(this.state.io, this.state.deviceState, this.props.publish, this.state.cmdTopic)
+                        : analogControl(this.state.io, this.state.deviceState, this.props.publish, this.state.cmdTopic))}
                 </div>
             </div>
         )
