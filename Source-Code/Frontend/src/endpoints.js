@@ -1,3 +1,6 @@
 export const clientAuth = "http://192.168.136.128:5000"
 export const mqttController = "http://192.168.136.129:18080"
-export const mqttServer = "ws://localhost:9001/ws"
+export const mqttServer = "ws://192.168.136.136:9001/ws"
+// export const clientAuth = "http://localhost:5000"
+// export const mqttController = "http://localhost:18080"
+// export const mqttServer = "ws://localhost:9001/ws"
