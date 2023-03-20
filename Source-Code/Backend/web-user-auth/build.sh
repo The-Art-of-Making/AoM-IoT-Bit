@@ -1,5 +1,6 @@
 #!/bin/bash
 
+rm -Rf frontend/build
 npm run build --prefix ../../Frontend/
 mkdir -p frontend
 cp -r ../../Frontend/build frontend/build
