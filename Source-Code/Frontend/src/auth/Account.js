@@ -1,4 +1,5 @@
 import { Component } from "react"
+import { Link } from "react-router-dom"
 import PropTypes from "prop-types"
 import { connect } from "react-redux"
 import classnames from "classnames"
@@ -65,13 +66,14 @@ class Account extends Component {
                   <label>Email</label>
                   <input className={classnames((errors.email !== undefined) ? "form-control is-invalid" : "form-control", { invalid: errors.email })} onChange={this.onChange} value={this.state.email} placeholder={this.props.auth.user.email} error={errors.email} id="email" type="email" />
                   {(errors.email) ? <><small className="form-text text-danger">{errors.email}</small><br /></> : null}
-                  <label>Password</label>
+                  <label className="mt-3">Password</label>
                   <input className={classnames((errors.password !== undefined) ? "form-control is-invalid" : "form-control", { invalid: errors.password })} onChange={this.onChange} value={this.state.password} placeholder="Password" error={errors.password} id="password" type="password" />
                   {(errors.password) ? <><small className="form-text text-danger">{errors.password}</small><br /></> : null}
-                  <label>Confirm Password</label>
+                  <label className="mt-3">Confirm Password</label>
                   <input className={classnames((errors.password2 !== undefined) ? "form-control is-invalid" : "form-control", { invalid: errors.password2 })} onChange={this.onChange} value={this.state.password2} placeholder="Confirm Password" error={errors.password2} id="password2" type="password" />
                   {(errors.password2) ? <><small className="form-text text-danger">{errors.password2}</small><br /></> : null}
                 </div>
+                <p>Return to <Link className="link" to="/dashboard">Dashboard</Link></p>
                 <button className="btn btn-success" type="submit">Update</button>
               </div>
             </div>

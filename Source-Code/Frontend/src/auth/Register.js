@@ -64,14 +64,14 @@ class Register extends Component {
             <div className="d-flex justify-content-center h-100 row align-items-center">
               <div className="col card p-3 m-3 bg-primary">
                 <div className="card-header mb-3">Register Account</div>
-                <div className="form-group">
+                <div className="form-group mb-3">
                   <label>Email</label>
                   <input className={classnames((errors.email !== undefined) ? "form-control is-invalid" : "form-control", { invalid: errors.email })} onChange={this.onChange} value={this.state.email} placeholder="Email" error={errors.email} id="email" type="email" />
                   {(errors.email) ? <><small className="form-text text-danger">{errors.email}</small><br /></> : null}
-                  <label>Password</label>
+                  <label className="mt-3">Password</label>
                   <input className={classnames((errors.password !== undefined) ? "form-control is-invalid" : "form-control", { invalid: errors.password })} onChange={this.onChange} value={this.state.password} placeholder="Password" error={errors.password} id="password" type="password" />
                   {(errors.password) ? <><small className="form-text text-danger">{errors.password}</small><br /></> : null}
-                  <label>Confirm Password</label>
+                  <label className="mt-3">Confirm Password</label>
                   <input className={classnames((errors.password2 !== undefined) ? "form-control is-invalid" : "form-control", { invalid: errors.password2 })} onChange={this.onChange} value={this.state.password2} placeholder="Confirm Password" error={errors.password2} id="password2" type="password" />
                   {(errors.password2) ? <><small className="form-text text-danger">{errors.password2}</small><br /></> : null}
                 </div>

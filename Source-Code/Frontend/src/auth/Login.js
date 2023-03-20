@@ -68,7 +68,7 @@ class Login extends Component {
                 <span className="form-text text-danger">
                   {errors.emailPasswordIncorrect}
                 </span>
-                <div className="form-group">
+                <div className="form-group mb-3">
                   <label>Email</label>
                   <input
                     onChange={this.onChange}
@@ -85,7 +85,7 @@ class Login extends Component {
                     {errors.email}
                   </small>
                 </div>
-                <div className="form-group">
+                <div className="form-group mb-3">
                   <label>Password</label>
                   <input
                     onChange={this.onChange}

@@ -44,6 +44,7 @@ class Devices extends Component {
             .then(res => {
                 if (res.data.status === "RUNNING") {
                     this.mqttClient.connect()
+                    // TODO make request to update_config
                 }
             })
             .catch(err =>
@@ -102,7 +103,7 @@ class Devices extends Component {
                 <Sidebar currentItem="Devices" />
                 <div className="flex-column flex-grow-1">
                     <div className="d-grid gap-1">
-                        <Header user={this.props.auth.user.user} onLogoutClick={this.props.onLogoutClick} />
+                        <Header user={this.props.auth.user} onLogoutClick={this.props.onLogoutClick} />
                     </div>
                     <div className="container-fluid">
                         <div className="row justify-content-left p-1 gap-1">
