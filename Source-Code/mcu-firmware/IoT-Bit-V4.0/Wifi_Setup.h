@@ -1,33 +1,54 @@
-#include <ArduinoJson.h> // Necessary to make API request
-#include <WiFiNINA.h>    // Library to connect Arduino to wifi and to Adafruit IO
+#include <string.h>
+#include <stdio.h>
+#include <stdlib.h>
+
+#include <WiFiNINA.h>     // Library to connect Arduino to wifi
+#include <Ethernet.h>     // Needed to create IPAddress for server
+#include <PubSubClient.h> // Library to connect to MQTT server
 
 #include "MicroSD_IO.h" // Header file for SD Card IO setup
 
-#define SD_CARD
+#define SECRETS_BUFFER_SIZE 508
 
-String ssid; // Your network SSID (name)
-String pass; // Your network password (use for WPA, or use as key for WEP)
+char secretsBuffer[SECRETS_BUFFER_SIZE]; // Total length of Wifi SSID and Password must not exceed 400
 
-String adafruit_io_username;  // The username attached to your Adafruit IO account
-String adafruit_io_group_key; // This is a unique key to a single group in Adafruit IO
-String adafruit_io_feed_key;  // This is a unique key to a single feed in the above group
-String adafruit_io_key;       // Unique key attached to it that serves as a security measure for sending data across WiFi and through the internet
-
-unsigned long requestInterval = 2000; // Programmable delay between requests, in milliseconds
-String server = "io.adafruit.com";    // Name of address for Adafruit IOT Cloud
+// SD card info
+const char *wifiSSID;       // Your network SSID (name)
+const char *wifiPassword;   // Your network password (use for WPA, or use as key for WEP)
+const char *clientUsername; // Username to connect to MQTT server
+const char *clientPassword; // Password to connect to MQTT server
 
 WiFiClient client; // Initialize the client library
-int wifi_status;   // Used to report Wifi connectivity information
+int wifiStatus;    // Used to report Wifi connectivity information
 
+uint16_t port = 1883; // MQTT reverse proxy port
+IPAddress server(143, 42, 127, 125);
+
+const char topicLevels[3][7] = {"config", "state", "cmd"};
+
+typedef enum
+{
+  CONFIG = 0,
+  STATE,
+  CMD
+} TopicLevel;
+
+typedef enum
+{
+  DEVICE_0 = 0,
+  DEVICE_1
+} DeviceNumber;
+
+uint16_t bufferSize = 1024;
+
+PubSubClient pubSubClient(server, port, client);
+
+// Read credentials from SD card
 bool initializeCredentials()
 {
-// if SD card is working, read credentials from SD card
-#ifdef SD_CARD
   /* Attempt to read from secrets.txt */
   String secrets = readfromFile("secrets.txt");
-
-  ////Debugging Code
-  Serial.println("(Debug) sectrets.txt contents read: " + secrets);
+  Serial.println("secrets.txt contents read: " + secrets);
 
   if (secrets == "NULL")
   {
@@ -35,108 +56,53 @@ bool initializeCredentials()
   }
 
   /* The expected contents of the secrets.txt file should look like this: */
-  /* Format:  REQUEST_RATE_SEC;SECRET_SSID;SECRET_PASS;IO_USERNAME;IO_GROUP;IO_FEED_KEY;IO_KEY */
-  /* Example: 2;Issam's iPhone;Pass123;AOMUser1;AOMGroupA;AOMGroupAFeed1;AoMIoKeYsEcReT123 */
+  /* Format:  WIFI_SSID;WIFI_PASSWORD;CLIENT_USERNAME;CLIENT_PASSWORD */
+  /* Example: Issam's iPhone;Pass123;client-c7c3599a-2e70-4f20-a4e1-7a6477e8f858;04d4d7a0510959e27460c9434adc9b6cd484de68ae26e438abc819e9785d6127 */
 
   /* Split the data into its parts */
 
   /* Buffer for security */
-  char buffer_secrets[secrets.length() + 1];
-  secrets.toCharArray(buffer_secrets, secrets.length() + 1);
+  secrets.toCharArray(secretsBuffer, SECRETS_BUFFER_SIZE);
 
   char *splitValue;
 
   /* For only the first split, specify the char array to use */
-  splitValue = strtok(buffer_secrets, ";");
+  splitValue = strtok(secretsBuffer, ";");
   if (splitValue == NULL)
   {
-    Serial.println("Cannot Split: failed to parse request Interval");
+    Serial.println("Cannot Split: failed to parse wifi ssid");
     return false;
   }
+  wifiSSID = splitValue;
 
-  for (char c : String(splitValue))
-  {
-    if (!isDigit(c))
-    {
-      Serial.println("Cannot Split: failed to parse request Interval");
-      return false;
-    }
-  }
-
-  requestInterval = String(splitValue).toInt();
-
-  /* Set the Request Interval based on the potentiometer [As of 01/27/22 range is 2 - 86400 seconds (1 day)] */
-  if (requestInterval < 2)
-  {
-    requestInterval = 2;
-  }
-  else if (requestInterval > 86400)
-  {
-    requestInterval = 86400;
-  }
-
-  /* Now we scale the request Interval up */
-  requestInterval *= 1000;
-
-  /* The splitter continues using the buffer_secrets */
+  /* The splitter continues using the secretsBuffer */
   splitValue = strtok(NULL, ";");
   if (splitValue == NULL)
   {
-    Serial.println("Cannot Split: failed to parse ssid");
+    Serial.println("Cannot Split: failed to parse wifi password");
     return false;
   }
-  ssid = String(splitValue);
+  wifiPassword = splitValue;
 
-  /* The splitter continues using the buffer_secrets */
+  /* The splitter continues using the secretsBuffer */
   splitValue = strtok(NULL, ";");
   if (splitValue == NULL)
   {
-    Serial.println("Cannot Split: failed to parse pass");
+    Serial.println("Cannot Split: failed to parse client username");
     return false;
   }
-  pass = String(splitValue);
+  clientUsername = splitValue;
 
-  /* The splitter continues using the buffer_secrets */
+  /* The splitter continues using the secretsBuffer */
   splitValue = strtok(NULL, ";");
   if (splitValue == NULL)
   {
-    Serial.println("Cannot Split: failed to parse adafruit_io_username");
+    Serial.println("Cannot Split: failed to parse client password");
     return false;
   }
-  adafruit_io_username = String(splitValue);
+  clientPassword = splitValue;
 
-  /* The splitter continues using the buffer_secrets */
-  splitValue = strtok(NULL, ";");
-  if (splitValue == NULL)
-  {
-    Serial.println("Cannot Split: failed to parse adafruit_io_group");
-    return false;
-  }
-  adafruit_io_group_key = String(splitValue);
-
-  /* The splitter continues using the buffer_secrets */
-  splitValue = strtok(NULL, ";");
-  if (splitValue == NULL)
-  {
-    Serial.println("Cannot Split: failed to parse adafruit_io_feed_key");
-    return false;
-  }
-  adafruit_io_feed_key = String(splitValue);
-
-  /* The splitter continues using the buffer_secrets */
-  splitValue = strtok(NULL, ";");
-  if (splitValue == NULL)
-  {
-    Serial.println("Cannot Split: failed to parse adafruit_io_key");
-    return false;
-  }
-  adafruit_io_key = String(splitValue);
-
-// if SD_CARD is not working, simply return true for setup() to continue
-#else
-  Serial.println("SD card not configured, reading from secrets.h instead.");
   return true;
-#endif
 }
 
 void printWifiStatus()
@@ -161,10 +127,10 @@ void printWifiStatus()
   Serial.println("");
 }
 
-bool wifi_connected()
+bool wifiConnected()
 {
-  wifi_status = WiFi.status();
-  return (wifi_status == WL_CONNECTED);
+  wifiStatus = WiFi.status();
+  return (wifiStatus == WL_CONNECTED);
 }
 
 bool connectToWIFI()
@@ -186,26 +152,17 @@ bool connectToWIFI()
 
   /* Attempt to connect to the Wifi network 1 time */
   int attempt_count = 0;
-  while ((wifi_status != WL_CONNECTED) && (attempt_count < 3))
+  while ((wifiStatus != WL_CONNECTED) && (attempt_count < 3))
   {
     attempt_count += 1;
 
-    Serial.println("Attempt (" + String(attempt_count) + ") to connect to Wifi Network @ SSID: " + ssid + "...");
+    Serial.print("Attempt (" + String(attempt_count) + ") to connect to Wifi Network @ SSID: ");
+    Serial.write(wifiSSID);
+    Serial.println("...");
 
     /* Connect to WPA/WPA2 network. NOTE: Change the next lines if using open or WEP network */
 
-    /* Buffer for security */
-    char buffer_ssid[ssid.length() + 1];
-    ssid.toCharArray(buffer_ssid, ssid.length() + 1);
-
-    /* Buffer for security */
-    char buffer_pass[pass.length() + 1];
-    pass.toCharArray(buffer_pass, pass.length() + 1);
-
-    wifi_status = WiFi.begin(buffer_ssid, buffer_pass);
-
-    ////Debugging Code
-    // printWifiStatus();
+    wifiStatus = WiFi.begin(wifiSSID, wifiPassword);
 
     /* Wait 10 seconds for connection */
     delay(10000);
@@ -213,13 +170,21 @@ bool connectToWIFI()
 
   if (attempt_count < 3)
   {
-    Serial.println("Sucessfully connected to Wifi Network @ SSID: " + ssid + "!");
+    char buf[50 + strlen(wifiSSID)];
+    strcpy(buf, "Successfully connected to Wifi Network @ SSID: ");
+    strcat(buf, wifiSSID);
+    strcat(buf, "\n");
+    Serial.write(buf);
     printWifiStatus();
     return true;
   }
   else
   {
-    Serial.println("Failed to connect to Wifi Network @ SSID: " + ssid + "!");
+    char buf[44 + strlen(wifiSSID)];
+    strcpy(buf, "Failed to connect to Wifi Network @ SSID: ");
+    strcat(buf, wifiSSID);
+    strcat(buf, "\n");
+    Serial.write(buf);
     return false;
   }
 }
@@ -246,7 +211,11 @@ bool disconnectFromWIFI()
   /* Keep attempting to connect to the Wifi network */
   if (WiFi.status() == WL_CONNECTED)
   {
-    Serial.println("Disconnecting from Wifi @ SSID: " + ssid + "...");
+    char buf[37 + strlen(wifiSSID)];
+    strcpy(buf, "Disconnecting from Wifi @ SSID: ");
+    strcat(buf, wifiSSID);
+    strcat(buf, "...\n");
+    Serial.write(buf);
 
     WiFi.end();
     response = true;
@@ -262,187 +231,64 @@ bool disconnectFromWIFI()
   return response;
 }
 
-String http_Request_GET()
+bool connectPubSubClient(MQTT_CALLBACK_SIGNATURE)
 {
-
-  /* Close any connection before send a new request. This will free the socket on the Nina module. */
-  client.stop();
-
-  Serial.println("");
-  Serial.println("Attempting to connect to cloud server " + server + "...");
-
-  /* Buffer for security */
-  char buffer_server[server.length() + 1];
-  server.toCharArray(buffer_server, server.length() + 1);
-
-  if (client.connect(buffer_server, 80))
+  pubSubClient.setCallback(callback);
+  bool success = pubSubClient.connect(clientUsername, clientUsername, clientPassword);
+  if (success)
   {
-    Serial.println("Sucessfully connected to server " + server + "!");
-
-    Serial.println("Attempting to get message...");
-
-    //Serial.println("Feed Key:");
-    //Serial.println(adafruit_io_feed_key);
-    String adafruit_io_feed_key_appended = adafruit_io_group_key + "." + adafruit_io_feed_key;
-    //Serial.println("Fixed Feed Key:");
-    //Serial.println(adafruit_io_feed_key_appended);
-    
-    /* Make a HTTP request */
-    client.println("GET /api/v2/" + adafruit_io_username + "/feeds/" + adafruit_io_feed_key_appended + "/data/last HTTP/1.1");
-
-    /* Calls Adafruit IO's API to retrieve the last data value recorded in a provided list */
-    client.println("Host: " + server);
-    client.println("Connection: close");
-    client.println("Content-Type: application/json");
-    client.println("X-AIO-Key: " + adafruit_io_key);
-
-    /* Terminate headers with a blank line */
-    if (client.println() == 0)
-    {
-      Serial.println(F("Failed to send request"));
-      return "NULL";
-    }
-
-    /* Check HTTP status */
-    char wifi_status[32] = {0};
-    client.readBytesUntil('\r', wifi_status, sizeof(wifi_status));
-    if (strcmp(wifi_status, "HTTP/1.1 200 OK") != 0)
-    {
-      Serial.print(F("Unexpected response: "));
-      Serial.println(wifi_status);
-      return "NULL";
-    }
-
-    /* Skip HTTP headers */
-    char endOfHeaders[] = "\r\n\r\n";
-    if (!client.find(endOfHeaders))
-    {
-      Serial.println(F("Invalid response1"));
-      return "NULL";
-    }
-
-    /* Skip Adafruit headers */
-    char endOfHeaders2[] = "\r";
-    if (!client.find(endOfHeaders2))
-    {
-      Serial.println(F("Invalid response2"));
-      return "NULL";
-    }
-
-    /* Deserialize JSON */
-    const size_t capacity = JSON_OBJECT_SIZE(12) + 170;
-
-    /* The JSON Document to Deserialize*/
-    StaticJsonDocument<capacity> doc;
-
-    DeserializationError deserializationError = deserializeJson(doc, client);
-
-    if (deserializationError)
-    {
-      Serial.print(F("deserializeJson() failed: "));
-      Serial.println(deserializationError.c_str());
-      return "NULL";
-    }
-
-    const char *value = doc["value"];
-    String val = String(value);
-
-    return val;
+    Serial.println("PubSub client successfully connected to MQTT server");
   }
   else
   {
-    return "NULL";
+    int state = pubSubClient.state();
+    Serial.println();
+    Serial.print("PubSub client failed to connect to MQTT server with code ");
+    Serial.println(state);
+    Serial.println();
+    delay(5000);
   }
+  return success;
 }
 
-bool http_Request_POST(String message)
+void disconnectPubSubClient()
 {
-  const size_t capacity = JSON_ARRAY_SIZE(3) + 3 * JSON_OBJECT_SIZE(2) + 2 * JSON_OBJECT_SIZE(3) + 130;
+  Serial.println("Disconnecting PubSub client from MQTT server");
+  pubSubClient.disconnect();
+}
 
-  /* Create the JSON Document */
-  StaticJsonDocument<capacity> doc;
+bool subscribePubSubClient(const char *username, DeviceNumber deviceNumber, TopicLevel topicLevel)
+{
+  // Build topic in the form of /<Client Username>/devices/<Device>/<Topic Level>
+  size_t size = strlen(clientUsername) + strlen(topicLevels[topicLevel]) + 13;
+  char *topic = (char *)malloc(size);
+  strcpy(topic, "/");
+  strcat(topic, clientUsername);
+  strcat(topic, "/devices/");
+  char device[2];
+  snprintf(device, sizeof(device), "%d", deviceNumber);
+  strcat(topic, device);
+  strcat(topic, "/");
+  strcat(topic, topicLevels[topicLevel]);
 
-  /* Add the "location" object */
-  JsonObject location = doc.createNestedObject("location");
-  location["lat"] = 0;
-  location["lon"] = 0;
-  location["ele"] = 0;
-
-  /* Create JSON nested array for group */
-  JsonArray feeds = doc.createNestedArray("feeds");
-
-  /* Fill first array index with feed1 */
-  JsonObject feed1 = feeds.createNestedObject();
-  feed1["key"] = String(adafruit_io_feed_key);
-  feed1["value"] = message;
-
-  /* Close any connection before send a new request. This will free the socket on the Nina module. */
-  client.stop();
-
-  Serial.println("");
-  Serial.println("Attempting to connect to cloud server " + server + "...");
-
-  /* Buffer for security */
-  char buffer_server[server.length() + 1];
-  server.toCharArray(buffer_server, server.length() + 1);
-
-  if (client.connect(buffer_server, 80))
+  // Subscribe to topic
+  char buf[26 + strlen(topic)];
+  strcpy(buf, "Subscribing to topic ");
+  strcat(buf, topic);
+  strcat(buf, "...\n");
+  Serial.write(buf);
+  bool success = pubSubClient.subscribe(topic);
+  if (success)
   {
-    Serial.println("Sucessfully connected to server " + server + "!");
-
-    Serial.println("Attempting to send message: " + message);
-
-    /* Make a HTTP request */
-    client.println("POST /api/v2/" + adafruit_io_username + "/groups/" + adafruit_io_group_key + "/data HTTP/1.1");
-    Serial.println("POST /api/v2/" + adafruit_io_username + "/groups/" + adafruit_io_group_key + "/data HTTP/1.1");
-
-    /* Calls Adafruit IO's API to upload the string decided by the conditional */
-    client.println("Host: " + server);
-    client.println("Connection: close");
-    client.print("Content-Length: ");
-    client.println(measureJson(doc));
-    client.println("Content-Type: application/json");
-    client.println("X-AIO-Key: " + adafruit_io_key);
-
-    /* Terminate headers with a blank line */
-    client.println();
-
-    /* Send JSON document in body */
-    serializeJson(doc, client);
-
-    return true;
+    Serial.println("Subscription successful");
   }
   else
   {
-    return false;
+    Serial.println("Subscription failed");
   }
-}
+  Serial.println();
 
-bool httpRequest_Multiple(String messages[])
-{
+  free(topic);
 
-  /*
-   * https://io.adafruit.com/api/docs/#operation/createGroupData
-   *
-   * POST /{username}/groups/{group_key}/data
-   *
-   * JSON:
-   *
-   *  {
-   *    "location": {
-   *      "lat": 0,
-   *      "lon": 0,
-   *      "ele": 0
-   *    },
-   *   "feeds": [
-   *     {
-   *       "key": "string",
-   *       "value": "string"
-   *     }
-   *   ],
-   *   "created_at": "string"
-   *  }
-   *
-   */
-  return false;
+  return success;
 }

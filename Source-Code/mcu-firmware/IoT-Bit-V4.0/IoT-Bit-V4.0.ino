@@ -15,25 +15,20 @@
  *  CS    - pin  4
  */
 
-int pin_conn_stat_LED = 6; // The pin for outputing the connection status to an LED
+int wifiStatusLED = 6; // The pin for outputing the wifi connection status to an LED
 
-int pin_out_value = 1; // The pin for writing the output signal
-int pin_in_value = 0;  // The pin for reading the input signal
+int outputPin = 1; // The pin for writing the output signal
+int inputPin = 0;  // The pin for reading the input signal
 
-int pin_post_mode_swt = A1; // The pin for reading the POST switch status
-int pin_get_mode_swt = A2;  // The pin for reading the GET switch status
+int pubSwitch = A1;  // The pin for reading the PUB switch status
+int recvSwitch = A2; // The pin for reading the RECV switch status
 
-int pin_post_stat_LED = A3; // The pin for outputing the POST status to an LED
-int pin_get_stat_LED = A6;  // The pin for outputing the GET status to an LED
+int pubLED = A3;  // The pin for outputing the POST status to an LED
+int recvLED = A6; // The pin for outputing the GET status to an LED
 
-String low_message = "LOW";          // The message sent that represents a low digital signal
-String high_message = "HIGH";        // The message sent that represents a high digital signal
-String message_to_send = "UNKNOWN";  // The message to be sent
-String message_recieved = "UNKNOWN"; // The message recieved
+unsigned long LEDDelayPeriod = 500;
 
-unsigned long lastConnectionTime = 0; // Last time you connected to the server, in milliseconds
-
-int LEDDelayPeriod = 500;
+bool publish = false;
 
 void setup()
 {
@@ -41,30 +36,30 @@ void setup()
   Serial.begin(9600);
 
   /* Set all pin modes */
-  pinMode(pin_in_value, INPUT);
-  pinMode(pin_out_value, OUTPUT);
+  pinMode(inputPin, INPUT);
+  pinMode(outputPin, OUTPUT);
 
-  pinMode(pin_post_mode_swt, INPUT);
-  pinMode(pin_get_mode_swt, INPUT);
+  pinMode(pubSwitch, INPUT);
+  pinMode(recvSwitch, INPUT);
 
-  pinMode(pin_conn_stat_LED, OUTPUT);
-  pinMode(pin_post_stat_LED, OUTPUT);
-  pinMode(pin_get_stat_LED, OUTPUT);
+  pinMode(wifiStatusLED, OUTPUT);
+  pinMode(pubLED, OUTPUT);
+  pinMode(recvLED, OUTPUT);
 
   /* Attempt to read from secrets.txt */
   do
   {
     for (int i = 0; i < 3; i++)
     {
-      delay(100);
-      digitalWrite(pin_get_stat_LED, HIGH);
-      digitalWrite(pin_post_stat_LED, HIGH);
-      digitalWrite(pin_conn_stat_LED, HIGH);
+      digitalWrite(recvLED, HIGH);
+      digitalWrite(pubLED, HIGH);
+      digitalWrite(wifiStatusLED, HIGH);
       delay(100);
 
-      digitalWrite(pin_get_stat_LED, LOW);
-      digitalWrite(pin_post_stat_LED, LOW);
-      digitalWrite(pin_conn_stat_LED, LOW);
+      digitalWrite(recvLED, LOW);
+      digitalWrite(pubLED, LOW);
+      digitalWrite(wifiStatusLED, LOW);
+      delay(100);
     }
 
     /* Give Them 3 seconds */
@@ -84,197 +79,99 @@ void setup()
   } while (initializeCredentials() == false);
 
   /* Let them know that the device is ready */
-  digitalWrite(pin_get_stat_LED, HIGH);
-  digitalWrite(pin_post_stat_LED, HIGH);
-  digitalWrite(pin_conn_stat_LED, HIGH);
+  digitalWrite(recvLED, HIGH);
+  digitalWrite(pubLED, HIGH);
+  digitalWrite(wifiStatusLED, HIGH);
   delay(1000);
-  digitalWrite(pin_get_stat_LED, LOW);
-  digitalWrite(pin_post_stat_LED, LOW);
-  digitalWrite(pin_conn_stat_LED, LOW);
+  digitalWrite(recvLED, LOW);
+  digitalWrite(pubLED, LOW);
+  digitalWrite(wifiStatusLED, LOW);
   delay(1000);
 
   /*
    * Interrupts
-   * - POST_ISR = triggered whenever the input signal value changes state
+   * - publishISR = triggered whenever the input signal value changes state
    */
-  attachInterrupt(digitalPinToInterrupt(pin_in_value), POST_ISR, CHANGE);
+  attachInterrupt(digitalPinToInterrupt(inputPin), publishISR, CHANGE);
 }
 
 void loop()
 {
-  Serial.print("\nGet Mode Switch: ");
-  Serial.println(digitalRead(pin_get_mode_swt));
-  Serial.print("Post Mode Switch: ");
-  Serial.println(digitalRead(pin_post_mode_swt));
+  Serial.print("\Receive Mode Switch: ");
+  Serial.println(digitalRead(recvSwitch));
+  Serial.print("Publish Mode Switch: ");
+  Serial.println(digitalRead(pubSwitch));
 
-  /* Removed disconnection from WiFi if no switch is flipped. This seems to cause more headaches. */
-  /* Determine if no desire to POST or GET. */
-  /*if ((digitalRead(pin_post_mode_swt) == LOW) && (digitalRead(pin_get_mode_swt) == LOW))
-  {
-    // Attempt to close connection
-    Serial.println("Switches are turned off, disconnecting from any WIFI...");
-    disconnectFromWIFI();
-
-    // Connection to WiFi terminated
-    digitalWrite(pin_conn_stat_LED, LOW);
-    digitalWrite(pin_post_stat_LED, LOW);
-    digitalWrite(pin_get_stat_LED, LOW);
-  }*/
-  if (!wifi_connected()) /* Determine if wifi connection needs to be restablished. */
+  if (!wifiConnected()) /* Determine if wifi connection needs to be restablished. */
   {
     /* Connection to WiFi terminated */
-    digitalWrite(pin_conn_stat_LED, LOW);
-    digitalWrite(pin_post_stat_LED, LOW);
-    digitalWrite(pin_get_stat_LED, LOW);
+    digitalWrite(wifiStatusLED, LOW);
+    digitalWrite(pubLED, LOW);
+    digitalWrite(recvLED, LOW);
 
     /* Attempt to restablish connection */
     Serial.println("Initializing connection to WIFI...");
     if (connectToWIFI())
     {
       /* Connection to WiFi established */
-      digitalWrite(pin_conn_stat_LED, HIGH);
+      digitalWrite(wifiStatusLED, HIGH);
     }
+  }
+  else if (!pubSubClient.connected())
+  {
+    connectPubSubClient(callback);
+    // Subscribe to config and cmd topics
+    subscribePubSubClient(clientUsername, DEVICE_0, CONFIG);
+    subscribePubSubClient(clientUsername, DEVICE_0, CMD);
+    subscribePubSubClient(clientUsername, DEVICE_1, CONFIG);
+    subscribePubSubClient(clientUsername, DEVICE_1, CMD);
   }
   else /* All other cases assume a connection to wifi. */
   {
-
-    /* Print out the request interval */
-    Serial.println("Request Interval: " + String(requestInterval / 1000) + "s");
-
-    /* Interrupts will handle the POST case */
-    /* Determine the GET switch state and if the device should GET. */
-    if (digitalRead(pin_get_mode_swt) == HIGH)
-    {
-      /* Disable interrupts so POST signal changes do not interfere with GET */
-      noInterrupts();
-
-      message_GET();
-
-      /* Re-enable interrupts once complete with GET sequence. */
-      interrupts();
-
-      delay(requestInterval);
-    }
+    // TODO publish/receive messages
+    publishMsg();
+    pubSubClient.loop();
   }
 
-  delay(500);
+  delay(250);
 }
 
-bool message_POST()
+void callback(char* topic, byte* payload, unsigned int length)
 {
-  /* If no activity for an entire posting interval, retry */
-  if (millis() - lastConnectionTime > requestInterval)
-  {
-
-    /* Read state from pin */
-    int pin_state = digitalRead(pin_in_value);
-
-    /* Set local light based on state */
-    if (pin_state == 0)
-    {
-      message_to_send = low_message;
-    }
-    else if (pin_state == 1)
-    {
-      message_to_send = high_message;
-    }
-    else
-    {
-      message_to_send = "UNKNOWN";
-    }
-
-    bool postRequestSuccess;
-
-    while (postRequestSuccess == false)
-    {
-
-      postRequestSuccess = http_Request_POST(message_to_send);
-
-      /* Request a connection to Adafruit IO */
-      if (postRequestSuccess)
-      {
-
-        /* Note the time that the connection was made */
-        lastConnectionTime = millis();
-        Serial.println("Data upload suceeded!");
-        return true;
-      }
-      else
-      {
-        /* if you couldn't make a connection */
-        Serial.println("Data upload failed!");
-      }
-    }
-  }
-  return false;
+  Serial.println(topic);
+  // TODO device configuration
+  // TODO update outputs
+  // Blink LED to indicate message successfully received
+  digitalWrite(recvLED, HIGH);
+  delay(LEDDelayPeriod);
+  digitalWrite(recvLED, LOW);
+  delay(LEDDelayPeriod);
 }
 
-bool message_GET()
+// TODO publish to state topic
+void publishMsg()
 {
-  /* Request a connection to Adafruit IO and ask for a GET request */
-  message_recieved = http_Request_GET();
-
-  if (message_recieved != "NULL")
+  if (publish)
   {
-    /* Note the time that the connection was made */
-    Serial.println("Data download succeeded!");
-
-    // Blink LED to indicate successful GET
-    digitalWrite(pin_get_stat_LED, HIGH);
-    delay(LEDDelayPeriod);
-    digitalWrite(pin_get_stat_LED, LOW);
-    delay(LEDDelayPeriod);
-  }
-  else
-  {
-    /* if you couldn't make a connection */
-    Serial.println("Data download failed!");
-    return false;
-  }
-
-  Serial.println("Recieved message: " + message_recieved);
-
-  if (message_recieved == high_message)
-  {
-    digitalWrite(pin_out_value, HIGH);
-  }
-  else if (message_recieved == low_message)
-  {
-    digitalWrite(pin_out_value, LOW);
-  }
-
-  return true;
-}
-
-void POST_ISR()
-{
-
-  bool success = false;
-
-  /* Indicate that we have entered the POST interrupt service routine */
-  Serial.println("POST ISR Entered.");
-
-  /* Only post if POST switch is enabled*/
-  if (digitalRead(pin_post_mode_swt) == HIGH)
-  {
-
-    // record bool when POST message funcion called
-    success = message_POST();
-
-    // Report post status, blink LED if successful
-    if (success)
+    // Report publish status, blink LED if successful
+    if (true)
     {
-      Serial.println("Message posted successully.");
-
-      // Blink LED to indicate successful POST
-      digitalWrite(pin_get_stat_LED, HIGH);
+      // Blink LED to indicate successful publish
+      digitalWrite(recvLED, HIGH);
       delay(LEDDelayPeriod);
-      digitalWrite(pin_get_stat_LED, LOW);
+      digitalWrite(recvLED, LOW);
       delay(LEDDelayPeriod);
+
+      publish = false;
     }
-    else
-    {
-      Serial.println("Message post failed.");
-    }
+  }
+}
+
+void publishISR()
+{
+  /* Only publish if publish switch is enabled*/
+  if (digitalRead(pubSwitch) == HIGH)
+  {
+    publish = true;
   }
 }
