@@ -57,7 +57,7 @@ bool initializeCredentials()
 
   /* The expected contents of the secrets.txt file should look like this: */
   /* Format:  WIFI_SSID;WIFI_PASSWORD;CLIENT_USERNAME;CLIENT_PASSWORD */
-  /* Example: Issam's iPhone;Pass123;client-c7c3599a-2e70-4f20-a4e1-7a6477e8f858;04d4d7a0510959e27460c9434adc9b6cd484de68ae26e438abc819e9785d6127 */
+  /* Example: iPhone;password;client-c7c3599a-2e70-4f20-a4e1-7a6477e8f858;04d4d7a0510959e27460c9434adc9b6cd484de68ae26e438abc819e9785d6127 */
 
   /* Split the data into its parts */
 
@@ -257,10 +257,18 @@ void disconnectPubSubClient()
   pubSubClient.disconnect();
 }
 
-bool subscribePubSubClient(const char *username, DeviceNumber deviceNumber, TopicLevel topicLevel)
+// Build topic in the form of /<Client Username>/devices/<Device>/<Topic Level>
+bool buildTopic(const char *username, DeviceNumber deviceNumber, TopicLevel topicLevel, char topicBuffer[], size_t maxSize)
 {
-  // Build topic in the form of /<Client Username>/devices/<Device>/<Topic Level>
+  // Get topic size
   size_t size = strlen(clientUsername) + strlen(topicLevels[topicLevel]) + 13;
+  if (size > maxSize)
+  {
+    Serial.println("Topic size exceeds max size");
+    return false;
+  }
+
+  // Build topic
   char *topic = (char *)malloc(size);
   strcpy(topic, "/");
   strcat(topic, clientUsername);
@@ -271,7 +279,16 @@ bool subscribePubSubClient(const char *username, DeviceNumber deviceNumber, Topi
   strcat(topic, "/");
   strcat(topic, topicLevels[topicLevel]);
 
-  // Subscribe to topic
+  // Copy topic to topic buffer
+  snprintf(topicBuffer, maxSize, "%s", topic);
+  free(topic);
+
+  return true;
+}
+
+// Subscribe to topic
+bool subscribePubSubClient(char *topic)
+{
   char buf[26 + strlen(topic)];
   strcpy(buf, "Subscribing to topic ");
   strcat(buf, topic);
@@ -287,8 +304,6 @@ bool subscribePubSubClient(const char *username, DeviceNumber deviceNumber, Topi
     Serial.println("Subscription failed");
   }
   Serial.println();
-
-  free(topic);
 
   return success;
 }

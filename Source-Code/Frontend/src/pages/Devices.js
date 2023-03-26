@@ -23,7 +23,7 @@ class Devices extends Component {
     }
 
     messageHandler = message => {
-        this.state.refs[message.destinationName].current.setDeviceState(message.payloadString)
+        this.state.refs[message.destinationName].current.setDeviceState(message.payloadBytes)
     }
 
     componentDidMount() {

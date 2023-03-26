@@ -17,8 +17,10 @@
 
 int wifiStatusLED = 6; // The pin for outputing the wifi connection status to an LED
 
-int outputPin = 1; // The pin for writing the output signal
+// Device 0 - input
+// Device 1 - output
 int inputPin = 0;  // The pin for reading the input signal
+int outputPin = 1; // The pin for writing the output signal
 
 int pubSwitch = A1;  // The pin for reading the PUB switch status
 int recvSwitch = A2; // The pin for reading the RECV switch status
@@ -27,8 +29,18 @@ int pubLED = A3;  // The pin for outputing the POST status to an LED
 int recvLED = A6; // The pin for outputing the GET status to an LED
 
 unsigned long LEDDelayPeriod = 500;
-
+unsigned long statusUpdatePeriod = 1000;
+unsigned long statusUpdateNext = 0;
 bool publish = false;
+
+// Buffers for each device topic
+#define MAX_TOPIC_SIZE 256
+char device0ConfigTopic[MAX_TOPIC_SIZE];
+char device0StateTopic[MAX_TOPIC_SIZE];
+char device0CmdTopic[MAX_TOPIC_SIZE];
+char device1ConfigTopic[MAX_TOPIC_SIZE];
+char device1StateTopic[MAX_TOPIC_SIZE];
+char device1CmdTopic[MAX_TOPIC_SIZE];
 
 void setup()
 {
@@ -38,6 +50,7 @@ void setup()
   /* Set all pin modes */
   pinMode(inputPin, INPUT);
   pinMode(outputPin, OUTPUT);
+  digitalWrite(outputPin, LOW);
 
   pinMode(pubSwitch, INPUT);
   pinMode(recvSwitch, INPUT);
@@ -62,12 +75,8 @@ void setup()
       delay(100);
     }
 
-    /* Give Them 3 seconds */
+    /* Wait 3 seconds before initializing */
     Serial.print("Checking For SD card in...");
-    /*Serial.print("5...");
-    delay(1000);
-    Serial.print("4...");
-    delay(1000);*/
     Serial.print("3...");
     delay(1000);
     Serial.print("2...");
@@ -97,10 +106,14 @@ void setup()
 
 void loop()
 {
-  Serial.print("\Receive Mode Switch: ");
-  Serial.println(digitalRead(recvSwitch));
-  Serial.print("Publish Mode Switch: ");
-  Serial.println(digitalRead(pubSwitch));
+  if (millis() > statusUpdateNext)
+  {
+    Serial.print("\nReceive Mode Switch: ");
+    Serial.println(digitalRead(recvSwitch));
+    Serial.print("Publish Mode Switch: ");
+    Serial.println(digitalRead(pubSwitch));
+    statusUpdateNext = millis() + statusUpdatePeriod;
+  }
 
   if (!wifiConnected()) /* Determine if wifi connection needs to be restablished. */
   {
@@ -120,11 +133,22 @@ void loop()
   else if (!pubSubClient.connected())
   {
     connectPubSubClient(callback);
+
+    // Build device 0 topics
+    buildTopic(clientUsername, DEVICE_0, CONFIG, device0ConfigTopic, MAX_TOPIC_SIZE);
+    buildTopic(clientUsername, DEVICE_0, STATE, device0StateTopic, MAX_TOPIC_SIZE);
+    buildTopic(clientUsername, DEVICE_0, CMD, device0CmdTopic, MAX_TOPIC_SIZE);
+
+    // Build device 1 topics
+    buildTopic(clientUsername, DEVICE_1, CONFIG, device1ConfigTopic, MAX_TOPIC_SIZE);
+    buildTopic(clientUsername, DEVICE_1, STATE, device1StateTopic, MAX_TOPIC_SIZE);
+    buildTopic(clientUsername, DEVICE_1, CMD, device1CmdTopic, MAX_TOPIC_SIZE);
+
     // Subscribe to config and cmd topics
-    subscribePubSubClient(clientUsername, DEVICE_0, CONFIG);
-    subscribePubSubClient(clientUsername, DEVICE_0, CMD);
-    subscribePubSubClient(clientUsername, DEVICE_1, CONFIG);
-    subscribePubSubClient(clientUsername, DEVICE_1, CMD);
+    subscribePubSubClient(device0ConfigTopic);
+    subscribePubSubClient(device0CmdTopic);
+    subscribePubSubClient(device1ConfigTopic);
+    subscribePubSubClient(device1CmdTopic);
   }
   else /* All other cases assume a connection to wifi. */
   {
@@ -136,16 +160,36 @@ void loop()
   delay(250);
 }
 
-void callback(char* topic, byte* payload, unsigned int length)
+void callback(char *topic, byte *payload, unsigned int length)
 {
-  Serial.println(topic);
   // TODO device configuration
   // TODO update outputs
-  // Blink LED to indicate message successfully received
-  digitalWrite(recvLED, HIGH);
-  delay(LEDDelayPeriod);
-  digitalWrite(recvLED, LOW);
-  delay(LEDDelayPeriod);
+
+  /* Only update output if switch is enabled*/
+  if (digitalRead(recvSwitch) == HIGH && strcmp(topic, device1CmdTopic) == 0)
+  {
+    // Set device 1 output
+    uint32_t payloadValue = 0;
+    for (unsigned int i = 0; i < length; i++)
+    {
+      payloadValue += *(payload + i) << (8 * i);
+    }
+    bool output = payloadValue;
+    digitalWrite(outputPin, output);
+
+    // Publish new state for device 1
+    byte *newPayload = (byte *)&output;
+    if (!pubSubClient.publish(device1StateTopic, newPayload, 1, true))
+    {
+      Serial.println("Failed to publish new state for device");
+    }
+
+    // Blink LED to indicate message successfully received
+    digitalWrite(recvLED, HIGH);
+    delay(LEDDelayPeriod);
+    digitalWrite(recvLED, LOW);
+    delay(LEDDelayPeriod);
+  }
 }
 
 // TODO publish to state topic
@@ -154,7 +198,7 @@ void publishMsg()
   if (publish)
   {
     // Report publish status, blink LED if successful
-    if (true)
+    if (true) // If publish successful
     {
       // Blink LED to indicate successful publish
       digitalWrite(recvLED, HIGH);
