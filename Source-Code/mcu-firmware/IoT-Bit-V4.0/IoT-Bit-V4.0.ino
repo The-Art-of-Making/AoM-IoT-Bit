@@ -1,12 +1,15 @@
 /*
  * Authors: Mark Hofmeister, Issam Abushaban, Benjamin Esquieres
  * Created: 7/30/2022
- * Last Updated: 03/20/2023
+ * Last Updated: 03/27/2023
  * Version: V4.0
  *
  */
 
 #include "Wifi_Setup.h" // Header file for wifi setup functions
+#include "pb_decode.h"
+#include "controller_message.pb.h"
+#include "AoM_IoT_devices.h"
 
 /* SD card attached to SPI bus as follows, do not use these pins
  *  MOSI  - pin 11
@@ -15,12 +18,11 @@
  *  CS    - pin  4
  */
 
-int wifiStatusLED = 6; // The pin for outputing the wifi connection status to an LED
+#define DEVICE_0_PIN 0
+#define DEVICE_1_PIN 1
 
-// Device 0 - input
-// Device 1 - output
-int inputPin = 0;  // The pin for reading the input signal
-int outputPin = 1; // The pin for writing the output signal
+Device device0(DEVICE_0_PIN, 0); // Device 0 will be a digital input
+Device device1(DEVICE_1_PIN, 1); // Device 1 will be a digital output
 
 int pubSwitch = A1;  // The pin for reading the PUB switch status
 int recvSwitch = A2; // The pin for reading the RECV switch status
@@ -28,9 +30,12 @@ int recvSwitch = A2; // The pin for reading the RECV switch status
 int pubLED = A3;  // The pin for outputing the POST status to an LED
 int recvLED = A6; // The pin for outputing the GET status to an LED
 
+int wifiStatusLED = 6; // The pin for outputing the wifi connection status to an LED
+
 unsigned long LEDDelayPeriod = 500;
-unsigned long statusUpdatePeriod = 1000;
+unsigned long statusUpdatePeriod = 2000;
 unsigned long statusUpdateNext = 0;
+
 bool publish = false;
 
 // Buffers for each device topic
@@ -46,11 +51,6 @@ void setup()
 {
   /* Begins Serial monitor for debugging purposes. */
   Serial.begin(9600);
-
-  /* Set all pin modes */
-  pinMode(inputPin, INPUT);
-  pinMode(outputPin, OUTPUT);
-  digitalWrite(outputPin, LOW);
 
   pinMode(pubSwitch, INPUT);
   pinMode(recvSwitch, INPUT);
@@ -96,12 +96,6 @@ void setup()
   digitalWrite(pubLED, LOW);
   digitalWrite(wifiStatusLED, LOW);
   delay(1000);
-
-  /*
-   * Interrupts
-   * - publishISR = triggered whenever the input signal value changes state
-   */
-  attachInterrupt(digitalPinToInterrupt(inputPin), publishISR, CHANGE);
 }
 
 void loop()
@@ -152,8 +146,26 @@ void loop()
   }
   else /* All other cases assume a connection to wifi. */
   {
-    // TODO publish/receive messages
-    publishMsg();
+    if (device0.enabled && device0.publish && digitalRead(pubSwitch) == HIGH)
+    {
+      // TODO publish device zero
+      // Publish new state for device 1
+      byte *payload = (byte *)&device0.value;
+      if (pubSubClient.publish(device0StateTopic, payload, 4, true))
+      {
+        // Blink LED to indicate successful publish
+        digitalWrite(recvLED, HIGH);
+        delay(LEDDelayPeriod);
+        digitalWrite(recvLED, LOW);
+        delay(LEDDelayPeriod);
+        device0.publish = false;
+      }
+      else
+      {
+        Serial.println("Failed to publish new state for device 0");
+      }
+    }
+
     pubSubClient.loop();
   }
 
@@ -162,8 +174,30 @@ void loop()
 
 void callback(char *topic, byte *payload, unsigned int length)
 {
-  // TODO device configuration
-  // TODO update outputs
+  if (strcmp(topic, device0ConfigTopic) == 0 || strcmp(topic, device1ConfigTopic) == 0)
+  {
+    aom_iot_controller_ControllerMessage controllerMessage = aom_iot_controller_ControllerMessage_init_zero;
+    pb_istream_t stream = pb_istream_from_buffer(payload, length);
+    bool status = pb_decode(&stream, aom_iot_controller_ControllerMessage_fields, &controllerMessage);
+    if (!status)
+    {
+      Serial.print("Failed to decode configuration for ");
+      Serial.println(topic);
+      Serial.print("Decoding error: ");
+      Serial.println(PB_GET_ERROR(&stream));
+    }
+    else
+    {
+      if (controllerMessage.device.number == 0)
+      {
+        configureDevice(&device0, &controllerMessage, device0ISR);
+      }
+      if (controllerMessage.device.number == 1)
+      {
+        configureDevice(&device1, &controllerMessage, NULL);
+      }
+    }
+  }
 
   /* Only update output if switch is enabled*/
   if (digitalRead(recvSwitch) == HIGH && strcmp(topic, device1CmdTopic) == 0)
@@ -175,13 +209,16 @@ void callback(char *topic, byte *payload, unsigned int length)
       payloadValue += *(payload + i) << (8 * i);
     }
     bool output = payloadValue;
-    digitalWrite(outputPin, output);
+    if (device1.enabled)
+    {
+      digitalWrite(device1.pin, output);
+    }
 
     // Publish new state for device 1
     byte *newPayload = (byte *)&output;
     if (!pubSubClient.publish(device1StateTopic, newPayload, 1, true))
     {
-      Serial.println("Failed to publish new state for device");
+      Serial.println("Failed to publish new state for device 1");
     }
 
     // Blink LED to indicate message successfully received
@@ -192,30 +229,8 @@ void callback(char *topic, byte *payload, unsigned int length)
   }
 }
 
-// TODO publish to state topic
-void publishMsg()
+void device0ISR()
 {
-  if (publish)
-  {
-    // Report publish status, blink LED if successful
-    if (true) // If publish successful
-    {
-      // Blink LED to indicate successful publish
-      digitalWrite(recvLED, HIGH);
-      delay(LEDDelayPeriod);
-      digitalWrite(recvLED, LOW);
-      delay(LEDDelayPeriod);
-
-      publish = false;
-    }
-  }
-}
-
-void publishISR()
-{
-  /* Only publish if publish switch is enabled*/
-  if (digitalRead(pubSwitch) == HIGH)
-  {
-    publish = true;
-  }
+  device0.value = digitalRead(device0.pin);
+  device0.publish = true;
 }

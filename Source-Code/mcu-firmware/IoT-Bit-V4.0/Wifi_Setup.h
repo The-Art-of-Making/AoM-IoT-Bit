@@ -39,8 +39,6 @@ typedef enum
   DEVICE_1
 } DeviceNumber;
 
-uint16_t bufferSize = 1024;
-
 PubSubClient pubSubClient(server, port, client);
 
 // Read credentials from SD card
