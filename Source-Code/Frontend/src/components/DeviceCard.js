@@ -3,6 +3,23 @@ import classnames from "classnames"
 import CardInfo from "./CardInfo"
 import { editIcon, checkIcon } from "../icons/icons"
 
+// Convert value to ArrayBuffer
+const convertToBuffer = value => {
+    const buffer = new ArrayBuffer(4)
+    const uint32 = new Uint32Array(buffer)
+    uint32.set([value], 0)
+    return buffer
+}
+
+// Convert ArrayBuffer to value
+const convertToNumber = buffer => {
+    let value = 0
+    for (let i = 0; i < buffer.length; i++) {
+        value += buffer[i] << (8 * i)
+    }
+    return value
+}
+
 const Gauge = (percent = 0, radius = 45, color = "#21c181") => {
     const strokeWidth = radius * 0.25
     const innerRadius = radius - strokeWidth / 2
@@ -59,7 +76,7 @@ const digitalControl = (io, state, publish, topic) => {
             {(io === "output")
                 ? <div className="bg-dark d-flex justify-content-center pb-3 rounded-bottom">
                     <label className="switch align-self-center">
-                        <input type="checkbox" checked={(parseInt(state) === 1) ? true : false} onChange={() => publish(topic, (parseInt(state) === 1) ? "0" : "1")} />
+                        <input type="checkbox" checked={(parseInt(state) === 1) ? true : false} onChange={() => publish(topic, (parseInt(state) === 1) ? convertToBuffer(0) : convertToBuffer(1))} />
                         <span className="slider round" />
                     </label>
                 </div>
@@ -78,7 +95,7 @@ const analogControl = (io, state, publish, topic) => {
             </div>
             {(io === "output")
                 ? <div className="bg-dark d-flex justify-content-center px-2 rounded-bottom">
-                    <input type="range" className="form-range" value={value * 100} onChange={e => publish(topic, (e.target.value / 100 * 4096).toString())} />
+                    <input type="range" className="form-range" value={value * 100} onChange={e => publish(topic, convertToBuffer(e.target.value / 100 * 4096))} />
                 </div>
                 : null
             }
@@ -111,7 +128,7 @@ export default class DeviceCard extends Component {
 
     setDeviceState = state => {
         this.setState({
-            deviceState: state
+            deviceState: convertToNumber(state)
         })
     }
 
@@ -126,6 +143,7 @@ export default class DeviceCard extends Component {
                             onChange={this.onChange}
                             value={this.state.name}
                             placeholder={this.state.name}
+                            id="name"
                         />
                         : this.props.device.name}
                     {(this.state.edit)
@@ -144,7 +162,7 @@ export default class DeviceCard extends Component {
                     {(this.state.edit)
                         ? <div className="d-flex">
                             <p className="card-text" style={{ fontWeight: "bold" }}>IO:&ensp;</p>
-                            <select className="form-control mb-2" onChange={this.onChange} value={this.state.io}>
+                            <select className="form-control mb-2" onChange={this.onChange} value={this.state.io} id="io">
                                 <option key="input" value="input">input</option>
                                 <option key="output" value="output">output</option>
                             </select>
@@ -154,7 +172,7 @@ export default class DeviceCard extends Component {
                     {(this.state.edit)
                         ? <div className="d-flex">
                             <p className="card-text" style={{ fontWeight: "bold" }}>Type:&ensp;</p>
-                            <select className="form-control mb-2" onChange={this.onChange} value={this.state.signal}>
+                            <select className="form-control mb-2" onChange={this.onChange} value={this.state.signal} id="signal">
                                 <option key="analog" value="analog">analog</option>
                                 <option key="digital" value="digital">digital</option>
                             </select>
