@@ -2,11 +2,12 @@ import { Component, createRef } from "react"
 import PropTypes from "prop-types"
 import { connect } from "react-redux"
 import { logoutUser } from "../actions/authActions"
+import { toast } from "react-toastify"
 import axios from "axios"
 import Header from "../components/Header"
 import Sidebar from "../components/Sidebar"
 import DeviceCard from "../components/DeviceCard"
-import { clientAuth } from "../endpoints"
+import { clientAuth, mqttController } from "../endpoints"
 import MQTTClient from "../components/MQTTClient"
 
 class Devices extends Component {
@@ -14,6 +15,8 @@ class Devices extends Component {
     state = {
         devices: [],
         errors: {},
+        server: false,
+        connected: false,
         refs: {}
     }
 
@@ -27,7 +30,7 @@ class Devices extends Component {
     }
 
     componentDidMount() {
-        this.mqttClient = new MQTTClient(this.props.auth.user.id, "password", [], this.messageHandler)
+        this.mqttClient = new MQTTClient(this.props.auth.user.id, "password", [], this.setConnected, this.messageHandler)
         this.getDevices()
         this.getServer()
     }
@@ -37,21 +40,52 @@ class Devices extends Component {
         this.mqttClient.disconnect()
     }
 
+    setConnected = () => {
+        this.setState({
+            connected: true
+        })
+        toast.success("Connected to server")
+    }
+
+    updateConfig = () => {
+        const reqData = { user: this.props.auth.user.id }
+        axios
+            .post(mqttController + "/update_config", reqData)
+            .then(res => {
+                (res.data.success) ?
+                    toast.success("Device configurations updated")
+                    : toast.warning("Failed to update device configurations")
+            })
+            .catch(err => {
+                this.setState({
+                    errors: (err.response) ? err.response.data : err
+                })
+                toast.warning("Failed to update device configurations")
+            })
+    }
+
     getServer = () => {
         const reqData = { user: this.props.auth.user.id }
         axios
             .post(clientAuth + "/web/client/get_server", reqData)
             .then(res => {
-                if (res.data.status === "RUNNING") {
+                const running = res.data.status === "RUNNING"
+                if (running) {
                     this.mqttClient.connect()
-                    // TODO make request to update_config
+                    this.updateConfig()
+                } else {
+                    toast.warning("Server is not running")
                 }
+                this.setState({
+                    server: running
+                })
             })
-            .catch(err =>
+            .catch(err => {
                 this.setState({
                     errors: (err.response) ? err.response.data : err
                 })
-            )
+                toast.error("Failed to get server status")
+            })
         if (!this.mqttClient.connected) {
             this.intervalID = setTimeout(this.getServer.bind(this), 5000)
         }
@@ -75,29 +109,33 @@ class Devices extends Component {
                     this.mqttClient.subscribe(topic)
                 })
             })
-            .catch(err =>
+            .catch(err => {
                 this.setState({
                     errors: err.response.data
                 })
-            )
+                toast.error("Failed to get devices")
+            })
     }
 
     editDevice = (uid, name, io, signal) => {
         const updateDevice = { user: this.props.auth.user.id, uid: uid, name: name, io: io, signal: signal }
         axios
             .post(clientAuth + "/web/client/update_device", updateDevice)
-            .then(res => {
+            .then(() => {
+                this.updateConfig()
                 this.getDevices()
-                console.log(res)
+                toast.success("Successfully edited device")
             })
-            .catch(err =>
+            .catch(err => {
                 this.setState({
                     errors: err.response.data
                 })
-            )
+                toast.error("Failed to edit device")
+            })
     }
 
     render() {
+        const disabledStyle = !this.state.connected ? { backgroundColor: "black", filter: "alpha(opacity=30)", opacity: 0.3 } : {}
         return (
             <div className="d-flex">
                 <Sidebar currentItem="Devices" />
@@ -106,7 +144,7 @@ class Devices extends Component {
                         <Header user={this.props.auth.user} onLogoutClick={this.onLogoutClick} />
                     </div>
                     <div className="container-fluid">
-                        <div className="row justify-content-left p-1 gap-1">
+                        <div className="row justify-content-left p-1 gap-1" style={disabledStyle}>
                             {
                                 this.state.devices.map(device =>
                                     <DeviceCard
@@ -115,6 +153,7 @@ class Devices extends Component {
                                         device={device}
                                         editDevice={this.editDevice}
                                         publish={this.mqttClient.publish}
+                                        serverConnected={this.state.connected}
                                     />
                                 )
                             }

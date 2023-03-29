@@ -14,7 +14,7 @@ Users can create an account with a unique email and a password, then start their
 
    See [https://docs.npmjs.com/downloading-and-installing-node-js-and-npm](https://docs.npmjs.com/downloading-and-installing-node-js-and-npm) for installation instructions
 
-### Development
+## Development
 
 Run the following commands to start the development environment.
 

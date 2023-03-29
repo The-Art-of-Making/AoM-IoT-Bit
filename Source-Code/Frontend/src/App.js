@@ -6,7 +6,9 @@ import store from "./store"
 import setAuthToken from "./utils/setAuthToken"
 import { setCurrentUser, logoutUser } from "./actions/authActions"
 import PrivateRoute from "./components/private-route/PrivateRoute"
+import { ToastContainer } from "react-toastify"
 
+// Pages
 import Register from "./auth/Register"
 import Login from "./auth/Login"
 import Account from "./auth/Account"
@@ -45,6 +47,7 @@ export default class App extends Component {
   render() {
     return (
       <Provider store={store}>
+        <ToastContainer autoClose="3000" />
         <BrowserRouter>
           <Routes>
             <Route path="/" element={<Login />} />

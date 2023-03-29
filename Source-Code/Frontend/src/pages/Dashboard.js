@@ -9,6 +9,7 @@ import DashboardCard from "../components/DashboardCard"
 import { actionIcon, zoneIcon } from "../icons/icons"
 import UnderConstruction from "../components/UnderContruction"
 import { clientAuth } from "../endpoints"
+import { toast } from "react-toastify"
 
 class Dashboard extends Component {
 
@@ -41,11 +42,12 @@ class Dashboard extends Component {
                     server: res.data.status
                 })
             )
-            .catch(err =>
+            .catch(err => {
                 this.setState({
                     errors: err.response.data
                 })
-            )
+                toast.error("Failed to get server status")
+            })
     }
 
     getClients() {
@@ -57,11 +59,12 @@ class Dashboard extends Component {
                     clients: res.data.length
                 })
             )
-            .catch(err =>
+            .catch(err => {
                 this.setState({
                     errors: err.response.data
                 })
-            )
+                toast.error("Failed to get clients")
+            })
     }
 
     getDevices() {
@@ -73,11 +76,12 @@ class Dashboard extends Component {
                     devices: res.data.length
                 })
             })
-            .catch(err =>
+            .catch(err => {
                 this.setState({
                     errors: err.response.data
                 })
-            )
+                toast.error("Failed to get devices")
+            })
     }
 
     getActions() {
@@ -90,11 +94,12 @@ class Dashboard extends Component {
                 })
             }
             )
-            .catch(err =>
+            .catch(err => {
                 this.setState({
                     errors: err.response.data
                 })
-            )
+                toast.error("Failed to get actions")
+            })
     }
 
     serverTextColor = () => {

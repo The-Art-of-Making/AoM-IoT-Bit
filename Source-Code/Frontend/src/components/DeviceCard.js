@@ -1,7 +1,7 @@
 import { Component } from "react"
 import classnames from "classnames"
 import CardInfo from "./CardInfo"
-import { editIcon, checkIcon } from "../icons/icons"
+import { editIcon, checkIcon, checkCircleIcon, xCircleIcon } from "../icons/icons"
 
 // Convert value to ArrayBuffer
 const convertToBuffer = value => {
@@ -67,7 +67,7 @@ const Gauge = (percent = 0, radius = 45, color = "#21c181") => {
     )
 }
 
-const digitalControl = (io, state, publish, topic) => {
+const digitalControl = (io, state, publish, topic, disabled) => {
     return (
         <>
             <div className={classnames((io === "input") ? "rounded pb-2" : "rounded-top", "bg-dark d-flex justify-content-center pt-3")}>
@@ -76,8 +76,13 @@ const digitalControl = (io, state, publish, topic) => {
             {(io === "output")
                 ? <div className="bg-dark d-flex justify-content-center pb-3 rounded-bottom">
                     <label className="switch align-self-center">
-                        <input type="checkbox" checked={(parseInt(state) === 1) ? true : false} onChange={() => publish(topic, (parseInt(state) === 1) ? convertToBuffer(0) : convertToBuffer(1))} />
-                        <span className="slider round" />
+                        <input
+                            type="checkbox"
+                            checked={(parseInt(state) === 1) ? true : false}
+                            onChange={() => publish(topic, (parseInt(state) === 1) ? convertToBuffer(0) : convertToBuffer(1))}
+                            disabled={disabled}
+                        />
+                        <span className="slider round" style={{ cursor: disabled ? "default" : "" }} />
                     </label>
                 </div>
                 : null
@@ -86,7 +91,7 @@ const digitalControl = (io, state, publish, topic) => {
     )
 }
 
-const analogControl = (io, state, publish, topic) => {
+const analogControl = (io, state, publish, topic, disabled) => {
     const value = parseInt(state) / 4095
     return (
         <>
@@ -95,7 +100,13 @@ const analogControl = (io, state, publish, topic) => {
             </div>
             {(io === "output")
                 ? <div className="bg-dark d-flex justify-content-center px-2 rounded-bottom">
-                    <input type="range" className="form-range" value={value * 100} onChange={e => publish(topic, convertToBuffer(e.target.value / 100 * 4096))} />
+                    <input
+                        type="range"
+                        className="form-range"
+                        value={value * 100}
+                        onChange={e => publish(topic, convertToBuffer(e.target.value / 100 * 4096))}
+                        disabled={disabled}
+                    />
                 </div>
                 : null
             }
@@ -157,6 +168,7 @@ export default class DeviceCard extends Component {
                     }
                 </div>
                 <div className="card-body bg-primary">
+                    {/* <p className="card-text">Status:&ensp;{this.props.connected ? <span className="text-success">{checkCircleIcon}Connected</span> : <span className="text-danger">{xCircleIcon}Disconnected</span>}</p> */}
                     <CardInfo info="Client" value={this.props.device.client_name} textStyle="text-secondary" />
                     <CardInfo info="Number" value={this.props.device.number} textStyle="text-secondary" />
                     {(this.state.edit)
@@ -180,8 +192,8 @@ export default class DeviceCard extends Component {
                         : <CardInfo info="Type" value={this.props.device.signal} textStyle="text-secondary" />
                     }
                     {(this.props.device.signal === "digital" ?
-                        digitalControl(this.state.io, this.state.deviceState, this.props.publish, this.state.cmdTopic)
-                        : analogControl(this.state.io, this.state.deviceState, this.props.publish, this.state.cmdTopic))}
+                        digitalControl(this.state.io, this.state.deviceState, this.props.publish, this.state.cmdTopic, !this.props.serverConnected)
+                        : analogControl(this.state.io, this.state.deviceState, this.props.publish, this.state.cmdTopic, !this.props.serverConnected))}
                 </div>
             </div>
         )

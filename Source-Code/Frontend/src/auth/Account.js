@@ -73,7 +73,7 @@ class Account extends Component {
                   <input className={classnames((errors.password2 !== undefined) ? "form-control is-invalid" : "form-control", { invalid: errors.password2 })} onChange={this.onChange} value={this.state.password2} placeholder="Confirm Password" error={errors.password2} id="password2" type="password" />
                   {(errors.password2) ? <><small className="form-text text-danger">{errors.password2}</small><br /></> : null}
                 </div>
-                <p>Return to <Link className="link" to="/dashboard">Dashboard</Link></p>
+                <p>Return to <Link className="link text-light" to="/dashboard">Dashboard</Link></p>
                 <button className="btn btn-success" type="submit">Update</button>
               </div>
             </div>
