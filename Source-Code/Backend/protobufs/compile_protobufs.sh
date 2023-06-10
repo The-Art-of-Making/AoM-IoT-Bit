@@ -28,9 +28,16 @@ sed -i "s/import device_pb2 as device__pb2/import protobufs.device_pb2 as device
 
 echo "Compiling protobufs for C (nanopb)..."
 C_OUT_DIR=./c_out
+FIRMWARE_DIR=../../mcu-firmware/IoT-Bit-V4.0
 if [ ! -d "$C_OUT_DIR" ]; then
     echo "Creating c_out directory"
     mkdir $C_OUT_DIR
 fi
+cd nanopb
+git submodule update --remote
+cd ../
 python3 nanopb/generator/nanopb_generator.py device/device.proto -I ./device -D $C_OUT_DIR
 python3 nanopb/generator/nanopb_generator.py controller/controller_message.proto -I ./controller -I ./device -D $C_OUT_DIR
+rm -Rf $FIRMWARE_DIR/*.pb.*
+cp nanopb/pb.h nanopb/pb_common.h nanopb/pb_common.c nanopb/pb_decode.h nanopb/pb_decode.c $FIRMWARE_DIR
+cp -r $C_OUT_DIR/* $FIRMWARE_DIR

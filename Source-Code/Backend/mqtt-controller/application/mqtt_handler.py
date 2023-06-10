@@ -40,8 +40,8 @@ class MQTTPublisher:
         message: MQTTMessage,
         username: str = "",
         password: str = "",
-        timeout: int = 15,
-        attempts: int = 5,
+        timeout: int = 20,
+        attempts: int = 6,
     ):
         self.mqtt_client = mqtt.Client(client_id=username)
         self.mqtt_client.username_pw_set(username, password)

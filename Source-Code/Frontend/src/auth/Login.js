@@ -5,6 +5,7 @@ import PropTypes from "prop-types"
 import { connect } from "react-redux"
 import { loginUser } from "../actions/authActions"
 import WithRouter from "../components/WithRouter"
+import Header from "../components/Header"
 
 class Login extends Component {
 
@@ -57,16 +58,17 @@ class Login extends Component {
 
     return (
       <div>
+        <Header />
         <hr className="my-5" style={{ visibility: "hidden" }}></hr>
         <form noValidate onSubmit={this.onSubmit}>
           <div className="container">
             <div className="d-flex justify-content-center h-100 row align-items-center">
-              <div className="col card p-3 m-3">
+              <div className="col card p-3 m-3 bg-primary">
                 <div className="card-header mb-3">Login</div>
                 <span className="form-text text-danger">
                   {errors.emailPasswordIncorrect}
                 </span>
-                <div className="form-group">
+                <div className="form-group mb-3">
                   <label>Email</label>
                   <input
                     onChange={this.onChange}
@@ -83,7 +85,7 @@ class Login extends Component {
                     {errors.email}
                   </small>
                 </div>
-                <div className="form-group">
+                <div className="form-group mb-3">
                   <label>Password</label>
                   <input
                     onChange={this.onChange}

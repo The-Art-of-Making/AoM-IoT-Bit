@@ -1,6 +1,6 @@
 {
-  "short_name": "auth-template",
-  "name": "auth-template",
+  "short_name": "aom-iot",
+  "name": "aom-iot",
   "icons": [
     {
       "src": "favicon.ico",

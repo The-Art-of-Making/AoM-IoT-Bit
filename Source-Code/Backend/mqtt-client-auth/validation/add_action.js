@@ -22,7 +22,7 @@ module.exports = function validateClient(data) {
 
     // Trigger topic check
     if (Validator.isEmpty(data.triggerTopic)) {
-        errors.triggerTopic = "Trigger topic is required"
+        errors.triggerTopic = "Trigger device is required"
     }
 
     // Trigger state check
