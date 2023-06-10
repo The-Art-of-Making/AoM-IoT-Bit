@@ -75,8 +75,8 @@ class Register extends Component {
                   <input className={classnames((errors.password2 !== undefined) ? "form-control is-invalid" : "form-control", { invalid: errors.password2 })} onChange={this.onChange} value={this.state.password2} placeholder="Confirm Password" error={errors.password2} id="password2" type="password" />
                   {(errors.password2) ? <><small className="form-text text-danger">{errors.password2}</small><br /></> : null}
                 </div>
-                <p>Already have an account? <Link className="link" to="/login">Login</Link></p>
-                <p>Return to <Link className="link" to="/">Home</Link></p>
+                <p>Already have an account? <Link className="link text-light" to="/login">Login</Link></p>
+                <p>Return to <Link className="link text-light" to="/">Home</Link></p>
                 <button className="btn btn-success" type="submit">Register</button>
               </div>
             </div>

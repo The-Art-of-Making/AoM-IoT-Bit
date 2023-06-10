@@ -7,6 +7,7 @@ import classnames from "classnames"
 import { checkIcon, deleteIcon } from "../../icons/icons"
 import ActionResponse from "../../components/ActionResponse"
 import { clientAuth } from "../../endpoints"
+import { toast } from "react-toastify"
 
 class NewAction extends Component {
 
@@ -35,11 +36,12 @@ class NewAction extends Component {
                 })
             }
             )
-            .catch(err =>
+            .catch(err => {
                 this.setState({
                     errors: err.response.data
                 })
-            )
+                toast.error("Failed to get devices")
+            })
     }
 
     onChange = e => {
@@ -110,13 +112,15 @@ class NewAction extends Component {
         }
         axios
             .post(clientAuth + "/web/client/add_action", newAction)
-            .then(res =>
-                console.log(res)
+            .then(() =>
+                toast.success("Successfully added action")
             )
-            .catch(err =>
+            .catch(err => {
                 this.setState({
                     errors: err.response.data
                 })
+                toast.error("Failed to add action")
+            }
             )
     }
 

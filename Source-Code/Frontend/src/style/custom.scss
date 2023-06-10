@@ -3,16 +3,41 @@ $body-color: white;
 
 $font-family-base: "Roboto", "Open-Sans", "Helvetica", "Arial", sans-serif;
 
+// https://coolors.co/000e1d-051527-0d1d35-1974ce-5f7490-21c181-9cc34a-ff5722-eb3838
+$primary: #051527;
+$secondary: #5f7490;
+$success: #21c181;
+$info: #9cc34a;
+$warning: #ff5722;
+$danger: #eb3838;
+$light: #1974ce;
+$dark: #0d1d35;
+
 $theme-colors: (
-  "primary": #051527, // cards, navbar
-  "secondary": #5f7490, // sub text color
-  "success": #21c181,
-  "info": #9cc34a,
-  "warning": #ff5722,
-  "danger": #eb3838,
-  "light": #1974ce, // accents / buttons
-  "dark": #0d1d35 // card sub-background
+  "primary": $primary, // cards, navbar
+  "secondary": $secondary, // sub text color
+  "success": $success,
+  "info": $info,
+  "warning": $warning,
+  "danger": $danger,
+  "light": $light, // accents / buttons
+  "dark": $dark // card sub-background
 );
+
+:root {
+  --toastify-color-light: #{$secondary} !important;
+  --toastify-color-dark: #{$primary} !important;
+  --toastify-color-info: #{$info} !important;
+  --toastify-color-success: #{$success} !important;
+  --toastify-color-warning: #{$warning} !important;
+  --toastify-color-error: #{$danger} !important;
+
+  --toastify-text-color-light: #fff !important;
+
+  -toastify-spinner-color: #{$dark} !important;
+
+  --toastify-color-progress-dark: #{$light} !important;
+}
 
 /* The switch - the box around the slider */
 .switch {
@@ -37,7 +62,7 @@ $theme-colors: (
   left: 0;
   right: 0;
   bottom: 0;
-  background-color: #5f7490;
+  background-color: $secondary;
   -webkit-transition: .4s;
   transition: .4s;
 }
@@ -55,7 +80,7 @@ $theme-colors: (
 }
 
 input:checked + .slider {
-  background-color: #21c181;
+  background-color: $success;
 }
 
 input:checked + .slider:before {
@@ -78,23 +103,22 @@ input[type="range"]::-webkit-slider-thumb {
   background: white !important;
 }
 input[type="range"]::-webkit-slider-runnable-track {
-  background: #5f7490 !important;
+  background: $secondary !important;
 }
 
 input[type="range"]::-moz-range-thumb {
   background: white !important;
 }
 input[type="range"]::-moz-range-track {
-  background: #5f7490 !important;
+  background: $secondary !important;
 }
 
 input[type="range"]::-ms-thumb {
   background: white !important;
 }
 input[type="range"]::-ms-track {
-  background: #5f7490 !important;
+  background: $secondary !important;
 }
 
 @import "../../node_modules/bootstrap/scss/bootstrap.scss";
-
-// https://coolors.co/000e1d-051527-0d1d35-1974ce-5f7490-21c181-9cc34a-ff5722-eb3838
+@import "../../node_modules/react-toastify/scss/main.scss";

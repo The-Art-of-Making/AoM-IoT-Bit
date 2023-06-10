@@ -2,6 +2,7 @@ import { Component } from "react"
 import { Link } from "react-router-dom"
 import PropTypes from "prop-types"
 import { connect } from "react-redux"
+import { toast } from "react-toastify"
 import axios from "axios"
 import ClientCard from "../../components/ClientCard"
 import { clientAuth } from "../../endpoints"
@@ -28,11 +29,12 @@ class AllClients extends Component {
                     clients: res.data
                 })
             )
-            .catch(err =>
+            .catch(err => {
                 this.setState({
                     errors: err.response.data
                 })
-            )
+                toast.error("Failed to get clients")
+            })
     }
 
     getDevices() {
@@ -44,42 +46,46 @@ class AllClients extends Component {
                     devices: res.data
                 })
             )
-            .catch(err =>
+            .catch(err => {
                 this.setState({
                     errors: err.response.data
                 })
-            )
+                toast.warning("Failed to get devices")
+            })
     }
 
     editClient = (client, name) => {
         const updateClient = { user: this.props.auth.user.id, username: client, name: name }
         axios
             .post(clientAuth + "/web/client/update", updateClient)
-            .then(res => {
+            .then(() => {
                 this.getClients()
                 this.getDevices()
-                console.log(res)
+                toast.success("Successfully edited client")
             })
-            .catch(err =>
+            .catch(err => {
                 this.setState({
                     errors: err.response.data
                 })
-            )
+                toast.error("Failed to edited client")
+            })
     }
 
     deleteClient = client => {
         const reqData = { user: this.props.auth.user.id, username: client }
         axios
             .post(clientAuth + "/web/client/delete", reqData)
-            .then(res => {
+            .then(() => {
                 this.getClients()
                 this.getDevices()
-                console.log(res)
+                toast.success("Successfully deleted client")
             })
-            .catch(err =>
+            .catch(err => {
                 this.setState({
                     errors: err.response.data
                 })
+                toast.error("Failed to delete client")
+            }
             )
     }
 

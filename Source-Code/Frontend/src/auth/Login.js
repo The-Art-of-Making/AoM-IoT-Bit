@@ -102,8 +102,8 @@ class Login extends Component {
                     {errors.password}
                   </small>
                 </div>
-                <p>Don't have an account? <Link className="link" to="/register">Register</Link></p>
-                <p>Return to <Link className="link" to="/">Home</Link></p>
+                <p>Don't have an account? <Link className="link text-light" to="/register">Register</Link></p>
+                <p>Return to <Link className="link text-light" to="/">Home</Link></p>
                 <button className="btn btn-success" type="submit">Login</button>
               </div>
             </div>

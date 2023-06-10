@@ -7,6 +7,7 @@ import axios from "axios"
 import classnames from "classnames"
 import { checkIcon, deleteIcon } from "../../icons/icons"
 import { clientAuth } from "../../endpoints"
+import { toast } from "react-toastify"
 
 class NewClient extends Component {
 
@@ -48,12 +49,14 @@ class NewClient extends Component {
                 this.setState({
                     errors: {}
                 })
+                toast.success("Successfully added new client")
             })
-            .catch(err =>
+            .catch(err => {
                 this.setState({
                     errors: err.response.data
                 })
-            )
+                toast.error("Failed to add new client")
+            })
     }
 
     render() {

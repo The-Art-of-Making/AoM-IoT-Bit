@@ -5,6 +5,7 @@ import { Link } from "react-router-dom"
 import axios from "axios"
 import ActionRow from "../../components/ActionRow"
 import { clientAuth } from "../../endpoints"
+import { toast } from "react-toastify"
 
 class AllActions extends Component {
 
@@ -27,25 +28,28 @@ class AllActions extends Component {
                 })
             }
             )
-            .catch(err =>
+            .catch(err => {
                 this.setState({
                     errors: err.response.data
                 })
-            )
+                toast.error("Failed to get actions")
+            })
     }
 
     deleteAction = action => {
         const reqData = { user: this.props.auth.user.id, uid: action }
         axios
             .post(clientAuth + "/web/client/delete_action", reqData)
-            .then(res => {
+            .then(() => {
                 this.getActions()
-                console.log(res)
+                toast.success("Successfully deleted action")
             })
-            .catch(err =>
+            .catch(err => {
                 this.setState({
                     errors: err.response.data
                 })
+                toast.error("Failed to delete action")
+            }
             )
     }
 

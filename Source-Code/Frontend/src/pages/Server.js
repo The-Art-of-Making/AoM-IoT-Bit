@@ -7,6 +7,7 @@ import Header from "../components/Header"
 import Sidebar from "../components/Sidebar"
 import CardInfo from "../components/CardInfo"
 import { clientAuth, mqttController } from "../endpoints"
+import { toast } from "react-toastify"
 
 class Server extends Component {
 
@@ -41,11 +42,12 @@ class Server extends Component {
                     port: res.data.port
                 })
             )
-            .catch(err =>
+            .catch(err => {
                 this.setState({
                     errors: err.response.data
                 })
-            )
+                toast.error("Failed to get server information")
+            })
         this.intervalID = setTimeout(this.getServer.bind(this), 5000)
     }
 
@@ -59,6 +61,7 @@ class Server extends Component {
         return "text-warning"
     }
 
+    // TODO improve UI and add toasts
     onClick = e => {
         e.preventDefault()
         const reqData = { user: this.props.auth.user.id }

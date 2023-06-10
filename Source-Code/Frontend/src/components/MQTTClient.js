@@ -5,7 +5,7 @@ const Paho = window.Paho
 // TODO send get_config request on connect
 
 export default class MQTTClient {
-    constructor(username, password, topics = [], onMessageArrivedCallback = message => { }) {
+    constructor(username, password, topics = [], onConnectCallback = () => { }, onMessageArrivedCallback = message => { }) {
         this.username = username
         this.password = password
         this.client = new Paho.MQTT.Client(mqttServer + "?username=" + this.username + "&password=" + this.password, this.username)
@@ -14,6 +14,7 @@ export default class MQTTClient {
         this.connected = false
         this.reconnect = false
         this.topics = topics
+        this.onConnectCallback = onConnectCallback
         this.onMessageArrivedCallback = onMessageArrivedCallback
     }
 
@@ -41,6 +42,7 @@ export default class MQTTClient {
         console.log("Connected")
         this.connected = true
         this.topics.forEach(topic => this.subscribe(topic))
+        this.onConnectCallback()
     }
 
     onMessageArrived = message => {
