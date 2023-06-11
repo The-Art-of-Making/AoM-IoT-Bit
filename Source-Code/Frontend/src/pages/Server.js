@@ -6,7 +6,7 @@ import axios from "axios"
 import Header from "../components/Header"
 import Sidebar from "../components/Sidebar"
 import CardInfo from "../components/CardInfo"
-import { clientAuth, mqttController } from "../endpoints"
+import { iotWebHandlerEndpts } from "../endpoints"
 import { toast } from "react-toastify"
 
 class Server extends Component {
@@ -31,10 +31,11 @@ class Server extends Component {
         this.props.logoutUser()
     }
 
+    // TODO remove server
     getServer() {
-        const reqData = { user: this.props.auth.user.id }
+        const reqData = { user_id: this.props.auth.user.id }
         axios
-            .post(clientAuth + "/web/client/get_server", reqData)
+            .post(iotWebHandlerEndpts + "/web/client/get_server", reqData)
             .then(res =>
                 this.setState({
                     status: res.data.status,
@@ -64,31 +65,32 @@ class Server extends Component {
     // TODO improve UI and add toasts
     onClick = e => {
         e.preventDefault()
-        const reqData = { user: this.props.auth.user.id }
-        if (this.state.status === "SHUTDOWN") {
-            axios
-                .post(mqttController + "/start_server", reqData)
-                .then(res =>
-                    console.log(res)
-                )
-                .catch(err =>
-                    this.setState({
-                        errors: err.response.data
-                    })
-                )
-        }
-        else {
-            axios
-                .post(mqttController + "/shutdown_server", reqData)
-                .then(res =>
-                    console.log(res)
-                )
-                .catch(err =>
-                    this.setState({
-                        errors: err.response.data
-                    })
-                )
-        }
+        // TODO page to be deleted
+        // const reqData = { user: this.props.auth.user.id }
+        // if (this.state.status === "SHUTDOWN") {
+        //     axios
+        //         .post(mqttController + "/start_server", reqData)
+        //         .then(res =>
+        //             console.log(res)
+        //         )
+        //         .catch(err =>
+        //             this.setState({
+        //                 errors: err.response.data
+        //             })
+        //         )
+        // }
+        // else {
+        //     axios
+        //         .post(mqttController + "/shutdown_server", reqData)
+        //         .then(res =>
+        //             console.log(res)
+        //         )
+        //         .catch(err =>
+        //             this.setState({
+        //                 errors: err.response.data
+        //             })
+        //         )
+        // }
     }
 
     render() {

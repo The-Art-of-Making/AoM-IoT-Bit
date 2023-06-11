@@ -5,7 +5,7 @@ import { connect } from "react-redux"
 import { toast } from "react-toastify"
 import axios from "axios"
 import ClientCard from "../../components/ClientCard"
-import { clientAuth } from "../../endpoints"
+import { iotWebHandlerEndpts } from "../../endpoints"
 
 class AllClients extends Component {
 
@@ -21,9 +21,9 @@ class AllClients extends Component {
     }
 
     getClients() {
-        const reqData = { user: this.props.auth.user.id }
+        const reqData = { user_id: this.props.auth.user.id }
         axios
-            .post(clientAuth + "/web/client/get_clients", reqData)
+            .post(iotWebHandlerEndpts + "/web/client/all", reqData)
             .then(res =>
                 this.setState({
                     clients: res.data
@@ -38,9 +38,9 @@ class AllClients extends Component {
     }
 
     getDevices() {
-        const reqData = { user: this.props.auth.user.id }
+        const reqData = { user_id: this.props.auth.user.id }
         axios
-            .post(clientAuth + "/web/client/get_devices", reqData)
+            .post(iotWebHandlerEndpts + "/web/device/all", reqData)
             .then(res =>
                 this.setState({
                     devices: res.data
@@ -54,10 +54,10 @@ class AllClients extends Component {
             })
     }
 
-    editClient = (client, name) => {
-        const updateClient = { user: this.props.auth.user.id, username: client, name: name }
+    editClient = (uuid, name) => {
+        const updateClient = { user_id: this.props.auth.user.id, uuid: uuid, name: name }
         axios
-            .post(clientAuth + "/web/client/update", updateClient)
+            .post(iotWebHandlerEndpts + "/web/client/update", updateClient)
             .then(() => {
                 this.getClients()
                 this.getDevices()
@@ -71,10 +71,10 @@ class AllClients extends Component {
             })
     }
 
-    deleteClient = client => {
-        const reqData = { user: this.props.auth.user.id, username: client }
+    deleteClient = uuid => {
+        const reqData = { user_id: this.props.auth.user.id, uuid: uuid }
         axios
-            .post(clientAuth + "/web/client/delete", reqData)
+            .post(iotWebHandlerEndpts + "/web/client/delete", reqData)
             .then(() => {
                 this.getClients()
                 this.getDevices()
@@ -92,7 +92,7 @@ class AllClients extends Component {
     render() {
         return (
             <div className="row justify-content-left p-1 gap-1">
-                {this.state.clients.map(client => <ClientCard key={client.username} client={client} devices={this.state.devices} editClient={this.editClient} deleteClient={this.deleteClient} />)}
+                {this.state.clients.map(client => <ClientCard key={client.uuid} client={client} devices={this.state.devices} editClient={this.editClient} deleteClient={this.deleteClient} />)}
                 <div className="card text-white bg-primary" style={{ maxWidth: "24.7%" }} >
                     <Link style={{ textDecoration: "none" }} to="new_client">
                         <div className="card-body bg-primary">

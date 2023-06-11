@@ -4,7 +4,7 @@ import { connect } from "react-redux"
 import { Link } from "react-router-dom"
 import axios from "axios"
 import ActionRow from "../../components/ActionRow"
-import { clientAuth } from "../../endpoints"
+import { iotWebHandlerEndpts } from "../../endpoints"
 import { toast } from "react-toastify"
 
 class AllActions extends Component {
@@ -19,9 +19,9 @@ class AllActions extends Component {
     }
 
     getActions() {
-        const reqData = { user: this.props.auth.user.id }
+        const reqData = { user_id: this.props.auth.user.id }
         axios
-            .post(clientAuth + "/web/client/get_actions", reqData)
+            .post(iotWebHandlerEndpts + "/web/action/all", reqData)
             .then(res => {
                 this.setState({
                     actions: res.data
@@ -36,10 +36,10 @@ class AllActions extends Component {
             })
     }
 
-    deleteAction = action => {
-        const reqData = { user: this.props.auth.user.id, uid: action }
+    deleteAction = uuid => {
+        const reqData = { user_id: this.props.auth.user.id, uuid: uuid }
         axios
-            .post(clientAuth + "/web/client/delete_action", reqData)
+            .post(iotWebHandlerEndpts + "/web/action/delete", reqData)
             .then(() => {
                 this.getActions()
                 toast.success("Successfully deleted action")
@@ -76,7 +76,7 @@ class AllActions extends Component {
                                         </tr>
                                     </thead>
                                     <tbody>
-                                        {this.state.actions.map(action => <ActionRow key={action.uid} action={action} deleteAction={this.deleteAction} />)}
+                                        {this.state.actions.map(action => <ActionRow key={action.uuid} action={action} deleteAction={this.deleteAction} />)}
                                     </tbody>
                                 </table>
                             </div>

@@ -18,10 +18,10 @@ router.post("/add", (req, res) => {
     const user_id = req.body.user_id
     const name = req.body.name
     const uuid = "action-" + crypto.randomUUID()
-    const triggerTopic = req.body.triggerTopic
-    const triggerState = req.body.triggerState
-    const deviceResponses = req.body.deviceResponses
-    const deviceUUIDs = Object.keys(req.body.deviceResponses)
+    const trigger_topic = req.body.trigger_topic
+    const trigger_state = req.body.trigger_state
+    const device_responses = req.body.device_responses
+    const deviceUUIDs = Object.keys(req.body.device_responses)
     User
         .findOne({ _id: user_id })
         .then(findUser => {
@@ -40,16 +40,16 @@ router.post("/add", (req, res) => {
                                 return res.status(404).json({ devices: "Devices not found" })
                             }
                         }
-                        for (const device_uuid in deviceResponses) {
-                            deviceResponses[device_uuid] = parseInt(deviceResponses[device_uuid], 10)
+                        for (const device_uuid in device_responses) {
+                            device_responses[device_uuid] = parseInt(device_responses[device_uuid], 10)
                         }
                         let newAction = new Action({
                             name: name,
                             uuid: uuid,
                             user_uuid: findUser.uuid,
-                            trigger_topic: triggerTopic,
-                            trigger_state: parseInt(triggerState, 10),
-                            responses: new Map(Object.entries(deviceResponses))
+                            trigger_topic: trigger_topic,
+                            trigger_state: parseInt(trigger_state, 10),
+                            responses: new Map(Object.entries(device_responses))
                         })
                         newAction
                             .save()
@@ -68,7 +68,7 @@ router.post("/add", (req, res) => {
 })
 
 // Delete an action
-router.post("/delete_action", (req, res) => {
+router.post("/delete", (req, res) => {
     // Check validation
     const { errors, isValid } = validateDeleteAction(req.body)
     if (!isValid) {

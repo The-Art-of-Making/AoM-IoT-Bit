@@ -6,7 +6,7 @@ import axios from "axios"
 import classnames from "classnames"
 import { checkIcon, deleteIcon } from "../../icons/icons"
 import ActionResponse from "../../components/ActionResponse"
-import { clientAuth } from "../../endpoints"
+import { iotWebHandlerEndpts } from "../../endpoints"
 import { toast } from "react-toastify"
 
 class NewAction extends Component {
@@ -26,9 +26,9 @@ class NewAction extends Component {
     }
 
     getDevices() {
-        const reqData = { user: this.props.auth.user.id }
+        const reqData = { user_id: this.props.auth.user.id }
         axios
-            .post(clientAuth + "/web/client/get_devices", reqData)
+            .post(iotWebHandlerEndpts + "/web/device/all", reqData)
             .then(res => {
                 this.setState({
                     devices: res.data,
@@ -51,8 +51,8 @@ class NewAction extends Component {
     }
 
     updateTriggerDevice = e => {
-        const uid = e.target.value
-        const triggerDevice = this.state.devices.find(device => device.uid === uid)
+        const uuid = e.target.value
+        const triggerDevice = this.state.devices.find(device => device.uuid === uuid)
         this.setState({
             triggerDevice: (triggerDevice === undefined) ? {} : triggerDevice
         })
@@ -74,10 +74,10 @@ class NewAction extends Component {
         })
     }
 
-    updateResponseDevice = (index, uid) => {
-        const device = this.state.devices.find(device => device.uid === uid)
+    updateResponseDevice = (index, uuid) => {
+        const device = this.state.devices.find(device => device.uuid === uuid)
         let deviceResponses = this.state.deviceResponses
-        deviceResponses[index].response.device = uid
+        deviceResponses[index].response.device = uuid
         deviceResponses[index].response.signal = (device === undefined) ? "analog" : device.signal
         this.setState({
             deviceResponses: deviceResponses
@@ -96,7 +96,7 @@ class NewAction extends Component {
         e.preventDefault()
         const triggerTopic = (Object.keys(this.state.triggerDevice).length === 0)
             ? ""
-            : "/" + this.state.triggerDevice.client_username + "/devices/" + this.state.triggerDevice.number.toString() + "/state"
+            : "/" + this.state.triggerDevice.client_uuid + "/devices/" + this.state.triggerDevice.number.toString() + "/state"
         let deviceResponses = {}
         this.state.deviceResponses.forEach(response => {
             const device = response.response.device
@@ -104,14 +104,14 @@ class NewAction extends Component {
             deviceResponses[device] = state
         })
         const newAction = {
-            user: this.props.auth.user.id,
+            user_id: this.props.auth.user.id,
             name: this.state.name,
-            triggerTopic: triggerTopic,
-            triggerState: this.state.triggerState.toString(),
-            deviceResponses: deviceResponses
+            trigger_topic: triggerTopic,
+            trigger_state: this.state.triggerState.toString(),
+            device_responses: deviceResponses
         }
         axios
-            .post(clientAuth + "/web/client/add_action", newAction)
+            .post(iotWebHandlerEndpts + "/web/action/add", newAction)
             .then(() =>
                 toast.success("Successfully added action")
             )
@@ -128,13 +128,13 @@ class NewAction extends Component {
     render() {
 
         const { errors } = this.state
-        const deviceOptions = this.state.devices.map(device => <option key={device.uid} value={device.uid}>{device.name}</option>)
+        const deviceOptions = this.state.devices.map(device => <option key={device.uuid} value={device.uuid}>{device.name}</option>)
         const responseOptions = this.state.outputDevices.map(device =>
             <option
-                key={device.uid}
+                key={device.uuid}
                 signal={device.signal}
-                value={device.uid}
-                disabled={this.state.deviceResponses.find(response => response.response.device === device.uid)}
+                value={device.uuid}
+                disabled={this.state.deviceResponses.find(response => response.response.device === device.uuid)}
             >
                 {device.name}
             </option>

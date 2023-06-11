@@ -121,7 +121,7 @@ export default class DeviceCard extends Component {
         name: this.props.device.name,
         io: this.props.device.io,
         signal: this.props.device.signal,
-        cmdTopic: "/" + this.props.device.client_username + "/devices/" + this.props.device.number + "/cmd",
+        cmdTopic: "/" + this.props.device.client_uuid + "/devices/" + this.props.device.number + "/cmd", // TODO verify device topics
         deviceState: "0"
     }
 
@@ -160,7 +160,7 @@ export default class DeviceCard extends Component {
                     {(this.state.edit)
                         ? <>
                             <div className="btn text-success" onClick={() => {
-                                this.props.editDevice(this.props.device.uid, this.state.name, this.state.io, this.state.signal)
+                                this.props.editDevice(this.props.device.uuid, this.state.name, this.state.io, this.state.signal)
                                 this.setEdit(false)
                             }}>{checkIcon}</div>
                         </>

@@ -7,7 +7,7 @@ export default function ActionRow(props) {
             <td>{props.action.trigger_topic}</td>
             <td>{props.action.trigger_state}</td>
             <td>{ }</td>
-            <td><div className="btn text-danger" onClick={() => props.deleteAction(props.action.uid)}>{deleteIcon}</div></td>
+            <td><div className="btn text-danger" onClick={() => props.deleteAction(props.action.uuid)}>{deleteIcon}</div></td>
         </tr>
     )
 }

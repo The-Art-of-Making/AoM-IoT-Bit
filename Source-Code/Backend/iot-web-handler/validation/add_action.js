@@ -31,10 +31,10 @@ module.exports = function validateClient(data) {
     }
 
     // Device-response check
-    if (!data.deviceResponses) {
-        errors.deviceResponses = "Device responses required"
-    } else if (!Object.keys((data.deviceResponses)).length > 0) {
-        errors.deviceResponses = "Device responses required"
+    if (!data.device_responses) {
+        errors.device_responses = "Device responses required"
+    } else if (!Object.keys((data.device_responses)).length > 0) {
+        errors.device_responses = "Device responses required"
     }
 
     return {

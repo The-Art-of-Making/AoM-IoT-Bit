@@ -6,7 +6,7 @@ import { logoutUser } from "../../actions/authActions"
 import axios from "axios"
 import classnames from "classnames"
 import { checkIcon, deleteIcon } from "../../icons/icons"
-import { clientAuth } from "../../endpoints"
+import { iotWebHandlerEndpts } from "../../endpoints"
 import { toast } from "react-toastify"
 
 class NewClient extends Component {
@@ -24,9 +24,9 @@ class NewClient extends Component {
         })
     }
 
-    downloadConfigFile = (username, password) => {
+    downloadConfigFile = (uuid, token) => {
         const element = document.createElement("a");
-        const file = new Blob([this.state.wifiSSID + ";" + this.state.wifiPassword + ";" + username + ";" + password], { type: 'text/plain' });
+        const file = new Blob([this.state.wifiSSID + ";" + this.state.wifiPassword + ";" + uuid + ";" + token], { type: 'text/plain' });
         element.href = URL.createObjectURL(file);
         element.download = "secrets.txt";
         document.body.appendChild(element);
@@ -36,16 +36,15 @@ class NewClient extends Component {
     onSubmit = e => {
         e.preventDefault()
         const newClient = {
-            user: this.props.auth.user.id,
+            user_id: this.props.auth.user.id,
             name: this.state.name,
-            wifiSSID: this.state.wifiSSID,
-            wifiPassword: this.state.wifiPassword
+            wifi_ssid: this.state.wifiSSID,
+            wifi_password: this.state.wifiPassword
         }
         axios
-            .post(clientAuth + "/web/client/register", newClient)
+            .post(iotWebHandlerEndpts + "/web/client/register", newClient)
             .then(res => {
-                this.downloadConfigFile(res.data.username, res.data.password)
-                console.log(res)
+                this.downloadConfigFile(res.data.uuid, res.data.token)
                 this.setState({
                     errors: {}
                 })
@@ -83,26 +82,26 @@ class NewClient extends Component {
                                 {(errors.name) ? <><small className="form-text text-danger">{errors.name}</small><br /></> : null}
                                 <label className="mt-3">Wifi SSID</label>
                                 <input
-                                    className={classnames((errors.wifiSSID !== undefined) ? "form-control is-invalid" : "form-control", { invalid: errors.wifiSSID })}
+                                    className={classnames((errors.wifi_ssid !== undefined) ? "form-control is-invalid" : "form-control", { invalid: errors.wifi_ssid })}
                                     onChange={this.onChange}
                                     value={this.state.wifiSSID}
                                     placeholder="Wifi SSID"
-                                    error={errors.wifiSSID}
+                                    error={errors.wifi_ssid}
                                     id="wifiSSID"
                                     type="text"
                                 />
-                                {(errors.wifiSSID) ? <><small className="form-text text-danger">{errors.wifiSSID}</small><br /></> : null}
+                                {(errors.wifi_ssid) ? <><small className="form-text text-danger">{errors.wifi_ssid}</small><br /></> : null}
                                 <label className="mt-3">Wifi Password</label>
                                 <input
-                                    className={classnames((errors.wifiPassword !== undefined) ? "form-control is-invalid" : "form-control", { invalid: errors.wifiPassword })}
+                                    className={classnames((errors.wifi_password !== undefined) ? "form-control is-invalid" : "form-control", { invalid: errors.wifi_password })}
                                     onChange={this.onChange}
                                     value={this.state.wifiPassword}
                                     placeholder="Wifi Password"
-                                    error={errors.wifiPassword}
+                                    error={errors.wifi_password}
                                     id="wifiPassword"
                                     type="password"
                                 />
-                                {(errors.wifiPassword) ? <><small className="form-text text-danger">{errors.wifiPassword}</small><br /></> : null}
+                                {(errors.wifi_password) ? <><small className="form-text text-danger">{errors.wifi_password}</small><br /></> : null}
                             </div>
                             <div className="d-flex flex-row-reverse">
                                 <button className="btn text-success" type="submit">{checkIcon} Add Client</button>

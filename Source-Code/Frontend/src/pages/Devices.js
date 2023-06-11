@@ -7,7 +7,7 @@ import axios from "axios"
 import Header from "../components/Header"
 import Sidebar from "../components/Sidebar"
 import DeviceCard from "../components/DeviceCard"
-import { clientAuth, mqttController } from "../endpoints"
+import { iotWebHandlerEndpts } from "../endpoints"
 import MQTTClient from "../components/MQTTClient"
 
 class Devices extends Component {
@@ -16,7 +16,7 @@ class Devices extends Component {
         devices: [],
         errors: {},
         server: false,
-        connected: false,
+        connected: true, // TODO get state of cluster
         refs: {}
     }
 
@@ -32,7 +32,7 @@ class Devices extends Component {
     componentDidMount() {
         this.mqttClient = new MQTTClient(this.props.auth.user.id, "password", [], this.setConnected, this.messageHandler)
         this.getDevices()
-        this.getServer()
+        // this.getServer()
     }
 
     componentWillUnmount() {
@@ -47,27 +47,29 @@ class Devices extends Component {
         toast.success("Connected to server")
     }
 
+    // TODO send command to client/devices to update config 
     updateConfig = () => {
-        const reqData = { user: this.props.auth.user.id }
-        axios
-            .post(mqttController + "/update_config", reqData)
-            .then(res => {
-                (res.data.success) ?
-                    toast.success("Device configurations updated")
-                    : toast.warning("Failed to update device configurations")
-            })
-            .catch(err => {
-                this.setState({
-                    errors: (err.response) ? err.response.data : err
-                })
-                toast.warning("Failed to update device configurations")
-            })
+        // const reqData = { user: this.props.auth.user.id }
+        // axios
+        //     .post(mqttController + "/update_config", reqData)
+        //     .then(res => {
+        //         (res.data.success) ?
+        //             toast.success("Device configurations updated")
+        //             : toast.warning("Failed to update device configurations")
+        //     })
+        //     .catch(err => {
+        //         this.setState({
+        //             errors: (err.response) ? err.response.data : err
+        //         })
+        //         toast.warning("Failed to update device configurations")
+        //     })
     }
 
+    // TODO get state of MQTT cluster
     getServer = () => {
-        const reqData = { user: this.props.auth.user.id }
+        const reqData = { user_id: this.props.auth.user.id }
         axios
-            .post(clientAuth + "/web/client/get_server", reqData)
+            .post(iotWebHandlerEndpts + "/web/client/get_server", reqData)
             .then(res => {
                 const running = res.data.status === "RUNNING"
                 if (running) {
@@ -92,15 +94,15 @@ class Devices extends Component {
     }
 
     getDevices = () => {
-        const reqData = { user: this.props.auth.user.id }
+        const reqData = { user_id: this.props.auth.user.id }
         axios
-            .post(clientAuth + "/web/client/get_devices", reqData)
+            .post(iotWebHandlerEndpts + "/web/device/all", reqData)
             .then(res => {
                 this.setState({
                     devices: res.data
                 })
                 res.data.forEach(device => {
-                    const topic = "/" + device.client_username + "/devices/" + device.number + "/state"
+                    const topic = "/" + device.client_uuid + "/devices/" + device.number + "/state"
                     let updatedRefs = this.state.refs
                     updatedRefs[topic] = createRef()
                     this.setState({
@@ -117,10 +119,10 @@ class Devices extends Component {
             })
     }
 
-    editDevice = (uid, name, io, signal) => {
-        const updateDevice = { user: this.props.auth.user.id, uid: uid, name: name, io: io, signal: signal }
+    editDevice = (uuid, name, io, signal) => {
+        const updateDevice = { user_id: this.props.auth.user.id, uuid: uuid, name: name, io: io, signal: signal }
         axios
-            .post(clientAuth + "/web/client/update_device", updateDevice)
+            .post(iotWebHandlerEndpts + "/web/device/update", updateDevice)
             .then(() => {
                 this.updateConfig()
                 this.getDevices()
@@ -148,8 +150,8 @@ class Devices extends Component {
                             {
                                 this.state.devices.map(device =>
                                     <DeviceCard
-                                        key={device.uid}
-                                        ref={this.state.refs["/" + device.client_username + "/devices/" + device.number + "/state"]}
+                                        key={device.uuid}
+                                        ref={this.state.refs["/" + device.client_uuid + "/devices/" + device.number + "/state"]}
                                         device={device}
                                         editDevice={this.editDevice}
                                         publish={this.mqttClient.publish}

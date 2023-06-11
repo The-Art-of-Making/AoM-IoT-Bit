@@ -18,8 +18,9 @@ Users can create an account with a unique email and a password, then start their
 
 Run the following commands to start the development environment.
 
-1. `npm run backend-install`
-2. `npm run build-style`
-3. `export MONGOURI="<your MongoDB URI>"`
-4. (Optional) Update `endpoints.js` to point to your development infrastructure such as an MQTT development server for testing or a development deployment of the `mqtt-client-auth` backend service which can be run in conjunction for greater development functionality
-5. `npm run dev`
+1. `npm install .`
+2. `npm run backend-install`
+3. `npm run build-style`
+4. `export MONGOURI="<your MongoDB URI>"`
+5. (Optional) Update `endpoints.js` to point to your development infrastructure such as an MQTT development server for testing or a instance of the `iot-wb-handler` backend service which can be run in conjunction for greater development functionality
+6. `npm run dev`

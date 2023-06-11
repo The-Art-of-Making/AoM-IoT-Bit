@@ -8,7 +8,7 @@ import Sidebar from "../components/Sidebar"
 import DashboardCard from "../components/DashboardCard"
 import { actionIcon, zoneIcon } from "../icons/icons"
 import UnderConstruction from "../components/UnderContruction"
-import { clientAuth } from "../endpoints"
+import { iotWebHandlerEndpts } from "../endpoints"
 import { toast } from "react-toastify"
 
 class Dashboard extends Component {
@@ -22,7 +22,7 @@ class Dashboard extends Component {
     }
 
     componentDidMount() {
-        this.getServer()
+        // this.getServer()
         this.getClients()
         this.getDevices()
         this.getActions()
@@ -33,27 +33,28 @@ class Dashboard extends Component {
         this.props.logoutUser()
     }
 
-    getServer() {
-        const reqData = { user: this.props.auth.user.id }
-        axios
-            .post(clientAuth + "/web/client/get_server", reqData)
-            .then(res =>
-                this.setState({
-                    server: res.data.status
-                })
-            )
-            .catch(err => {
-                this.setState({
-                    errors: err.response.data
-                })
-                toast.error("Failed to get server status")
-            })
-    }
+    // TODO replace with server info
+    // getServer() {
+    //     const reqData = { user_id: this.props.auth.user.id }
+    //     axios
+    //         .post(iotWebHandlerEndpts + "/web/client/get_server", reqData)
+    //         .then(res =>
+    //             this.setState({
+    //                 server: res.data.status
+    //             })
+    //         )
+    //         .catch(err => {
+    //             this.setState({
+    //                 errors: err.response.data
+    //             })
+    //             toast.error("Failed to get server status")
+    //         })
+    // }
 
     getClients() {
-        const reqData = { user: this.props.auth.user.id }
+        const reqData = { user_id: this.props.auth.user.id }
         axios
-            .post(clientAuth + "/web/client/get_clients", reqData)
+            .post(iotWebHandlerEndpts + "/web/client/all", reqData)
             .then(res =>
                 this.setState({
                     clients: res.data.length
@@ -68,9 +69,9 @@ class Dashboard extends Component {
     }
 
     getDevices() {
-        const reqData = { user: this.props.auth.user.id }
+        const reqData = { user_id: this.props.auth.user.id }
         axios
-            .post(clientAuth + "/web/client/get_devices", reqData)
+            .post(iotWebHandlerEndpts + "/web/device/all", reqData)
             .then(res => {
                 this.setState({
                     devices: res.data.length
@@ -85,9 +86,9 @@ class Dashboard extends Component {
     }
 
     getActions() {
-        const reqData = { user: this.props.auth.user.id }
+        const reqData = { user_id: this.props.auth.user.id }
         axios
-            .post(clientAuth + "/web/client/get_actions", reqData)
+            .post(iotWebHandlerEndpts + "/web/action/all", reqData)
             .then(res => {
                 this.setState({
                     actions: res.data
@@ -129,7 +130,10 @@ class Dashboard extends Component {
                                 <div className="card-header">{actionIcon} Actions</div>
                                 <div className="card-body bg-primary">
                                     <div className="d-grid text-left p-3 rounded" style={{ background: "#" }}>
-                                        {(this.state.actions.length > 0) ? this.state.actions.map(action => <p key={action.uid} className="card-text"><span className="text-light" style={{ fontWeight: "bold" }}>&#8627;&ensp;</span>{action.name}</p>) : null}
+                                        {(this.state.actions.length > 0) ?
+                                            this.state.actions.map(action => <p key={action.uuid} className="card-text"><span className="text-light" style={{ fontWeight: "bold" }}>&#8627;&ensp;</span>{action.name}</p>)
+                                            : <p className="card-text">No actions</p>
+                                        }
                                     </div>
                                 </div>
                             </div>

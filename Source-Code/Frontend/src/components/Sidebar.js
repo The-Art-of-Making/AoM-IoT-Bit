@@ -1,5 +1,5 @@
 import SidebarItem from "./SidebarItem"
-import { cloudIcon, dashboardIcon, serverIcon, clientIcon, deviceIcon, actionIcon, zoneIcon } from "../icons/icons"
+import { cloudIcon, dashboardIcon, clientIcon, deviceIcon, actionIcon, zoneIcon } from "../icons/icons"
 
 export default function Sidebar(props) {
     return (
@@ -11,7 +11,6 @@ export default function Sidebar(props) {
             <hr />
             <ul className="nav nav-pills flex-column mb-auto">
                 <SidebarItem title="Dashboard" icon={dashboardIcon} currentItem={props.currentItem} link="/dashboard" />
-                <SidebarItem title="Server" icon={serverIcon} currentItem={props.currentItem} link="/server" />
                 <SidebarItem title="Clients" icon={clientIcon} currentItem={props.currentItem} link="/clients" />
                 <SidebarItem title="Devices" icon={deviceIcon} currentItem={props.currentItem} link="/devices" />
                 <SidebarItem title="Actions" icon={actionIcon} currentItem={props.currentItem} link="/actions" />

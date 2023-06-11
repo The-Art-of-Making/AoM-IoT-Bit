@@ -78,7 +78,7 @@ export const updateCurrentUser = decoded => {
 export const updateAccountInfo = userData => dispatch => {
   trackPromise(
     axios
-      .post("/web_users/updateAccountInfo", userData)
+      .post("/web_users/update", userData)
       .then(res => {
         // Save to localStorage
         // Set token to localStorage

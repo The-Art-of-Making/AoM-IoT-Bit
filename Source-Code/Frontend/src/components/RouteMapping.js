@@ -3,10 +3,6 @@ export const RouteMapping = {
         to: "/dashboard",
         title: "Dashboard"
     },
-    server: {
-        to: "/server",
-        title: "Server"
-    },
     clients: {
         to: "/clients",
         title: "Clients"

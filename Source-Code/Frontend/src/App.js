@@ -13,7 +13,6 @@ import Register from "./auth/Register"
 import Login from "./auth/Login"
 import Account from "./auth/Account"
 import Dashboard from "./pages/Dashboard"
-import Server from "./pages/Server"
 import Clients from "./pages/Clients/Clients"
 import AllClients from "./pages/Clients/AllClients"
 import NewClient from "./pages/Clients/NewClient"
@@ -66,14 +65,6 @@ export default class App extends Component {
               element={
                 <PrivateRoute>
                   <Dashboard />
-                </PrivateRoute>
-              }
-            />
-            <Route
-              path="/server"
-              element={
-                <PrivateRoute>
-                  <Server />
                 </PrivateRoute>
               }
             />
