@@ -1,9 +1,0 @@
-flask
-flask-cors
-kubernetes
-mongoengine
-paho-mqtt
-pika
-protobuf
-uuid
-waitress

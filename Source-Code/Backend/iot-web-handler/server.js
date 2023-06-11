@@ -2,7 +2,9 @@ const express = require("express")
 const cors = require("cors")
 const mongoose = require("mongoose")
 const bodyParser = require("body-parser")
-const mqtt_auth = require("./routes/mqtt/auth/auth")
+const action = require("./routes/web/action")
+const client = require("./routes/web/client")
+const device = require("./routes/web/device")
 const db = process.env.MONGOURI || require("./config/keys").mongoURI
 
 const server = express()
@@ -24,8 +26,10 @@ server.use(
 
 server.use(bodyParser.json())
 
-server.use("/mqtt/auth/", mqtt_auth)
+server.use("/web/action/", action)
+server.use("/web/client/", client)
+server.use("/web/device/", device)
 
-const port = process.env.PORT || 5000
+const port = process.env.PORT || 5001
 
-server.listen(port, () => console.log(`mqtt-client-auth up and running on port ${port}!`))
+server.listen(port, () => console.log(`iot-web-handler up and running on port ${port}!`))

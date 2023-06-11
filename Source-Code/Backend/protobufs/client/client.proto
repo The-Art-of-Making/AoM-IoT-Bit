@@ -1,0 +1,16 @@
+syntax = "proto3";
+
+package aom.iot.client;
+
+import "device.proto";
+
+message Client {
+    string name = 1;
+    string uuid = 2;
+    string token = 3;
+    string user_uuid = 4;
+    string lan_ip = 5;
+    string wan_ip = 6;
+    repeated aom.iot.device.Device devices = 7;
+}
+

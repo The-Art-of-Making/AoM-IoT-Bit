@@ -1,0 +1,33 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: mqtt-config-deployment
+  labels:
+    app: mqtt-config
+spec:
+  replicas: 2
+  selector:
+    matchLabels:
+      app: mqtt-config
+  template:
+    metadata:
+      labels:
+        app: mqtt-config
+    spec:
+      containers:
+        - name: mqtt-config-application
+          image: d3lta12/mqtt-config-application:public
+          imagePullPolicy: Always
+          env:
+            - name: MONGOURI
+              valueFrom:
+                secretKeyRef:
+                  name: mongo-uri
+                  key: MONGOURI
+            # TODO fix PROTOCOL_BUFFERS_PYTHON_IMPLEMENTATION env var workaround
+            - name: PROTOCOL_BUFFERS_PYTHON_IMPLEMENTATION
+              value: "python"
+            - name: MQTT_SERVER_HOST
+              value: ""
+            - name: MQTT_SERVER_PORT
+              value: 1883

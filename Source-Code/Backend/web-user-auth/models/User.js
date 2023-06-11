@@ -15,6 +15,13 @@ const UserSchema = new Schema(
       required: true,
       minlength: 8
     },
+    uuid: {
+      type: String,
+      minlength: 36,
+      required: true,
+      unique: true,
+      trim: true
+    },
     date: {
       type: Date,
       default: Date.now

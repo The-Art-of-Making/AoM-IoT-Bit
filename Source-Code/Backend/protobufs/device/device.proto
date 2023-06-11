@@ -2,6 +2,8 @@ syntax = "proto3";
 
 package aom.iot.device;
 
+import "action.proto";
+
 enum IO {
     INPUT = 0;
     OUTPUT = 1;
@@ -12,23 +14,15 @@ enum Signal {
     ANALOG = 1;
 }
 
-message Action {
-    string user = 1;
-    string name = 2;
-    string uid = 3;
-    string trigger_topic = 4;
-    uint32 trigger_state = 5;
-    uint32 response = 6;
-}
-
 message Device {
-    string user = 1;
-    string uid = 2;
-    string client_name = 3;
-    string client_username = 4;
-    string name = 5;
-    uint32 number = 6;
-    IO io = 7;
-    Signal signal = 8;
-    repeated Action actions = 9;
+    string name = 1;
+    string uuid = 2;
+    string token = 3;
+    string user_uuid = 4;
+    string client_uuid = 5;
+    string client_name = 6;
+    uint32 number = 7;
+    IO io = 8;
+    Signal signal = 9;
+    repeated aom.iot.action.Action actions = 10;
 }

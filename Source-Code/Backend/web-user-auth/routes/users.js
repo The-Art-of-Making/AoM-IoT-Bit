@@ -1,6 +1,7 @@
 const express = require("express")
 const router = express.Router()
 const bcrypt = require("bcryptjs")
+const crypto = require("crypto")
 const jwt = require("jsonwebtoken")
 const keys = require("../config/keys")
 
@@ -9,9 +10,8 @@ const validateRegisterInput = require("../validation/register")
 const validateLoginInput = require("../validation/login")
 const validateAccountInput = require("../validation/account")
 
-// Load User and Server models
+// Load User models
 const User = require("../models/User")
-const Server = require("../models/Server")
 
 router.post("/register", (req, res) => {
   // Form validation
@@ -27,23 +27,18 @@ router.post("/register", (req, res) => {
     else {
       const newUser = new User({
         email: req.body.email,
-        password: req.body.password
+        password: req.body.password,
+        uuid: "user-" + crypto.randomUUID()
       })
       // Hash password before saving in database
       bcrypt.genSalt(10, (err, salt) => {
+        if (err) throw err
         bcrypt.hash(newUser.password, salt, (err, hash) => {
           if (err) throw err
           newUser.password = hash
           newUser
             .save()
             .then(user => {
-              const newServer = new Server({
-                user: user._id
-              })
-              newServer.save().catch(err => {
-                User.deleteOne({ _id: user._id })
-                return res.status(500).json({ serverError: "Server failed to update.", error: err })
-              })
               return res.status(201).json(user)
             })
             .catch(err => {
@@ -106,7 +101,7 @@ router.post("/login", (req, res) => {
   })
 })
 
-router.post("/updateAccountInfo", (req, res) => {
+router.post("/update", (req, res) => {
   // query db for existing user, then update user doc with save() 
   User.findOne({ _id: req.body.id }).then(user => {
     if (user) {
@@ -175,7 +170,8 @@ router.post("/updateAccountInfo", (req, res) => {
       return res.status(404).json({ account: "Account Not Found" })
     }
   })
-
 })
+
+// TODO method for deleting account
 
 module.exports = router

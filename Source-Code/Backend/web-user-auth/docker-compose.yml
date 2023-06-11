@@ -5,7 +5,7 @@ services:
       dockerfile: Dockerfile
       context: ./
     ports:
-      - "5001:5001"
+      - "5002:5002"
     environment:
       - MONGOURI=${MONGOURI}
-      - PORT=5001
+      - PORT=5002

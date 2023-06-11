@@ -1,0 +1,17 @@
+apiVersion: v1
+kind: Service
+metadata:
+  name: mqtt-server-service
+spec:
+  type: LoadBalancer
+  selector:
+    app: mqtt-server
+  ports:
+    - name: mqtt
+      protocol: TCP
+      port: 1883
+      targetPort: 1883
+    - name: mqtt-websocket
+      protocol: TCP
+      port: 9001
+      targetPort: 9001

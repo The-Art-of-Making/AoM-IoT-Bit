@@ -1,0 +1,23 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: mqtt-server-deployment
+  labels:
+    app: mqtt-server
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: mqtt-server
+  template:
+    metadata:
+      labels:
+        app: mqtt-server
+    spec:
+      containers:
+        - name: mqtt-server-rabbitmq
+          image: d3lta12/mqtt-server-rabbitmq:public
+          imagePullPolicy: Always
+          ports:
+            - containerPort: 1883
+            - containerPort: 9001

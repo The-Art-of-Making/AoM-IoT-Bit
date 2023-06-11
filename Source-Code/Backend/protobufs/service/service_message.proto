@@ -1,0 +1,15 @@
+syntax = "proto3";
+
+package aom.iot.service;
+
+import "client.proto";
+
+enum Type {
+    CLIENT_CONFIG = 0;
+}
+
+message ServiceMessage {
+    Type type = 1;
+    double timestamp = 2;
+    aom.iot.client.Client client = 3;
+}

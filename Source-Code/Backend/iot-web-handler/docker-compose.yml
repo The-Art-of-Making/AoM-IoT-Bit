@@ -1,14 +1,14 @@
 version: "3.9"
 services:
-  rabbitmq:
+  node:
     build:
       dockerfile: Dockerfile
       context: ./
     ports:
-      - "1883:1883"
-      - "9001:9001"
+      - "5001:5001"
     environment:
-      - RABBITMQ_CONFIG_FILE=/etc/rabbitmq/rabbitmq.conf
+      - MONGOURI=${MONGOURI}
+      - PORT=5001
 networks:
   default:
     name: rabbitnet

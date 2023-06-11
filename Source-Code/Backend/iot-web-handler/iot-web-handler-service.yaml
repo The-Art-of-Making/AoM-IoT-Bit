@@ -1,12 +1,12 @@
 apiVersion: v1
 kind: Service
 metadata:
-  name: web-user-auth-service
+  name: iot-web-handler-service
 spec:
   type: LoadBalancer
   selector:
-    app: web-user-auth
+    app: iot-web-handler
   ports:
     - protocol: TCP
-      port: 5002
-      targetPort: 5002
+      port: 5001
+      targetPort: 5001

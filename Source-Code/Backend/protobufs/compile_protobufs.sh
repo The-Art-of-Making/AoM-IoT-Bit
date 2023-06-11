@@ -5,26 +5,29 @@ git submodule init
 
 echo "Compiling protobufs for python..."
 PYTHON_OUT_DIR=./python_out
-MQTT_CONTROLLER_PROTOBUFS=../mqtt-controller/application/protobufs
-MQTT_CLIENT_ACTIONS_PROTOBUFS=../mqtt-client-actions/application/protobufs
+MQTT_CONFIG_PROTOBUFS=../mqtt-config/application/protobufs
 if [ ! -d "$PYTHON_OUT_DIR" ]; then
     echo "Creating python_out directory"
     mkdir $PYTHON_OUT_DIR
 fi
-if [ ! -d "$MQTT_CONTROLLER_PROTOBUFS" ]; then
-    echo "Creating mqtt-controller/application/protobufs directory"
-    mkdir $MQTT_CONTROLLER_PROTOBUFS
+if [ ! -d "$MQTT_CONFIG_PROTOBUFS" ]; then
+    echo "Creating mqtt-config/application/protobufs directory"
+    mkdir $MQTT_CONFIG_PROTOBUFS
 fi
-if [ ! -d "$MQTT_CLIENT_ACTIONS_PROTOBUFS" ]; then
-    echo "Creating mqtt-client-actions/application/protobufs directory"
-    mkdir $MQTT_CLIENT_ACTIONS_PROTOBUFS
-fi
-protoc -I ./device --python_out=$PYTHON_OUT_DIR ./device/device.proto
-protoc -I ./controller -I ./device --python_out=$PYTHON_OUT_DIR ./controller/controller_message.proto
-rm -Rf $MQTT_CONTROLLER_PROTOBUFS/* && cp -r $PYTHON_OUT_DIR/* $MQTT_CONTROLLER_PROTOBUFS/
-rm -Rf $MQTT_CLIENT_ACTIONS_PROTOBUFS/* && cp -r $PYTHON_OUT_DIR/* $MQTT_CLIENT_ACTIONS_PROTOBUFS/
-sed -i "s/import device_pb2 as device__pb2/import protobufs.device_pb2 as device__pb2/g" $MQTT_CONTROLLER_PROTOBUFS/controller_message_pb2.py
-sed -i "s/import device_pb2 as device__pb2/import protobufs.device_pb2 as device__pb2/g" $MQTT_CLIENT_ACTIONS_PROTOBUFS/controller_message_pb2.py
+protoc -I ./action --python_out=$PYTHON_OUT_DIR ./action/action.proto
+protoc -I ./device -I ./action --python_out=$PYTHON_OUT_DIR ./device/device.proto
+protoc -I ./client -I ./device -I ./action --python_out=$PYTHON_OUT_DIR ./client/client.proto
+protoc -I ./service -I ./client -I ./device -I ./action --python_out=$PYTHON_OUT_DIR ./service/service_message.proto
+echo "Updating import paths for device_pb2.py, client_pb2.py, service_message_pb2.py..."
+sed -i "s/import action_pb2 as action__pb2/import protobufs.action_pb2 as action__pb2/g" $PYTHON_OUT_DIR/device_pb2.py
+sed -i "s/import action_pb2 as action__pb2/import protobufs.action_pb2 as action__pb2/g" $PYTHON_OUT_DIR/client_pb2.py
+sed -i "s/import device_pb2 as device__pb2/import protobufs.device_pb2 as device__pb2/g" $PYTHON_OUT_DIR/client_pb2.py
+sed -i "s/import action_pb2 as action__pb2/import protobufs.action_pb2 as action__pb2/g" $PYTHON_OUT_DIR/service_message_pb2.py
+sed -i "s/import device_pb2 as device__pb2/import protobufs.device_pb2 as device__pb2/g" $PYTHON_OUT_DIR/service_message_pb2.py
+sed -i "s/import client_pb2 as client__pb2/import protobufs.client_pb2 as client__pb2/g" $PYTHON_OUT_DIR/service_message_pb2.py
+echo "Copying output to project protobuf directories..."
+rm -Rf $MQTT_CONFIG_PROTOBUFS/* && cp -r $PYTHON_OUT_DIR/* $MQTT_CONFIG_PROTOBUFS/
+
 
 echo "Compiling protobufs for C (nanopb)..."
 C_OUT_DIR=./c_out
@@ -36,8 +39,10 @@ fi
 cd nanopb
 git submodule update --remote
 cd ../
-python3 nanopb/generator/nanopb_generator.py device/device.proto -I ./device -D $C_OUT_DIR
-python3 nanopb/generator/nanopb_generator.py controller/controller_message.proto -I ./controller -I ./device -D $C_OUT_DIR
+python3 nanopb/generator/nanopb_generator.py action/action.proto -I ./action -D $C_OUT_DIR
+python3 nanopb/generator/nanopb_generator.py device/device.proto -I ./device -I ./action -D $C_OUT_DIR
+python3 nanopb/generator/nanopb_generator.py client/client.proto -I ./client -I ./device -I ./action -D $C_OUT_DIR
+python3 nanopb/generator/nanopb_generator.py service/service_message.proto -I ./service -I ./client -I ./device -I ./action -D $C_OUT_DIR
 rm -Rf $FIRMWARE_DIR/*.pb.*
 cp nanopb/pb.h nanopb/pb_common.h nanopb/pb_common.c nanopb/pb_decode.h nanopb/pb_decode.c $FIRMWARE_DIR
 cp -r $C_OUT_DIR/* $FIRMWARE_DIR

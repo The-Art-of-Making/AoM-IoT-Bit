@@ -1,0 +1,6 @@
+bcrypt
+mongoengine
+paho-mqtt
+protobuf
+urllib3<2.0
+uuid

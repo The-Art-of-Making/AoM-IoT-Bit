@@ -1,0 +1,11 @@
+version: "3.9"
+services:
+  application:
+    build:
+      dockerfile: Dockerfile
+      context: ./
+    environment:
+      - MONGOURI=${MONGOURI}
+      - PROTOCOL_BUFFERS_PYTHON_IMPLEMENTATION=python # TODO fix PROTOCOL_BUFFERS_PYTHON_IMPLEMENTATION env var workaround
+      - MQTT_SERVER_HOST=localhost
+      - MQTT_SERVER_PORT=1883
