@@ -1,6 +1,7 @@
 import { Component } from "react"
 import classnames from "classnames"
 import CardInfo from "./CardInfo"
+import { deviceTopicBuidler, deviceTopics } from "./TopicBuilder"
 import { editIcon, checkIcon, checkCircleIcon, xCircleIcon } from "../icons/icons"
 
 // Convert value to ArrayBuffer
@@ -121,7 +122,7 @@ export default class DeviceCard extends Component {
         name: this.props.device.name,
         io: this.props.device.io,
         signal: this.props.device.signal,
-        cmdTopic: "/" + this.props.device.client_uuid + "/devices/" + this.props.device.number + "/cmd", // TODO verify device topics
+        cmdTopic: deviceTopicBuidler(this.props.device.user_uuid, this.props.device.client_uuid, this.props.device.device_uuid, deviceTopics.cmd),
         deviceState: "0"
     }
 

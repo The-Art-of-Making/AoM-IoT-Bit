@@ -6,6 +6,7 @@ import axios from "axios"
 import classnames from "classnames"
 import { checkIcon, deleteIcon } from "../../icons/icons"
 import ActionResponse from "../../components/ActionResponse"
+import { deviceTopicBuidler, deviceTopics } from "../../components/TopicBuilder"
 import { iotWebHandlerEndpts } from "../../endpoints"
 import { toast } from "react-toastify"
 
@@ -94,9 +95,10 @@ class NewAction extends Component {
 
     onSubmit = e => {
         e.preventDefault()
+        const triggerDevice = this.state.triggerDevice
         const triggerTopic = (Object.keys(this.state.triggerDevice).length === 0)
             ? ""
-            : "/" + this.state.triggerDevice.client_uuid + "/devices/" + this.state.triggerDevice.number.toString() + "/state"
+            : deviceTopicBuidler(triggerDevice.user_uuid, triggerDevice.client_uuid, triggerDevice.uuid, deviceTopics.state)
         let deviceResponses = {}
         this.state.deviceResponses.forEach(response => {
             const device = response.response.device

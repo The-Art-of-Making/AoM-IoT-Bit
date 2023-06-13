@@ -9,6 +9,7 @@ import Sidebar from "../components/Sidebar"
 import DeviceCard from "../components/DeviceCard"
 import { iotWebHandlerEndpts } from "../endpoints"
 import MQTTClient from "../components/MQTTClient"
+import { deviceTopicBuidler, deviceTopics } from "../components/TopicBuilder"
 
 class Devices extends Component {
 
@@ -102,7 +103,7 @@ class Devices extends Component {
                     devices: res.data
                 })
                 res.data.forEach(device => {
-                    const topic = "/" + device.client_uuid + "/devices/" + device.number + "/state"
+                    const topic = deviceTopicBuidler(device.user_uuid, device.client_uuid, device.uuid, deviceTopics.state)
                     let updatedRefs = this.state.refs
                     updatedRefs[topic] = createRef()
                     this.setState({
@@ -151,7 +152,7 @@ class Devices extends Component {
                                 this.state.devices.map(device =>
                                     <DeviceCard
                                         key={device.uuid}
-                                        ref={this.state.refs["/" + device.client_uuid + "/devices/" + device.number + "/state"]}
+                                        ref={deviceTopicBuidler(device.user_uuid, device.client_uuid, device.uuid, deviceTopics.state)}
                                         device={device}
                                         editDevice={this.editDevice}
                                         publish={this.mqttClient.publish}
