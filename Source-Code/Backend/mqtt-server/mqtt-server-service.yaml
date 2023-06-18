@@ -11,6 +11,10 @@ spec:
       protocol: TCP
       port: 1883
       targetPort: 1883
+    - name: amqp
+      protocol: TCP
+      port: 5672
+      targetPort: 5672
     - name: mqtt-websocket
       protocol: TCP
       port: 9001
