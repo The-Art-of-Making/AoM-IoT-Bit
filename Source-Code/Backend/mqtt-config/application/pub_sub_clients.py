@@ -1,12 +1,16 @@
 """Pub/sub clients and common interface"""
 
 import functools
-import time
 from os import environ
+from queue import Queue
+from time import sleep
+
+import paho.mqtt.client as paho_mqtt
 from pika import ConnectionParameters, PlainCredentials, SelectConnection
 from pika.exchange_type import ExchangeType
 
 from logger import logger
+from thread_handler import ThreadHandler
 
 HOST = environ.get("HOST", "localhost")
 PORT = int(environ.get("PORT", "5672"))
@@ -24,29 +28,80 @@ class PubSubClient:
         self.username = username
         self.password = password
 
-    def publish(self, topic: str, message: bytes) -> bool:
+    def publish(self, topic: str, message: bytes) -> None:
         """Publish to topic"""
         logger.info("PubSub Client publishing message %s to topic %s", message, topic)
 
-    def subscribe(self, topic: str):
+    def subscribe(self, topic: str) -> None:
         """Subscribe to topic"""
         logger.info("PubSub Client subscribing to topic %s", topic)
 
 
-class MQTTClient(PubSubClient):
-    """MQTT Pub/Sub Client"""
+class MQTTClient(PubSubClient, ThreadHandler):
+    """Threaded Paho MQTT client consumer"""
 
-    def __init__(self, host: str, port: int, username: str = "", password: str = ""):
-        super().__init__(host, port, username, password)
+    def __init__(
+        self,
+        host: str,
+        port: int,
+        username: str = "",
+        password: str = "",
+        topics: list = [],
+    ):
+        PubSubClient.__init__(self, host, port, username, password)
+        ThreadHandler.__init__(self, target=self.run)
+        self.paho_mqtt_client = paho_mqtt.Client(client_id=username)
+        self.paho_mqtt_client.username_pw_set(username, password)
+        self.paho_mqtt_client.on_connect = self.on_connect
+        self.paho_mqtt_client.on_message = self.on_message
+        self.topics = topics
+        self.messages = Queue()
+        self.start()
 
-    # TODO implement MQTT pub/sub client
+    def on_connect(
+        self, client: paho_mqtt.Client, userdata, flags, result_code
+    ) -> None:
+        """Callback for when the client receives a CONNACK response from the server
+        Subscribing in on_connect() means that if we lose the connection and
+        reconnect then subscriptions will be renewed.  Subscribe to config
+        topic to receive requests for client configs"""
+
+        logger.info("Connected to MQTT server with result code %s", result_code)
+
+        for topic in self.topics:
+            logger.info("Subscribing to %s topic", topic)
+            self.paho_mqtt_client.subscribe(topic)
+
+    def on_message(self, client: paho_mqtt.Client, userdata, mqtt_message) -> None:
+        """Callback for when a message is received from the server, adds message
+        to queue of received messages for consumption"""
+        logger.info("Received MQTT message from topic %s", mqtt_message.topic)
+        self.messages.put(mqtt_message.payload)
+
+    def subscribe(self, topic: str) -> None:
+        """MQTT client subscribes to messages published to topic"""
+        self.paho_mqtt_client.subscribe(topic)
+
+    def get_message(self) -> bytes:
+        """Get a message from the queue of received messages.  If the queue is empty,
+        block until a message is received and return the message."""
+        self.messages.get()
+
+    def publish(self, topic: str, message: bytes) -> None:
+        """MQTT client publishes message to topic"""
+        self.paho_mqtt_client.publish(topic, message)
+
+    def run(self) -> None:
+        """Run MQTT client"""
+        self.paho_mqtt_client.loop()
 
 
-class RabbitMQConsumer:
+# TODO type annotation
+class RabbitMQClient:
     """This is based on the pika asynchronous consumer example found here:
     https://github.com/pika/pika/blob/main/examples/asynchronous_consumer_example.py.
 
-    This is a RabbitMQ consumer that will handle unexpected interactions
+    This is a RabbitMQ client that will handle unexpected interactions
     with RabbitMQ such as channel and connection closures.
 
     If RabbitMQ closes the connection, this class will stop and indicate
@@ -69,6 +124,7 @@ class RabbitMQConsumer:
         exchange_type: ExchangeType = ExchangeType.topic,
         queue: str = "text",
         routing_key: str = "example.text",
+        on_message_callback: callable = None,
     ):
         """Create a new instance of an asynchronous RabbitMQ consumer
 
@@ -80,6 +136,9 @@ class RabbitMQConsumer:
         :param str exchange_type: type of exchange to setup
         :param str queue: queue to bind to
         :param routing_key: routing key of messages in queue
+        :param callable on_message_callback: optional function to be
+            called when a message is received, must accept single
+            argument of type bytes
 
         """
         self.host = host
@@ -98,6 +157,7 @@ class RabbitMQConsumer:
         self.consumer_tag = None
         self.consuming = False
         self.prefetch_count = 5
+        self.on_message_callback = on_message_callback
 
     def connect(self):
         """This method connects to RabbitMQ, returning the connection handle.
@@ -238,6 +298,7 @@ class RabbitMQConsumer:
         self.channel.exchange_declare(
             exchange=exchange_name,
             exchange_type=self.exchange_type,
+            durable=True,
             callback=on_exchange_declared,
         )
 
@@ -310,16 +371,16 @@ class RabbitMQConsumer:
 
     def _on_basic_qos_ok(self, _unused_frame):
         """Invoked by pika when the Basic.QoS method has completed. At this
-        point we will start consuming messages by calling start_consuming
+        point we will start consuming messages by calling _start_consuming
         which will invoke the needed RPC commands to start the process.
 
         :param pika.frame.Method _unused_frame: The Basic.QosOk response frame
 
         """
         logger.info("QOS set to: %d", self.prefetch_count)
-        self.start_consuming()
+        self._start_consuming()
 
-    def start_consuming(self):
+    def _start_consuming(self):
         """This method sets up the consumer by first calling
         add_on_cancel_callback so that the object is notified if RabbitMQ
         cancels the consumer. It then issues the Basic.Consume RPC command
@@ -370,12 +431,13 @@ class RabbitMQConsumer:
 
         """
         logger.info(
-            "Received message # %s from %s: %s",
+            "Received message # %s from %s",
             basic_deliver.delivery_tag,
             properties.app_id,
-            body,
         )
         self.acknowledge_message(basic_deliver.delivery_tag)
+        if self.on_message_callback is not None:
+            self.on_message_callback(body)
 
     def acknowledge_message(self, delivery_tag):
         """Acknowledge the message delivery from RabbitMQ by sending a
@@ -450,8 +512,20 @@ class RabbitMQConsumer:
                 self.connection.ioloop.stop()
             logger.info("Stopped")
 
+    def publish(self, topic: str, message: bytes):
+        """Basic publish to RabbitMQ server.
 
-class ReconnectingRabbitMQConsumer:
+        :param str topic: The topic to publish the message to
+        :param bytes message: The message to publish
+
+        """
+        if self.consuming and not self.closing:
+            self.channel.basic_publish(
+                exchange=self.exchange, routing_key=topic, body=message
+            )
+
+
+class ReconnectingRabbitMQClient:
     """This is an example consumer that will reconnect if the nested
     ExampleConsumer indicates that a reconnect is necessary.
 
@@ -477,7 +551,7 @@ class ReconnectingRabbitMQConsumer:
         self.queue = queue
         self.routing_key = routing_key
         self.reconnect_delay = 0
-        self.consumer = RabbitMQConsumer(
+        self.client = RabbitMQClient(
             host, port, username, password, exchange, exchange_type, queue, routing_key
         )
 
@@ -485,19 +559,19 @@ class ReconnectingRabbitMQConsumer:
         """Run RabbitMQ consumer"""
         while True:
             try:
-                self.consumer.run()
+                self.client.run()
             except KeyboardInterrupt:
-                self.consumer.stop()
+                self.client.stop()
                 break
             self._maybe_reconnect()
 
     def _maybe_reconnect(self):
-        if self.consumer.should_reconnect:
-            self.consumer.stop()
-            reconnect_delay = self.get_reconnect_delay()
+        if self.client.should_reconnect:
+            self.client.stop()
+            reconnect_delay = self._get_reconnect_delay()
             logger.info("Reconnecting after %d seconds", reconnect_delay)
-            time.sleep(reconnect_delay)
-            self.consumer = RabbitMQConsumer(
+            sleep(reconnect_delay)
+            self.client = RabbitMQClient(
                 self.host,
                 self.port,
                 self.username,
@@ -509,27 +583,26 @@ class ReconnectingRabbitMQConsumer:
             )
 
     def _get_reconnect_delay(self):
-        if self.consumer.was_consuming:
+        if self.client.was_consuming:
             self.reconnect_delay = 0
         else:
             self.reconnect_delay += 1
-        if self.reconnect_delay > 30:
-            self.reconnect_delay = 30
+        self.reconnect_delay = min(self.reconnect_delay, 30)
         return self.reconnect_delay
+
+    def publish(self, topic: str, message: bytes):
+        """Wrapper around RabbitMQClient publish.
+
+        :param str topic: The topic to publish the message to
+        :param bytes message: The message to publish
+
+        """
+        self.client.publish(topic, message)
 
 
 def main():
     """Test reconnecting RabbitMQ client"""
-    consumer = ReconnectingRabbitMQConsumer(
-        HOST,
-        PORT,
-        USERNAME,
-        PASSWORD,
-        "amq.topic",
-        ExchangeType.topic,
-        "config.rabbitmq",
-        "config.mqtt",
-    )
+    consumer = ReconnectingRabbitMQClient(HOST, PORT, USERNAME, PASSWORD)
     consumer.run()
 
 
