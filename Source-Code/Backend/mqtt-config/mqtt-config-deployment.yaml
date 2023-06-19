@@ -5,7 +5,7 @@ metadata:
   labels:
     app: mqtt-config
 spec:
-  replicas: 2
+  replicas: 1
   selector:
     matchLabels:
       app: mqtt-config
@@ -28,6 +28,6 @@ spec:
             - name: PROTOCOL_BUFFERS_PYTHON_IMPLEMENTATION
               value: "python"
             - name: MQTT_SERVER_HOST
-              value: ""
+              value: "mqtt-server-service.default"
             - name: MQTT_SERVER_PORT
-              value: 1883
+              value: 5672

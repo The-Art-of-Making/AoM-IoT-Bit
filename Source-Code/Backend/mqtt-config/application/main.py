@@ -3,10 +3,12 @@
 from os import environ
 from secrets import token_hex
 from signal import signal, SIGTERM, SIGINT
-from time import time
+from sys import exit as sys_exit
+from time import sleep, time
+from typing import Tuple
 from uuid import uuid4
 from google.protobuf.json_format import ParseDict
-import paho.mqtt.client as paho_mqtt
+from google.protobuf.message import DecodeError
 
 from database_handler import (
     DatabaseHandler_Actions,
@@ -19,12 +21,16 @@ from protobufs import action_pb2
 from protobufs import client_pb2
 from protobufs import device_pb2
 from protobufs import service_message_pb2
+from pub_sub_clients import RabbitMQClient
 
 UUID = "service-" + str(uuid4())
 TOKEN = token_hex()
-MQTT_SERVER_HOST = environ.get("MQTT_SERVER_HOST", "")
-MQTT_SERVER_PORT = int(environ.get("MQTT_SERVER_PORT", "1883"))
-GET_CONFIG_TOPIC = "/get-config"
+MQTT_SERVER_HOST = environ.get("MQTT_SERVER_HOST", "localhost")
+MQTT_SERVER_PORT = int(environ.get("MQTT_SERVER_PORT", "5672"))
+MQTT_EXCHANGE = environ.get("MQTT_EXCHANGE", "amq.topic")
+CONFIG_TOPIC = environ.get("GET_CONFIG_TOPIC", "config.rabbitmq")
+CONFIG_ROUTING_KEY = environ.get("CONFIG_ROUTING_KEY", "config.mqtt")
+RECONNECT_DELAY = int(environ.get("RECONNECT_DELAY", "5"))
 
 
 def get_device_actions(user_uuid: str) -> dict:
@@ -91,8 +97,10 @@ def build_client_message(
     return client_message
 
 
-def handle_client_config(client: client_pb2.Client) -> None:
-    """Publish client config with devices and actions to MQTT server"""
+def build_client_config(client: client_pb2.Client) -> Tuple[str, bytes]:
+    """Build client config with devices and actions.
+    Return topic to publish to and message bytes"""
+    client_config = (None, b"")
     if DatabaseHandler_MqttClients.client_auth(client.uuid, client.token):
         mqtt_client = DatabaseHandler_MqttClients.get_client(client.uuid)
         device_actions = get_device_actions(user_uuid=client.user_uuid)
@@ -109,42 +117,34 @@ def handle_client_config(client: client_pb2.Client) -> None:
             "client": build_client_message(mqtt_client, device_messages),
         }
         ParseDict(service_message_config, service_message)
+        # TODO add topic builder (see frontend)
         config_topic = (
-            "/" + mqtt_client.user_uuid + "/clients/" + mqtt_client.uuid + "/config"
+            "users."
+            + mqtt_client.user_uuid
+            + ".clients."
+            + mqtt_client.uuid
+            + ".config"
         )
-        paho_mqtt_client.publish(
-            config_topic, service_message.SerializeToString(), qos=1, retain=True
-        )
-        logger.info("Client config published for %s", mqtt_client.uuid)
+        client_config = (config_topic, service_message.SerializeToString())
+        logger.info("Client config built for %s", mqtt_client.uuid)
     else:
         logger.info("Failed to authenticate client %s", client.uuid)
+    return client_config
 
 
-def on_connect(client: paho_mqtt.Client, userdata, flags, result_code) -> None:
-    """Callback for when the client receives a CONNACK response from the server
-    Subscribing in on_connect() means that if we lose the connection and
-    reconnect then subscriptions will be renewed.  Subscribe to "get-config"
-    topic to receive requests for client configs"""
-
-    logger.info("Connected to MQTT server with result code %s", result_code)
-    logger.info("Subscribing to %s topic", GET_CONFIG_TOPIC)
-    client.subscribe(GET_CONFIG_TOPIC)
-
-
-def on_message(client: paho_mqtt.Client, userdata, mqtt_message) -> None:
-    """Callback for when a PUBLISH message is received from the server"""
-    if mqtt_message.topic == GET_CONFIG_TOPIC:
-        service_message = service_message_pb2.ServiceMessage()
-        if service_message.ParseFromString(mqtt_message.payload) != 0:
+def handle_messages(message: bytes) -> None:
+    """Handle messages from RabbitMQ and send responses"""
+    service_message = service_message_pb2.ServiceMessage()
+    try:
+        if service_message.ParseFromString(message) != 0:
             if service_message.type == service_message_pb2.CLIENT_CONFIG:
                 logger.info("Client config request received")
-                handle_client_config(service_message.client)
-
-
-paho_mqtt_client = paho_mqtt.Client(client_id=UUID)
-paho_mqtt_client.username_pw_set(UUID, TOKEN)
-paho_mqtt_client.on_connect = on_connect
-paho_mqtt_client.on_message = on_message
+                topic, client_config = build_client_config(service_message.client)
+                logger.info(topic)
+                logger.info(client_config)
+                rabbitmq_client.publish(topic, client_config)
+    except DecodeError as execption:
+        logger.warning("DecodeError: %s", execption)
 
 
 def signal_handler(signal_received, frame) -> None:
@@ -152,19 +152,47 @@ def signal_handler(signal_received, frame) -> None:
     logger.info("Recd %s from %s", signal_received, frame)
     logger.info("SIGTERM or SIGINT or CTRL-C detected. Exiting gracefully")
 
-    # TODO stop paho_mqtt_client
+    # TODO verify stop consuming new messages
+    # rabbitmq_client.stop()
 
     # Remove MQTT service authentication info from database
     if not DatabaseHandler_MqttServices.delete_service(uuid=UUID):
         logger.warning("Failed to delete MQTT service %s from database", UUID)
 
-    exit(0)
+    # Exit cleanly
+    sys_exit(0)
 
 
 signal(SIGINT, signal_handler)
 signal(SIGTERM, signal_handler)
 
+
+rabbitmq_client = RabbitMQClient(
+    MQTT_SERVER_HOST,
+    MQTT_SERVER_PORT,
+    UUID,
+    TOKEN,
+    MQTT_EXCHANGE,
+    queue=CONFIG_TOPIC,
+    routing_key=CONFIG_ROUTING_KEY,
+    on_message_callback=handle_messages,
+)
+
 if __name__ == "__main__":
     assert DatabaseHandler_MqttServices.add_service(UUID, TOKEN)
-    paho_mqtt_client.connect(MQTT_SERVER_HOST, MQTT_SERVER_PORT)
-    paho_mqtt_client.loop_forever()
+    while True:
+        rabbitmq_client.run()
+        if rabbitmq_client.should_reconnect:
+            rabbitmq_client.stop()
+            logger.info("Reconnecting after %d seconds", RECONNECT_DELAY)
+            sleep(RECONNECT_DELAY)
+            rabbitmq_client = RabbitMQClient(
+                MQTT_SERVER_HOST,
+                MQTT_SERVER_PORT,
+                UUID,
+                TOKEN,
+                MQTT_EXCHANGE,
+                queue=CONFIG_TOPIC,
+                routing_key=CONFIG_ROUTING_KEY,
+                on_message_callback=handle_messages,
+            )
