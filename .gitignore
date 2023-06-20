@@ -37,6 +37,9 @@ mongo_uri_secret.yaml
 *.pb.c
 *.pb.h
 
+# idf
+**/build
+
 # Various Altium files
 *.PrjPCBStructure
 *.SchDocPreview
