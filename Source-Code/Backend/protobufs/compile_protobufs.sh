@@ -8,11 +8,11 @@ PYTHON_OUT_DIR=./python_out
 MQTT_CONFIG_PROTOBUFS=../mqtt-config/application/protobufs
 if [ ! -d "$PYTHON_OUT_DIR" ]; then
     echo "Creating python_out directory"
-    mkdir $PYTHON_OUT_DIR
+    mkdir -p $PYTHON_OUT_DIR
 fi
 if [ ! -d "$MQTT_CONFIG_PROTOBUFS" ]; then
     echo "Creating mqtt-config/application/protobufs directory"
-    mkdir $MQTT_CONFIG_PROTOBUFS
+    mkdir -p $MQTT_CONFIG_PROTOBUFS
 fi
 protoc -I ./action --python_out=$PYTHON_OUT_DIR ./action/action.proto
 protoc -I ./device -I ./action --python_out=$PYTHON_OUT_DIR ./device/device.proto
@@ -31,10 +31,19 @@ rm -Rf $MQTT_CONFIG_PROTOBUFS/* && cp -r $PYTHON_OUT_DIR/* $MQTT_CONFIG_PROTOBUF
 
 echo "Compiling protobufs for C (nanopb)..."
 C_OUT_DIR=./c_out
-FIRMWARE_DIR=../../mcu-firmware/IoT-Bit-V4.0
+FIRMWARE_DIR_V4=../../mcu-firmware/IoT-Bit-V4.0
+FIRMWARE_DIR_ESP32=../../mcu-firmware/IoT-Bit-esp32/components/protobufs
 if [ ! -d "$C_OUT_DIR" ]; then
     echo "Creating c_out directory"
-    mkdir $C_OUT_DIR
+    mkdir -p $C_OUT_DIR
+fi
+if [ ! -d "$FIRMWARE_DIR_ESP32/include" ]; then
+    echo "Creating IoT-Bit-esp32/components/protobufs/include directory"
+    mkdir -p $FIRMWARE_DIR_ESP32/include
+fi
+if [ ! -d "$FIRMWARE_DIR_ESP32/src" ]; then
+    echo "Creating IoT-Bit-esp32/components/protobufs/src directory"
+    mkdir -p $FIRMWARE_DIR_ESP32/src
 fi
 cd nanopb
 git submodule update --remote
@@ -43,6 +52,13 @@ python3 nanopb/generator/nanopb_generator.py action/action.proto -I ./action -D 
 python3 nanopb/generator/nanopb_generator.py device/device.proto -I ./device -I ./action -D $C_OUT_DIR
 python3 nanopb/generator/nanopb_generator.py client/client.proto -I ./client -I ./device -I ./action -D $C_OUT_DIR
 python3 nanopb/generator/nanopb_generator.py service/service_message.proto -I ./service -I ./client -I ./device -I ./action -D $C_OUT_DIR
-rm -Rf $FIRMWARE_DIR/*.pb.*
-cp nanopb/pb.h nanopb/pb_common.h nanopb/pb_common.c nanopb/pb_decode.h nanopb/pb_decode.c $FIRMWARE_DIR
-cp -r $C_OUT_DIR/* $FIRMWARE_DIR
+rm -Rf $FIRMWARE_DIR_V4/*.pb.*
+rm -Rf $FIRMWARE_DIR_ESP32/include/*.pb.*
+rm -Rf $FIRMWARE_DIR_ESP32/src/*.pb.*
+cp nanopb/pb.h nanopb/pb_common.h nanopb/pb_common.c nanopb/pb_decode.h nanopb/pb_decode.c $FIRMWARE_DIR_V4
+cp nanopb/pb.h nanopb/pb_common.h nanopb/pb_common.c nanopb/pb_decode.h $FIRMWARE_DIR_ESP32/include
+cp nanopb/pb_decode.c $FIRMWARE_DIR_ESP32/src
+cp -r $C_OUT_DIR/* $FIRMWARE_DIR_V4
+cp -r $C_OUT_DIR/*.h $FIRMWARE_DIR_ESP32/include
+cp -r $C_OUT_DIR/*.c $FIRMWARE_DIR_ESP32/src
+

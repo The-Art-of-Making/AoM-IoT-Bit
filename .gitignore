@@ -36,6 +36,9 @@ mongo_uri_secret.yaml
 *_pb2.py
 *.pb.c
 *.pb.h
+pb_*.c
+pb_*.h
+pb.h
 
 # idf
 **/build
