@@ -24,9 +24,9 @@ class NewClient extends Component {
         })
     }
 
-    downloadConfigFile = (uuid, token) => {
+    downloadConfigFile = (user_uuid, uuid, token) => {
         const element = document.createElement("a");
-        const file = new Blob([this.state.wifiSSID + ";" + this.state.wifiPassword + ";" + uuid + ";" + token], { type: 'text/plain' });
+        const file = new Blob([this.state.wifiSSID + ";" + this.state.wifiPassword + ";" + user_uuid + ";" + uuid + ";" + token], { type: 'text/plain' });
         element.href = URL.createObjectURL(file);
         element.download = "secrets.txt";
         document.body.appendChild(element);
@@ -44,7 +44,7 @@ class NewClient extends Component {
         axios
             .post(iotWebHandlerEndpts + "/web/client/register", newClient)
             .then(res => {
-                this.downloadConfigFile(res.data.uuid, res.data.token)
+                this.downloadConfigFile(res.data.user_uuid, res.data.uuid, res.data.token)
                 this.setState({
                     errors: {}
                 })

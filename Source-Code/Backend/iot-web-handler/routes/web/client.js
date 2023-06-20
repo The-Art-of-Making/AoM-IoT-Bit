@@ -92,7 +92,7 @@ router.post("/register", (req, res) => {
                             newClient
                                 .save()
                                 .then(() => {
-                                    res.status(201).json({ uuid: newClient.uuid, token: token })
+                                    res.status(201).json({ user_uuid: newClient.user_uuid, uuid: newClient.uuid, token: token })
                                 })
                                 .catch(err => {
                                     console.log(err)
