@@ -30,4 +30,4 @@ spec:
             - name: MQTT_SERVER_HOST
               value: "mqtt-server-service.default"
             - name: MQTT_SERVER_PORT
-              value: 5672
+              value: "5672"
