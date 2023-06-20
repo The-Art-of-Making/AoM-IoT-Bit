@@ -25,7 +25,7 @@ export default function ClientCard(props) {
                 </div>
             </div>
             <div className="card-body bg-primary">
-                {/* <p className="card-text">Status:&ensp;{props.connected ? <span className="text-success">{checkCircleIcon}Connected</span> : <span className="text-danger">{xCircleIcon}Disconnected</span>}</p> */}
+                <p className="card-text">Status:&ensp;{props.connected ? <span className="text-success">{checkCircleIcon}Connected</span> : <span className="text-danger">{xCircleIcon}Disconnected</span>}</p>
                 <p className="card-text">Devices:</p>
                 {devices.map(device =>
                     <div key={device.uuid} className="d-flex">

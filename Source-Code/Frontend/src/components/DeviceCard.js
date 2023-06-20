@@ -145,6 +145,7 @@ export default class DeviceCard extends Component {
     }
 
     render() {
+        const device = this.props.device
         return (
             <div className="card text-white bg-primary" style={{ maxWidth: (this.props.maxWidth ? this.props.maxWidth : "24.7%") }}>
                 <div className="card-header d-flex justify-content-between align-items-center" style={{ fontWeight: "bold" }}>
@@ -157,11 +158,11 @@ export default class DeviceCard extends Component {
                             placeholder={this.state.name}
                             id="name"
                         />
-                        : this.props.device.name}
+                        : device.name}
                     {(this.state.edit)
                         ? <>
                             <div className="btn text-success" onClick={() => {
-                                this.props.editDevice(this.props.device.uuid, this.state.name, this.state.io, this.state.signal)
+                                this.props.editDevice(device.uuid, this.state.name, device.user_uuid, device.client_uuid, this.state.io, this.state.signal)
                                 this.setEdit(false)
                             }}>{checkIcon}</div>
                         </>
@@ -169,9 +170,9 @@ export default class DeviceCard extends Component {
                     }
                 </div>
                 <div className="card-body bg-primary">
-                    {/* <p className="card-text">Status:&ensp;{this.props.connected ? <span className="text-success">{checkCircleIcon}Connected</span> : <span className="text-danger">{xCircleIcon}Disconnected</span>}</p> */}
-                    <CardInfo info="Client" value={this.props.device.client_name} textStyle="text-secondary" />
-                    <CardInfo info="Number" value={this.props.device.number} textStyle="text-secondary" />
+                    <CardInfo info="Status" value={this.props.connected ? <span className="text-success">{checkCircleIcon}Connected</span> : <span className="text-danger">{xCircleIcon}Disconnected</span>} textStyle="text-secondary" />
+                    <CardInfo info="Client" value={device.client_name} textStyle="text-secondary" />
+                    <CardInfo info="Number" value={device.number} textStyle="text-secondary" />
                     {(this.state.edit)
                         ? <div className="d-flex">
                             <p className="card-text" style={{ fontWeight: "bold" }}>IO:&ensp;</p>
@@ -180,7 +181,7 @@ export default class DeviceCard extends Component {
                                 <option key="output" value="output">output</option>
                             </select>
                         </div>
-                        : <CardInfo info="IO" value={this.props.device.io} textStyle="text-secondary" />
+                        : <CardInfo info="IO" value={device.io} textStyle="text-secondary" />
                     }
                     {(this.state.edit)
                         ? <div className="d-flex">
@@ -190,9 +191,9 @@ export default class DeviceCard extends Component {
                                 <option key="digital" value="digital">digital</option>
                             </select>
                         </div>
-                        : <CardInfo info="Type" value={this.props.device.signal} textStyle="text-secondary" />
+                        : <CardInfo info="Type" value={device.signal} textStyle="text-secondary" />
                     }
-                    {(this.props.device.signal === "digital" ?
+                    {(device.signal === "digital" ?
                         digitalControl(this.state.io, this.state.deviceState, this.props.publish, this.state.cmdTopic, !this.props.serverConnected)
                         : analogControl(this.state.io, this.state.deviceState, this.props.publish, this.state.cmdTopic, !this.props.serverConnected))}
                 </div>
