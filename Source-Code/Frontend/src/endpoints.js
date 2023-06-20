@@ -1,14 +1,9 @@
-// Local dev env
-// export const clientAuth = "http://192.168.136.128:5000"
-// export const mqttController = "http://192.168.136.129:18080"
-// export const mqttServer = "ws://192.168.136.136:9001/ws"
-
 // Local testing
-export const mqttClientAuthEndpts = "http://localhost:5000"
-export const iotWebHandlerEndpts = "http://localhost:5001"
-export const mqttServer = "ws://localhost:9001/ws"
+// export const mqttClientAuthEndpts = "http://localhost:5000"
+// export const iotWebHandlerEndpts = "http://localhost:5001"
+// export const mqttServer = "ws://localhost:9001/ws"
 
 // Current Load Balancers deployments
-// export const clientAuth = "http://139.144.240.110:5000"
-// export const mqttController = "http://143.42.127.119:18080"
-// export const mqttServer = "ws://143.42.127.125:9001/ws"
+export const mqttClientAuthEndpts = "http://143.42.178.243:5000"
+export const iotWebHandlerEndpts = "http://104.237.148.245:5001"
+export const mqttServer = "ws://139.144.241.132:9001/ws"
