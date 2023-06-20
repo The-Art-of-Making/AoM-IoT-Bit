@@ -2,8 +2,6 @@ import { mqttServer } from '../endpoints'
 
 const Paho = window.Paho
 
-// TODO send get_config request on connect
-
 export default class MQTTClient {
     constructor(username, password, topics = [], onConnectCallback = () => { }, onMessageArrivedCallback = message => { }) {
         this.username = username

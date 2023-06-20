@@ -24,7 +24,6 @@ spec:
                 secretKeyRef:
                   name: mongo-uri
                   key: MONGOURI
-            # TODO fix PROTOCOL_BUFFERS_PYTHON_IMPLEMENTATION env var workaround
             - name: PROTOCOL_BUFFERS_PYTHON_IMPLEMENTATION
               value: "python"
             - name: MQTT_SERVER_HOST

@@ -3,8 +3,6 @@
 from mongoengine import Document
 from mongoengine.fields import DateTimeField, IntField, MapField, StringField
 
-# TODO generate python schemas from javascript schemas
-
 
 class web_users(Document):
     """Define user schema"""
