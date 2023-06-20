@@ -9,15 +9,15 @@ import Sidebar from "../components/Sidebar"
 import DeviceCard from "../components/DeviceCard"
 import { iotWebHandlerEndpts } from "../endpoints"
 import MQTTClient from "../components/MQTTClient"
-import { deviceTopicBuidler, deviceTopics } from "../components/TopicBuilder"
+import { clientTopicBuilder, clientTopics, deviceTopicBuidler, deviceTopics } from "../components/TopicBuilder"
 
 class Devices extends Component {
 
     state = {
         devices: [],
         errors: {},
-        server: false,
-        connected: true, // TODO get state of cluster
+        connected: false,
+        reconnectTimeout: 1500,
         refs: {}
     }
 
@@ -33,7 +33,8 @@ class Devices extends Component {
     componentDidMount() {
         this.mqttClient = new MQTTClient(this.props.auth.user.id, "password", [], this.setConnected, this.messageHandler)
         this.getDevices()
-        // this.getServer()
+        this.mqttClient.connect()
+        this.intervalID = setTimeout(this.connectToServer.bind(this), this.state.reconnectTimeout)
     }
 
     componentWillUnmount() {
@@ -45,52 +46,22 @@ class Devices extends Component {
         this.setState({
             connected: true
         })
-        toast.success("Connected to server")
     }
 
-    // TODO send command to client/devices to update config 
-    updateConfig = () => {
-        // const reqData = { user: this.props.auth.user.id }
-        // axios
-        //     .post(mqttController + "/update_config", reqData)
-        //     .then(res => {
-        //         (res.data.success) ?
-        //             toast.success("Device configurations updated")
-        //             : toast.warning("Failed to update device configurations")
-        //     })
-        //     .catch(err => {
-        //         this.setState({
-        //             errors: (err.response) ? err.response.data : err
-        //         })
-        //         toast.warning("Failed to update device configurations")
-        //     })
-    }
-
-    // TODO get state of MQTT cluster
-    getServer = () => {
-        const reqData = { user_id: this.props.auth.user.id }
-        axios
-            .post(iotWebHandlerEndpts + "/web/client/get_server", reqData)
-            .then(res => {
-                const running = res.data.status === "RUNNING"
-                if (running) {
-                    this.mqttClient.connect()
-                    this.updateConfig()
-                } else {
-                    toast.warning("Server is not running")
-                }
-                this.setState({
-                    server: running
-                })
-            })
-            .catch(err => {
-                this.setState({
-                    errors: (err.response) ? err.response.data : err
-                })
-                toast.error("Failed to get server status")
-            })
+    connectToServer = () => {
+        this.mqttClient.connect()
         if (!this.mqttClient.connected) {
-            this.intervalID = setTimeout(this.getServer.bind(this), 5000)
+            this.setState({
+                reconnectTimeout: this.state.reconnectTimeout * 2
+            })
+            toast.error("Failed to connect to server")
+            this.intervalID = setTimeout(this.connectToServer.bind(this), this.state.reconnectTimeout)
+        }
+        else {
+            this.setState({
+                reconnectTimeout: 5000
+            })
+            toast.success("Connected to server")
         }
     }
 
@@ -120,12 +91,13 @@ class Devices extends Component {
             })
     }
 
-    editDevice = (uuid, name, io, signal) => {
+    editDevice = (uuid, name, user_uuid, client_uuid, io, signal) => {
         const updateDevice = { user_id: this.props.auth.user.id, uuid: uuid, name: name, io: io, signal: signal }
         axios
             .post(iotWebHandlerEndpts + "/web/device/update", updateDevice)
             .then(() => {
-                this.updateConfig()
+                const topic = clientTopicBuilder(user_uuid, client_uuid, clientTopics.config)
+                this.mqttClient.publish(topic, 1)
                 this.getDevices()
                 toast.success("Successfully edited device")
             })

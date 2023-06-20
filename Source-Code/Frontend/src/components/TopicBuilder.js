@@ -6,7 +6,8 @@ export const deviceTopics = {
 
 export const clientTopics = {
     devices: "devices",
-    status: "status"
+    status: "status",
+    config: "config"
 }
 
 class Topic {
