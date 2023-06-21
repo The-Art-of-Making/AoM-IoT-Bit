@@ -42,6 +42,7 @@ pb.h
 
 # idf
 **/build
+**/*sdkconfig*
 
 # Various Altium files
 *.PrjPCBStructure
