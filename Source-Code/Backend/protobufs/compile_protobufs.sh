@@ -56,8 +56,8 @@ rm -Rf $FIRMWARE_DIR_V4/*.pb.*
 rm -Rf $FIRMWARE_DIR_ESP32/include/*.pb.*
 rm -Rf $FIRMWARE_DIR_ESP32/src/*.pb.*
 cp nanopb/pb.h nanopb/pb_common.h nanopb/pb_common.c nanopb/pb_decode.h nanopb/pb_decode.c $FIRMWARE_DIR_V4
-cp nanopb/pb.h nanopb/pb_common.h nanopb/pb_common.c nanopb/pb_decode.h $FIRMWARE_DIR_ESP32/include
-cp nanopb/pb_decode.c $FIRMWARE_DIR_ESP32/src
+cp nanopb/pb.h nanopb/pb_common.h nanopb/pb_decode.h $FIRMWARE_DIR_ESP32/include
+cp nanopb/pb_common.c nanopb/pb_decode.c $FIRMWARE_DIR_ESP32/src
 cp -r $C_OUT_DIR/* $FIRMWARE_DIR_V4
 cp -r $C_OUT_DIR/*.h $FIRMWARE_DIR_ESP32/include
 cp -r $C_OUT_DIR/*.c $FIRMWARE_DIR_ESP32/src

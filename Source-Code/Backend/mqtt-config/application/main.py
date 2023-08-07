@@ -103,7 +103,7 @@ def build_client_config(client: client_pb2.Client) -> Tuple[str, bytes]:
     client_config = (None, b"")
     if DatabaseHandler_MqttClients.client_auth(client.uuid, client.token):
         mqtt_client = DatabaseHandler_MqttClients.get_client(client.uuid)
-        device_actions = get_device_actions(user_uuid=client.user_uuid)
+        device_actions = get_device_actions(user_uuid=mqtt_client.user_uuid)
         mqtt_devices = DatabaseHandler_MqttDevices.get_client_devices(
             client_uuid=client.uuid
         )
