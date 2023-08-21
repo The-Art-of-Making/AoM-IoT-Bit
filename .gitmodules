@@ -4,3 +4,6 @@
 [submodule "Source-Code/Backend/protobufs/nanopb"]
 	path = Source-Code/Backend/protobufs/nanopb
 	url = git@github.com:nanopb/nanopb.git
+[submodule "Source-Code/cml"]
+	path = Source-Code/cml
+	url = git@github.com:delta-12/cml.git
