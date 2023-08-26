@@ -91,13 +91,13 @@ class Devices extends Component {
             })
     }
 
-    editDevice = (uuid, name, user_uuid, client_uuid, io, signal) => {
-        const updateDevice = { user_id: this.props.auth.user.id, uuid: uuid, name: name, io: io, signal: signal }
+    editDevice = (uuid, name, user_uuid, client_uuid, config_type) => {
+        const updateDevice = { user_id: this.props.auth.user.id, uuid: uuid, name: name, config_type: config_type }
         axios
             .post(iotWebHandlerEndpts + "/web/device/update", updateDevice)
             .then(() => {
                 const topic = clientTopicBuilder(user_uuid, client_uuid, clientTopics.config)
-                this.mqttClient.publish(topic, 1)
+                // this.mqttClient.publish(topic, 1)
                 this.getDevices()
                 toast.success("Successfully edited device")
             })
@@ -110,7 +110,8 @@ class Devices extends Component {
     }
 
     render() {
-        const disabledStyle = !this.state.connected ? { backgroundColor: "black", filter: "alpha(opacity=30)", opacity: 0.3 } : {}
+        // const disabledStyle = !this.state.connected ? { backgroundColor: "black", filter: "alpha(opacity=30)", opacity: 0.3 } : {}
+        const disabledStyle = {}
         return (
             <div className="d-flex">
                 <Sidebar currentItem="Devices" />

@@ -8,8 +8,7 @@ module.exports = function validateClient(data) {
     data.name = !isEmpty(data.name) ? data.name : ""
     data.uuid = !isEmpty(data.uuid) ? data.uuid : ""
     data.user_id = !isEmpty(data.user_id) ? data.user_id : ""
-    data.io = !isEmpty(data.io) ? data.io : ""
-    data.signal = !isEmpty(data.signal) ? data.signal : ""
+    data.config_type = !isEmpty(data.config_type) ? data.config_type : ""
 
     // Name check
     if (Validator.isEmpty(data.name)) {
@@ -26,14 +25,9 @@ module.exports = function validateClient(data) {
         errors.user_id = "User ID is required"
     }
 
-    // IO check
-    if (Validator.isEmpty(data.io)) {
-        errors.io = "IO is required"
-    }
-
-    // Signal check
-    if (Validator.isEmpty(data.signal)) {
-        errors.signal = "Signal is required"
+    // Config Type check
+    if (Validator.isEmpty(data.config_type)) {
+        errors.config_type = "Configuration is required"
     }
 
     return {

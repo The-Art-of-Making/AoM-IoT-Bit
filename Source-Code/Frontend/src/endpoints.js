@@ -1,9 +1,3 @@
-// Local testing
-// export const mqttClientAuthEndpts = "http://localhost:5000"
-// export const iotWebHandlerEndpts = "http://localhost:5001"
-// export const mqttServer = "ws://localhost:9001/ws"
-
-// Current Load Balancers deployments
-export const mqttClientAuthEndpts = "http://143.42.178.243:5000"
-export const iotWebHandlerEndpts = "http://104.237.148.245:5001"
-export const mqttServer = "ws://139.144.241.132:9001/ws"
+export const mqttClientAuthEndpts = process.env.REACT_APP_CLIENT_AUTH
+export const iotWebHandlerEndpts = process.env.REACT_APP_IOT_WEB_HANDLER
+export const mqttServer = process.env.REACT_APP_MQTT_SERVER

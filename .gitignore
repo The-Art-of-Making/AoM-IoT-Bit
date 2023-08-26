@@ -40,6 +40,9 @@ pb_*.c
 pb_*.h
 pb.h
 
+# cml
+Source-Code/Backend/mqtt-config/application/cml/**
+
 # idf
 **/build
 **/*sdkconfig*

@@ -3,13 +3,15 @@
 from os import environ
 from secrets import token_hex
 from signal import signal, SIGTERM, SIGINT
-from sys import exit as sys_exit
-from time import sleep, time
-from typing import Tuple
+from sys import exit as sys_exit, path
+from time import sleep
 from uuid import uuid4
-from google.protobuf.json_format import ParseDict
-from google.protobuf.message import DecodeError
 
+from config_handler import (
+    ClientConfigHandler,
+    DeviceConfigHandler,
+    ConfigRequestHandler,
+)
 from database_handler import (
     DatabaseHandler_Actions,
     DatabaseHandler_MqttClients,
@@ -17,11 +19,25 @@ from database_handler import (
     DatabaseHandler_MqttServices,
 )
 from logger import logger
-from protobufs import action_pb2
-from protobufs import client_pb2
-from protobufs import device_pb2
-from protobufs import service_message_pb2
 from pub_sub_clients import RabbitMQClient
+from topic_builder import (
+    TOPICBUILDER_AMQP_DELIMITER,
+    TopicBuilder_Route,
+    TopicBuilder_ClientTopic,
+    TopicBuilder_DeviceTopic,
+    TopicBuilder_Context,
+)
+
+PROD_DEV_ENV = environ.get("PROD_DEV_ENV", "DEV_ENV")
+if PROD_DEV_ENV == "PROD_ENV":
+    from cml.out.python import payload_pb2
+    from cml.out.python.client import config_pb2 as client_config_pb2
+    from cml.out.python.device import config_pb2 as device_config_pb2, action_pb2
+else:
+    path.append("../../../cml/out/python")
+    import payload_pb2
+    from client import config_pb2 as client_config_pb2
+    from device import config_pb2 as device_config_pb2, action_pb2
 
 UUID = "service-" + str(uuid4())
 TOKEN = token_hex()
@@ -32,119 +48,113 @@ CONFIG_TOPIC = environ.get("GET_CONFIG_TOPIC", "config.rabbitmq")
 CONFIG_ROUTING_KEY = environ.get("CONFIG_ROUTING_KEY", "config.mqtt")
 RECONNECT_DELAY = int(environ.get("RECONNECT_DELAY", "5"))
 
-
-def get_device_actions(user_uuid: str) -> dict:
-    """Get devices and their responses to all of a user's actions"""
-    device_actions = {}
-    actions = DatabaseHandler_Actions.get_actions(user_uuid=user_uuid)
-    for action in actions:
-        for device_uuid in action.responses:
-            if device_uuid not in device_actions:
-                device_actions[device_uuid] = {}
-            device_actions[device_uuid][action.uuid] = {
-                "name": action.name,
-                "uuid": action.uuid,
-                "user_uuid": action.user_uuid,
-                "trigger_topic": action.trigger_topic,
-                "trigger_state": action.trigger_state,
-                "response": action.responses[device_uuid],
-            }
-    return device_actions
+topic_builder_context = TopicBuilder_Context(TOPICBUILDER_AMQP_DELIMITER)
 
 
-def build_device_message(
-    mqtt_device, device_actions: dict
-) -> device_pb2.Device:  # TODO type annotation for mqtt_device
-    """Build a device proto message from an MQTT device database object and
-    user-associated device actions"""
-    device_uuid = mqtt_device.uuid
-    device_config = {
-        "name": mqtt_device.name,
-        "uuid": device_uuid,
-        "user_uuid": mqtt_device.user_uuid,
-        "client_uuid": mqtt_device.client_uuid,
-        "client_name": mqtt_device.client_name,
-        "number": mqtt_device.number,
-        "io": device_pb2.OUTPUT if mqtt_device.io == "output" else device_pb2.INPUT,
-        "signal": device_pb2.DIGITAL
-        if mqtt_device.signal == "digital"
-        else device_pb2.ANALOG,
-    }
-    device_message = device_pb2.Device()
-    ParseDict(device_config, device_message)
-    if device_uuid in device_actions:
-        for action_uuid in device_actions[device_uuid]:
-            action_message = action_pb2.Action()
-            ParseDict(device_actions[device_uuid][action_uuid], action_message)
-            device_message.actions.append(action_message)
-    return device_message
+def get_device_config(uuid: str) -> device_config_pb2:
+    """Populate device config with values from database"""
+    device_config = device_config_pb2.Config()
+    device = DatabaseHandler_MqttDevices.get_device(uuid=uuid)
+    actions = DatabaseHandler_Actions.get_actions(user_uuid=device.user_uuid)
+
+    device_config.common_config.name = device.name
+    device_config.common_config.uuid = device.uuid
+    device_config.common_config.token = device.token
+    device_config.user_uuid = device.user_uuid
+    device_config.client_uuid = device.client_uuid
+    device_config.client_name = device.client_name
+    device_config.number = device.number
+
+    if device.config_type == "Generic Digital Output":
+        device_config.config_type = device_config_pb2.GENERIC_DIGITAL_OUTPUT
+    if device.config_type == "Generic Digital Input":
+        device_config.config_type = device_config_pb2.GENERIC_DIGITAL_INPUT
+    if device.config_type == "Generic Analog Output":
+        device_config.config_type = device_config_pb2.GENERIC_ANALOG_OUTPUT
+    if device.config_type == "Generic Analog Input":
+        device_config.config_type = device_config_pb2.GENERIC_ANALOG_INPUT
+
+    if device.uuid in actions:
+        for action in actions[device.uuid]:
+            action_config = action_pb2.Action()
+            action_config.common_config.name = action.name
+            action_config.common_config.uuid = action.uuid
+            action_config.user_uuid = action.user_uuid
+            action_config.trigger_topic = action.trigger_topic
+            action_config.trgger_response = action.trigger_response
+            action_config.response = action.responses[device.uuid]
+            device_config.actions.append(action_config)
+
+    logger.info("Populated config for device %s", device_config.common_config.uuid)
+
+    return device_config
 
 
-def build_client_message(
-    mqtt_client, device_messages: list
-) -> client_pb2.Client:  # TODO type annotation for mqtt_client
-    """Build a client proto message from an MQTT client database object and
-    client-associated device messages"""
-    client_config = {
-        "name": mqtt_client.name,
-        "uuid": mqtt_client.uuid,
-        "user_uuid": mqtt_client.user_uuid,
-    }
-    client_message = client_pb2.Client()
-    ParseDict(client_config, client_message)
-    for device_message in device_messages:
-        client_message.devices.append(device_message)
-    return client_message
+def get_client_config(uuid: str) -> client_config_pb2:
+    """Populate client config with values from database"""
+    client_config = client_config_pb2.Confg()
+    client = DatabaseHandler_MqttClients.get_client(uuid=uuid)
+    devices = DatabaseHandler_MqttDevices.get_client_devices(client_uuid=uuid)
 
+    client_config.common_config.name = client.name
+    client_config.common_config.uuid = client.uuid
+    client_config.common_config.token = client.token
+    client_config.user_uuid = client.user_uuid
+    for device in devices:
+        client_config.device_configs.append(get_device_config(device.uuid))
+    logger.info("Populated config for client %s", client_config.common_config.uuid)
 
-def build_client_config(client: client_pb2.Client) -> Tuple[str, bytes]:
-    """Build client config with devices and actions.
-    Return topic to publish to and message bytes"""
-    client_config = (None, b"")
-    if DatabaseHandler_MqttClients.client_auth(client.uuid, client.token):
-        mqtt_client = DatabaseHandler_MqttClients.get_client(client.uuid)
-        device_actions = get_device_actions(user_uuid=client.user_uuid)
-        mqtt_devices = DatabaseHandler_MqttDevices.get_client_devices(
-            client_uuid=client.uuid
-        )
-        device_messages = []
-        for mqtt_device in mqtt_devices:
-            device_messages.append(build_device_message(mqtt_device, device_actions))
-        service_message = service_message_pb2.ServiceMessage()
-        service_message_config = {
-            "type": service_message_pb2.CLIENT_CONFIG,
-            "timestamp": time(),
-            "client": build_client_message(mqtt_client, device_messages),
-        }
-        ParseDict(service_message_config, service_message)
-        # TODO add topic builder (see frontend)
-        config_topic = (
-            "users."
-            + mqtt_client.user_uuid
-            + ".clients."
-            + mqtt_client.uuid
-            + ".config"
-        )
-        client_config = (config_topic, service_message.SerializeToString())
-        logger.info("Client config built for %s", mqtt_client.uuid)
-    else:
-        logger.info("Failed to authenticate client %s", client.uuid)
     return client_config
+
+
+def config_topic_builder(payload: payload_pb2) -> str:
+    """Build config topic based on payload fields"""
+    topic = ""
+
+    if payload.inner_payload_type == payload_pb2.CLIENT:
+        topic = (
+            topic_builder_context.clear_topic()
+            .append_route(
+                TopicBuilder_Route.TOPICBUILDER_ROUTE_USER,
+                payload.client_inner_payload.config.user_uuid,
+            )
+            .append_route(
+                TopicBuilder_Route.TOPICBUILDER_ROUTE_CLIENT,
+                payload.client_inner_payload.config.common_config.uuid,
+            )
+            .set_client_topic(TopicBuilder_ClientTopic.TOPICBUILDER_CLIENTTOPIC_CONFIG)
+            .get_topic()
+        )
+    if payload.inner_payload_type == payload_pb2.DEVICE:
+        topic = (
+            topic_builder_context.clear_topic()
+            .append_route(
+                TopicBuilder_Route.TOPICBUILDER_ROUTE_USER,
+                payload.device_inner_payload.config.user_uuid,
+            )
+            .append_route(
+                TopicBuilder_Route.TOPICBUILDER_ROUTE_CLIENT,
+                payload.device_inner_payload.config.client_uuid,
+            )
+            .append_route(
+                TopicBuilder_Route.TOPICBUILDER_ROUTE_DEVICE,
+                payload.device_inner_payload.config.common_config.uuid,
+            )
+            .set_device_topic(TopicBuilder_DeviceTopic.TOPICBUILDER_DEVICETOPIC_CONFIG)
+            .get_topic()
+        )
+
+    return topic
 
 
 def handle_messages(message: bytes) -> None:
     """Handle messages from RabbitMQ and send responses"""
-    service_message = service_message_pb2.ServiceMessage()
-    try:
-        if service_message.ParseFromString(message) != 0:
-            if service_message.type == service_message_pb2.CLIENT_CONFIG:
-                logger.info("Client config request received")
-                topic, client_config = build_client_config(service_message.client)
-                logger.info(topic)
-                logger.info(client_config)
-                rabbitmq_client.publish(topic, client_config)
-    except DecodeError as execption:
-        logger.warning("DecodeError: %s", execption)
+    logger.info("Config request received")
+    payload = config_request_handler.handle_payload(message)
+    topic = config_topic_builder(payload)
+    logger.info(topic)
+    logger.info(payload)
+    rabbitmq_client.publish(topic, payload.SerializeToString())
 
 
 def signal_handler(signal_received, frame) -> None:
@@ -166,6 +176,15 @@ def signal_handler(signal_received, frame) -> None:
 signal(SIGINT, signal_handler)
 signal(SIGTERM, signal_handler)
 
+client_config_handler = ClientConfigHandler(
+    DatabaseHandler_MqttClients.client_auth, get_client_config
+)
+device_config_handler = DeviceConfigHandler(
+    DatabaseHandler_MqttDevices.device_auth, get_device_config
+)
+config_request_handler = ConfigRequestHandler(
+    client_config_handler, device_config_handler
+)
 
 rabbitmq_client = RabbitMQClient(
     MQTT_SERVER_HOST,

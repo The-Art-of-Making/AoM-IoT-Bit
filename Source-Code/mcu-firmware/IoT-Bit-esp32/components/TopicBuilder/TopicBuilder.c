@@ -7,8 +7,8 @@
 /* Defines
 ****************************************************************************************************/
 
-#define TOPICBUILDER_TOPIC_DELIMETER '/'
-#define TOPICBUILDER_TOPIC_DELIMETER_SIZE (0x01U)
+#define TOPICBUILDER_TOPIC_DELIMITER '/'
+#define TOPICBUILDER_TOPIC_DELIMITER_SIZE (0x01U)
 
 /* Constants
 ****************************************************************************************************/
@@ -80,13 +80,13 @@ static void TopicBuilder_append(TopicBuilder_Context_t *const context, const cha
         uint16_t totalSize = context->Size + size;
         if (context->Size != 0)
         {
-            totalSize += TOPICBUILDER_TOPIC_DELIMETER_SIZE;
+            totalSize += TOPICBUILDER_TOPIC_DELIMITER_SIZE;
         }
         if (totalSize <= context->BufferSize)
         {
             if (context->Size != 0)
             {
-                *(context->Buffer + context->Size) = TOPICBUILDER_TOPIC_DELIMETER;
+                *(context->Buffer + context->Size) = TOPICBUILDER_TOPIC_DELIMITER;
                 context->Size++;
             }
             memcpy(context->Buffer, data, size);

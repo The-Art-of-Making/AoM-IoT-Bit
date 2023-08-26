@@ -14,8 +14,7 @@ router.post("/update", (req, res) => {
     }
     const name = req.body.name
     const uuid = req.body.uuid
-    const io = req.body.io
-    const signal = req.body.signal
+    const config_type = req.body.config_type
     User.findOne({ _id: req.body.user_id })
         .then(user => {
             if (!user) {
@@ -29,8 +28,7 @@ router.post("/update", (req, res) => {
                         }
                         else {
                             device.name = name
-                            device.io = io
-                            device.signal = signal
+                            device.config_type = config_type
                             device.save()
                                 .then(updatedDevice => {
                                     return res.status(200).json(updatedDevice)

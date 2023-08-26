@@ -21,8 +21,7 @@ const addDevices = (user_uuid, client_uuid, client_name) => {
             client_uuid: client_uuid,
             client_name: client_name,
             number: deviceCount,
-            io: "output",
-            signal: "digital"
+            config_type: "Generic Digital Output"
         })
         // Hash token before saving in database
         bcrypt.genSalt(10, (err, salt) => {

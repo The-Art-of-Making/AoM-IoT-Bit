@@ -29,11 +29,12 @@
     "build": "react-scripts build",
     "test": "react-scripts test",
     "eject": "react-scripts eject",
-    "backend-install": "npm install . --prefix ../Backend/web-user-auth",
+    "backend-install": "npm install . --prefix ../Backend/web-user-auth && npm install . --prefix ../Backend/iot-web-handler",
     "build-style": "npx sass src/style/custom.scss src/style/custom.css",
-    "backend": "cd ../Backend/web-user-auth && npm run dev",
+    "web-user-auth": "cd ../Backend/web-user-auth && npm run dev",
+    "web-iot-handler": "cd ../Backend/iot-web-handler && npm run dev",
     "frontend": "npm run build-style && npm start",
-    "dev": "concurrently \"npm run backend\" \"npm run frontend\""
+    "dev": "concurrently \"npm run web-user-auth\" \"npm run web-iot-handler\" \"npm run frontend\""
   },
   "proxy": "http://localhost:5002",
   "eslintConfig": {

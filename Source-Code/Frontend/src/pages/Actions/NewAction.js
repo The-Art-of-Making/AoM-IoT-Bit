@@ -33,7 +33,7 @@ class NewAction extends Component {
             .then(res => {
                 this.setState({
                     devices: res.data,
-                    outputDevices: res.data.filter(device => device.io === "output")
+                    outputDevices: res.data.filter(device => device.config_type === "Generic Digital Output" || device.config_type === "Generic Analog Output")
                 })
             }
             )
@@ -59,14 +59,14 @@ class NewAction extends Component {
         })
     }
 
-    addAction = e => {
+    addResponse = e => {
         e.preventDefault()
         let deviceResponses = this.state.deviceResponses
         deviceResponses.push({
             index: deviceResponses.length,
             response: {
                 device: "",
-                signal: "analog",
+                config_type: "analog",
                 state: 0
             }
         })
@@ -79,7 +79,7 @@ class NewAction extends Component {
         const device = this.state.devices.find(device => device.uuid === uuid)
         let deviceResponses = this.state.deviceResponses
         deviceResponses[index].response.device = uuid
-        deviceResponses[index].response.signal = (device === undefined) ? "analog" : device.signal
+        deviceResponses[index].response.config_type = (device === undefined) ? "Generic Digital Output" : device.config_type
         this.setState({
             deviceResponses: deviceResponses
         })
@@ -131,10 +131,11 @@ class NewAction extends Component {
 
         const { errors } = this.state
         const deviceOptions = this.state.devices.map(device => <option key={device.uuid} value={device.uuid}>{device.name}</option>)
-        const responseOptions = this.state.outputDevices.map(device =>
+        const outputDevices = this.state.outputDevices.filter(device => this.state.triggerDevice.uuid !== device.uuid)
+        const responseOptions = outputDevices.map(device =>
             <option
                 key={device.uuid}
-                signal={device.signal}
+                config_type={device.config_type}
                 value={device.uuid}
                 disabled={this.state.deviceResponses.find(response => response.response.device === device.uuid)}
             >
@@ -147,7 +148,7 @@ class NewAction extends Component {
                 index={response.index}
                 responseOptions={responseOptions}
                 errors={this.state.errors}
-                signal={response.response.signal}
+                config_type={response.response.config_type}
                 responseDevice={response.response.device}
                 updateResponseDevice={this.updateResponseDevice}
                 responseState={response.response.state}
@@ -185,7 +186,7 @@ class NewAction extends Component {
                                 </select>
                                 {(errors.triggerTopic) ? <><small className="form-text text-danger">{errors.triggerTopic}</small><br /></> : null}
                                 <label className="mt-3">Trigger State</label>
-                                {(this.state.triggerDevice.signal === "digital")
+                                {(this.state.triggerDevice.config_type === "Generic Digital Output" || this.state.triggerDevice.config_type === "Generic Digital Input")
                                     ? <>
                                         <select
                                             className={classnames((errors.triggerState !== undefined) ? "form-control is-invalid" : "form-control", { invalid: errors.triggerState })}
@@ -218,7 +219,7 @@ class NewAction extends Component {
                                 <div className="col">
                                     {responseElements}
                                 </div>
-                                {(this.state.outputDevices.length === this.state.deviceResponses.length) ? null : <button className="btn text-light" onClick={this.addAction}>+ Add Action</button>}
+                                {(outputDevices.length === this.state.deviceResponses.length) ? null : <button className="btn text-light" onClick={this.addResponse}>+ Add Response</button>}
                                 {(errors.deviceResponses && this.state.deviceResponses.length === 0) ? <div><small className="form-text text-danger">{errors.deviceResponses}</small><br /></div> : null}
                             </div>
                             <div className="d-flex flex-row-reverse">

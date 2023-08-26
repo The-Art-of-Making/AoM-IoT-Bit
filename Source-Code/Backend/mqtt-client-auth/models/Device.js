@@ -41,15 +41,15 @@ const DeviceSchema = new Schema(
             type: Number,
             required: true
         },
-        io: {
+        config_type: {
             type: String,
             required: true,
-            enum: ["input", "output"]
-        },
-        signal: {
-            type: String,
-            required: true,
-            enum: ["digital", "analog"]
+            enum: [
+                "Generic Digital Output",
+                "Generic Digital Input",
+                "Generic Analog Output",
+                "Generic Analog Input",
+            ],
         }
     },
     {

@@ -15,7 +15,7 @@ export default function ActionResponse(props) {
                     {props.responseOptions}
                 </select>
                 {
-                    (props.signal === "digital")
+                    (props.config_type === "Generic Digital Output" || props.config_type === "Generic Digital Input")
                         ? <>
                             <select
                                 className="form-control"

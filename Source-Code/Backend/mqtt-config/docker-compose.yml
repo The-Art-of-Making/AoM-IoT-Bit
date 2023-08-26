@@ -9,3 +9,4 @@ services:
       - PROTOCOL_BUFFERS_PYTHON_IMPLEMENTATION=python
       - MQTT_SERVER_HOST=localhost
       - MQTT_SERVER_PORT=5672
+      - PROD_DEV_ENV=PROD_ENV

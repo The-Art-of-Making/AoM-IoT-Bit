@@ -30,3 +30,5 @@ spec:
               value: "mqtt-server-service.default"
             - name: MQTT_SERVER_PORT
               value: "5672"
+            - name: PROD_DEV_ENV
+              value: "PROD_ENV"

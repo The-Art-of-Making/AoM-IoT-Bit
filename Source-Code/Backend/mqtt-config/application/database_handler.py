@@ -78,6 +78,19 @@ class DatabaseHandler_MqttDevices:
     """Operations for mqtt_devices collection"""
 
     @staticmethod
+    def device_auth(uuid: str, token: str) -> bool:
+        """Authenticate an MQTT device"""
+        mqtt_device = mqtt_devices.objects(uuid=uuid).first()
+        if mqtt_device is not None:
+            return checkpw(token.encode(), mqtt_device.token)
+        return False
+
+    @staticmethod
+    def get_device(uuid: str):  # TODO type annotation
+        """Get MQTT device"""
+        return mqtt_devices.objects(uuid=uuid).first()
+
+    @staticmethod
     def get_user_devices(user_uuid: str) -> QuerySet:
         """Get all of a user's devices"""
         return mqtt_devices.objects(user_uuid=user_uuid)

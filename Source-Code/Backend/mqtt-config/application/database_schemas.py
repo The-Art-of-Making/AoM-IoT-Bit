@@ -41,8 +41,15 @@ class mqtt_devices(Document):
     client_uuid = StringField(required=True, trim=True, min_length=36)
     client_name = StringField(required=True, trim=True)
     number = IntField(required=True)
-    io = StringField(required=True, choices=["input", "output"])
-    signal = StringField(required=True, choices=["digital", "analog"])
+    config_type = StringField(
+        required=True,
+        choices=[
+            "Generic Digital Output",
+            "Generic Digital Input",
+            "Generic Analog Output",
+            "Generic Analog Input",
+        ],
+    )
 
 
 class actions(Document):
