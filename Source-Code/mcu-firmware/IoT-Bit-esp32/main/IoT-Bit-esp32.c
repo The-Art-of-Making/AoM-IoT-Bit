@@ -8,12 +8,16 @@
 #include "esp_netif.h"
 #include "mqtt_client.h"
 
+#include "TopicBuilder.h"
 #include "Wifi.h"
+#include "pb_decode.h"
+#include "service_message.pb.h"
 
 #define CONFIG_BROKER_URL "localhost:1883"
 
 static const char *APP_TAG = "APP";
 static const char *MQTT_TAG = "MQTT";
+static const char *CONFIG_TOPIC = "config/mqtt";
 static esp_mqtt_client_handle_t mqttClient;
 
 /* Function prototypes
@@ -24,6 +28,7 @@ static void app_init(void);
 static void mqttStart(void);
 static void mqttEventHandler(void *handlerArgs, esp_event_base_t base, int32_t eventId, void *eventData);
 static void mqttLogNonZeroError(const char *message, int error_code);
+static void handleServiceMessage(const char *data, const unsigned int length);
 
 /* Function definitions
 ****************************************************************************************************/
@@ -132,27 +137,17 @@ static void mqttEventHandler(void *handlerArgs, esp_event_base_t base, int32_t e
 
         // TODO subscribe to client topics and get config
         // then subscribe to device topics
+        // publish client status
 
-        msg_id = esp_mqtt_client_publish(client, "/topic/qos1", "data_3", 0, 1, 0);
-        ESP_LOGI(MQTT_TAG, "sent publish successful, msg_id=%d", msg_id);
-
-        msg_id = esp_mqtt_client_subscribe(client, "/topic/qos0", 0);
-        ESP_LOGI(MQTT_TAG, "sent subscribe successful, msg_id=%d", msg_id);
-
-        msg_id = esp_mqtt_client_subscribe(client, "/topic/qos1", 1);
-        ESP_LOGI(MQTT_TAG, "sent subscribe successful, msg_id=%d", msg_id);
-
-        msg_id = esp_mqtt_client_unsubscribe(client, "/topic/qos1");
-        ESP_LOGI(MQTT_TAG, "sent unsubscribe successful, msg_id=%d", msg_id);
+        msg_id = esp_mqtt_client_subscribe(client, CONFIG_TOPIC, 1);
         break;
     case MQTT_EVENT_DISCONNECTED:
+        // TODO reconnect
         ESP_LOGI(MQTT_TAG, "MQTT disconnected");
         break;
     case MQTT_EVENT_SUBSCRIBED:
         // TODO start publishing device data
         ESP_LOGI(MQTT_TAG, "MQTT_EVENT_SUBSCRIBED, msg_id=%d", event->msg_id);
-        msg_id = esp_mqtt_client_publish(client, "/topic/qos0", "data", 0, 0, 0);
-        ESP_LOGI(MQTT_TAG, "sent publish successful, msg_id=%d", msg_id);
         break;
     case MQTT_EVENT_UNSUBSCRIBED:
         // TODO stop publishing device data
@@ -165,6 +160,9 @@ static void mqttEventHandler(void *handlerArgs, esp_event_base_t base, int32_t e
         ESP_LOGI(MQTT_TAG, "MQTT_EVENT_DATA");
         printf("TOPIC=%.*s\r\n", event->topic_len, event->topic);
         printf("DATA=%.*s\r\n", event->data_len, event->data);
+
+        handleServiceMessage(event->data, event->data_len);
+
         break;
     case MQTT_EVENT_ERROR:
         ESP_LOGW(MQTT_TAG, "MQTT_EVENT_ERROR");
@@ -187,5 +185,31 @@ static void mqttLogNonZeroError(const char *message, int error_code)
     if (error_code != 0)
     {
         ESP_LOGE(MQTT_TAG, "Last error %s: 0x%x", message, error_code);
+    }
+}
+
+static void handleServiceMessage(const char *data, const unsigned int length)
+{
+    aom_iot_service_ServiceMessage serviceMessage = aom_iot_service_ServiceMessage_init_zero;
+    pb_istream_t stream = pb_istream_from_buffer((unsigned char *)data, length);
+    bool decoded = pb_decode(&stream, aom_iot_service_ServiceMessage_fields, &serviceMessage);
+    aom_iot_client_Client client;
+    if (decoded)
+    {
+        switch (serviceMessage.type)
+        {
+        case (aom_iot_service_Type_CLIENT_CONFIG):
+            ESP_LOGI(APP_TAG, "Decoded CLIENT_CONFIG message");
+            client = serviceMessage.client;
+            // TODO active device and subscribe to device topics
+            // TODO publish to device topics
+            break;
+        default:
+            break;
+        }
+    }
+    else
+    {
+        ESP_LOGE(APP_TAG, "Failed to decode service message.\nDecode Error: %s", PB_GET_ERROR(&stream));
     }
 }
