@@ -30,6 +30,7 @@ from topic_builder import (
 
 PROD_DEV_ENV = environ.get("PROD_DEV_ENV", "DEV_ENV")
 if PROD_DEV_ENV == "PROD_ENV":
+    path.append("cml/out/python")
     from cml.out.python import payload_pb2
     from cml.out.python.client import config_pb2 as client_config_pb2
     from cml.out.python.device import config_pb2 as device_config_pb2, action_pb2
@@ -92,7 +93,7 @@ def get_device_config(uuid: str) -> device_config_pb2:
 
 def get_client_config(uuid: str) -> client_config_pb2:
     """Populate client config with values from database"""
-    client_config = client_config_pb2.Confg()
+    client_config = client_config_pb2.Config()
     client = DatabaseHandler_MqttClients.get_client(uuid=uuid)
     devices = DatabaseHandler_MqttDevices.get_client_devices(client_uuid=uuid)
 
@@ -152,8 +153,8 @@ def handle_messages(message: bytes) -> None:
     logger.info("Config request received")
     payload = config_request_handler.handle_payload(message)
     topic = config_topic_builder(payload)
-    logger.info(topic)
-    logger.info(payload)
+    logger.info("Publishing config to topic %s", topic)
+    logger.debug(payload)
     rabbitmq_client.publish(topic, payload.SerializeToString())
 
 

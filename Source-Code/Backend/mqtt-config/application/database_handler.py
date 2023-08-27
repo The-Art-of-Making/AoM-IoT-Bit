@@ -60,7 +60,7 @@ class DatabaseHandler_MqttClients:
         """Authenticate an MQTT client"""
         mqtt_client = mqtt_clients.objects(uuid=uuid).first()
         if mqtt_client is not None:
-            return checkpw(token.encode(), mqtt_client.token)
+            return checkpw(token.encode(), mqtt_client.token.encode())
         return False
 
     @staticmethod
@@ -82,7 +82,7 @@ class DatabaseHandler_MqttDevices:
         """Authenticate an MQTT device"""
         mqtt_device = mqtt_devices.objects(uuid=uuid).first()
         if mqtt_device is not None:
-            return checkpw(token.encode(), mqtt_device.token)
+            return checkpw(token.encode(), mqtt_device.token.encode())
         return False
 
     @staticmethod

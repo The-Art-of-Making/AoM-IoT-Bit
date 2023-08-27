@@ -7,6 +7,7 @@ from typing import Tuple
 
 PROD_DEV_ENV = environ.get("PROD_DEV_ENV", "DEV_ENV")
 if PROD_DEV_ENV == "PROD_ENV":
+    path.append("cml/out/python")
     from cml.out.python import payload_pb2
     from cml.out.python.client import inner_payload_pb2 as client_inner_payload_pb2
     from cml.out.python.device import inner_payload_pb2 as device_inner_payload_pb2
@@ -124,8 +125,6 @@ class ConfigRequestHandler:
         """Parse payload and call handler corresponding to request config type"""
         payload_message = payload_pb2.Payload()
         success = False
-
-        print(payload)
 
         # Set inner payload as config response
         if payload_message.ParseFromString(payload) != 0:
