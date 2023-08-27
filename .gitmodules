@@ -1,9 +1,6 @@
 [submodule "Source-Code/AoM-IoT-Bit-SD-Config"]
 	path = Source-Code/AoM-IoT-Bit-SD-Config
 	url = git@github.com:The-Art-of-Making/AoM-IoT-Bit-SD-Config.git
-[submodule "Source-Code/Backend/protobufs/nanopb"]
-	path = Source-Code/Backend/protobufs/nanopb
-	url = git@github.com:nanopb/nanopb.git
 [submodule "Source-Code/cml"]
 	path = Source-Code/cml
 	url = git@github.com:delta-12/cml.git
