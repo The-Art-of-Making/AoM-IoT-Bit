@@ -9,5 +9,5 @@ spec:
   ports:
     - name: mqtt-controller-endpoint
       protocol: TCP
-      port: 10080
-      targetPort: 10080
+      port: 18080
+      targetPort: 18080

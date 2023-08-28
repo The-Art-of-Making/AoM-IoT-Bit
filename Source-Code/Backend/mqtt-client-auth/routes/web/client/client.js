@@ -6,7 +6,9 @@ const User = require("../../../models/User")
 const Device = require("../../../models/Device")
 const Action = require("../../../models/Action")
 const validateRegisterClient = require("../../../validation/register_client")
+const validateUpdateClient = require("../../../validation/update_client")
 const validateDeleteClient = require("../../../validation/delete_client")
+const validateUpdateDevice = require("../../../validation/update_device")
 const validateAddAction = require("../../../validation/add_action")
 const validateDeleteAction = require("../../../validation/delete_action")
 
@@ -55,7 +57,7 @@ router.post("/register", (req, res) => {
     User.findOne({ _id: req.body.user })
         .then(user => {
             if (!user) {
-                return res.status(404).json({ error: "User " + req.body.user + " does not exist" })
+                return res.status(404).json({ user: "User " + req.body.user + " does not exist" })
             }
             else {
                 // TODO add two devices
@@ -98,6 +100,45 @@ router.post("/register", (req, res) => {
         })
 })
 
+router.post("/update", (req, res) => {
+    // Check validation
+    const { errors, isValid } = validateUpdateClient(req.body)
+    if (!isValid) {
+        return res.status(400).json(errors)
+    }
+    const username = req.body.username
+    User.findOne({ _id: req.body.user })
+        .then(user => {
+            if (!user) {
+                return res.status(404).json({ user: "User " + req.body.user + " does not exist" })
+            }
+            else {
+                Client.findOne({ username: username })
+                    .then(client => {
+                        if (!client) {
+                            return res.status(404).json({ client: "Client " + username + " does not exist" })
+                        }
+                        else {
+                            client.name = req.body.name
+                            client.save()
+                                .then(updatedClient => {
+                                    return res.status(200).json(updatedClient)
+                                })
+                                .catch(err => {
+                                    return res.status(500).json({ error: err })
+                                })
+                        }
+                    })
+                    .catch(err => {
+                        return res.status(500).json({ error: err })
+                    })
+            }
+        })
+        .catch(err => {
+            return res.status(500).json({ error: err })
+        })
+})
+
 router.post("/delete", (req, res) => {
     // Check validation
     const { errors, isValid } = validateDeleteClient(req.body)
@@ -107,7 +148,7 @@ router.post("/delete", (req, res) => {
     User.findOne({ _id: req.body.user })
         .then(user => {
             if (!user) {
-                return res.status(404).json({ error: "User " + req.body.user + " does not exist" })
+                return res.status(404).json({ user: "User " + req.body.user + " does not exist" })
             }
             else {
                 // Delete client devices
@@ -115,7 +156,7 @@ router.post("/delete", (req, res) => {
                     .findOne({ user: req.body.user, username: req.body.username })
                     .then(client => {
                         if (!client) {
-                            return res.status(404).json({ error: "Client " + req.body.username + " does not exist" })
+                            return res.status(404).json({ client: "Client " + req.body.username + " does not exist" })
                         } else {
                             if (!deleteDevices(req.body.user, req.body.username)) {
                                 return res.status(500).json({ error: "Failed to delete devices for client " + req.body.username })
@@ -145,6 +186,50 @@ router.post("/delete", (req, res) => {
         })
 })
 
+router.post("/update_device", (req, res) => {
+    // Check validation
+    const { errors, isValid } = validateUpdateDevice(req.body)
+    if (!isValid) {
+        return res.status(400).json(errors)
+    }
+    const uid = req.body.uid
+    const name = req.body.name
+    const io = req.body.io
+    const signal = req.body.signal
+    User.findOne({ _id: req.body.user })
+        .then(user => {
+            if (!user) {
+                return res.status(404).json({ user: "User " + req.body.user + " does not exist" })
+            }
+            else {
+                Device.findOne({ uid: uid })
+                    .then(device => {
+                        if (!device) {
+                            return res.status(404).json({ device: "Device " + uid + " does not exist" })
+                        }
+                        else {
+                            device.name = name
+                            device.io = io
+                            device.signal = signal
+                            device.save()
+                                .then(updatedDevice => {
+                                    return res.status(200).json(updatedDevice)
+                                })
+                                .catch(err => {
+                                    return res.status(500).json({ error: err })
+                                })
+                        }
+                    })
+                    .catch(err => {
+                        return res.status(500).json({ error: err })
+                    })
+            }
+        })
+        .catch(err => {
+            return res.status(500).json({ error: err })
+        })
+})
+
 router.post("/add_action", (req, res) => {
     // Check validation
     const { errors, isValid } = validateAddAction(req.body)
@@ -162,18 +247,18 @@ router.post("/add_action", (req, res) => {
         .findOne({ _id: user })
         .then(findUser => {
             if (!findUser) {
-                return res.status(404).json({ error: "User " + user + " does not exist" })
+                return res.status(404).json({ user: "User " + user + " does not exist" })
             }
             else {
                 Device
                     .find({ user: user })
                     .then(devices => {
                         if (!devices) {
-                            return res.status(404).json({ error: "Devices not found" })
+                            return res.status(404).json({ devices: "Devices not found" })
                         }
                         for (let i = 0; i < deviceUIDs.length; i++) {
                             if (!devices.find(device => device.uid == deviceUIDs[i])) {
-                                return res.status(404).json({ error: "Devices not found" })
+                                return res.status(404).json({ devices: "Devices not found" })
                             }
                         }
                         for (const uid in deviceResponses) {
@@ -216,7 +301,7 @@ router.post("/delete_action", (req, res) => {
         .findOne({ _id: user })
         .then(findUser => {
             if (!findUser) {
-                return res.status(404).json({ error: "User " + user + " does not exist" })
+                return res.status(404).json({ user: "User " + user + " does not exist" })
             }
             else {
                 Action
@@ -224,6 +309,114 @@ router.post("/delete_action", (req, res) => {
                     .then(() => {
                         // TODO make request to update_config endpt
                         return res.status(200).json({})
+                    })
+                    .catch(err => {
+                        return res.status(500).json({ error: err })
+                    })
+            }
+        })
+        .catch(err => {
+            return res.status(500).json({ error: err })
+        })
+})
+
+router.post("/get_actions", (req, res) => {
+    const user = req.body.user
+    if (!user) {
+        return res.status(400).json({ user: "User is required" })
+    }
+    User
+        .findOne({ _id: user })
+        .then(findUser => {
+            if (!findUser) {
+                return res.status(404).json({ user: "User " + user + " does not exist" })
+            }
+            else {
+                Action
+                    .find({ user: user })
+                    .then(actions => {
+                        return res.status(200).json(actions)
+                    })
+                    .catch(err => {
+                        return res.status(500).json({ error: err })
+                    })
+            }
+        })
+        .catch(err => {
+            return res.status(500).json({ error: err })
+        })
+})
+
+router.post("/get_server", (req, res) => {
+    const user = req.body.user
+    if (!user) {
+        return res.status(400).json({ user: "User is required" })
+    }
+    User
+        .findOne({ _id: user })
+        .then(findUser => {
+            if (!findUser) {
+                return res.status(404).json({ user: "User " + user + " does not exist" })
+            }
+            else {
+                Server
+                    .findOne({ user: user })
+                    .then(server => {
+                        return res.status(200).json(server)
+                    })
+                    .catch(err => {
+                        return res.status(500).json({ error: err })
+                    })
+            }
+        })
+        .catch(err => {
+            return res.status(500).json({ error: err })
+        })
+})
+
+router.post("/get_clients", (req, res) => {
+    const user = req.body.user
+    if (!user) {
+        return res.status(400).json({ user: "User is required" })
+    }
+    User
+        .findOne({ _id: user })
+        .then(findUser => {
+            if (!findUser) {
+                return res.status(404).json({ user: "User " + user + " does not exist" })
+            }
+            else {
+                Client
+                    .find({ user: user })
+                    .then(clients => {
+                        return res.status(200).json(clients)
+                    })
+                    .catch(err => {
+                        return res.status(500).json({ error: err })
+                    })
+            }
+        })
+        .catch(err => {
+            return res.status(500).json({ error: err })
+        })
+})
+
+router.post("/get_devices", (req, res) => {
+    const user = req.body.user
+    if (!user) {
+        return res.status(400).json({ user: "User is required" })
+    }
+    User
+        .findOne({ _id: user })
+        .then(findUser => {
+            if (!findUser) {
+                return res.status(404).json({ user: "User " + user + " does not exist" })
+            }
+            else {
+                Device
+                    .find()
+                    .then(devices => {
+                        return res.status(200).json(devices)
                     })
                     .catch(err => {
                         return res.status(500).json({ error: err })

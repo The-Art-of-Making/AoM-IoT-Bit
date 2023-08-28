@@ -11,4 +11,7 @@ COPY models models
 COPY routes routes
 COPY validation validation
 COPY server.js server.js
+WORKDIR /
+COPY frontend frontend
+WORKDIR /web-user-auth
 ENTRYPOINT [ "node", "server.js" ]

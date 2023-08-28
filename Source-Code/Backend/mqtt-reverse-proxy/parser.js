@@ -9,6 +9,16 @@ var upstream = '';
 function getClientId(s) {
     s.on('upload', async function (data, flags) {
 
+        // Get client id and set upstream if websocket connection
+        var n = data.indexOf('\r\n');
+        if (n != -1 && data.substr(0, n - 1).endsWith(" HTTP/1.")) {
+            s.off('upload');
+            const allow = await getWsClientId(data);  // Returns whether authentication was successful or not
+            (allow) ? s.allow() : s.deny();
+            return;
+        }
+
+        // Continue parsing MQTT connection
         var client_id;
         var client_password;
 
@@ -23,7 +33,7 @@ function getClientId(s) {
         var remaining_length = 0;
         var bytes_pos;
 
-        // get remaining length of packet, specified by next 1 to 4 bytes
+        // Get remaining length of packet, specified by next 1 to 4 bytes
         for (bytes_pos = 1; bytes_pos < 5; bytes_pos++) {
             var remaining_length_byte = data.charCodeAt(bytes_pos);
             remaining_length = (remaining_length << 8) + (remaining_length_byte & 127); // variable-length encoding scheme that uses one byte for values up to 127
@@ -37,7 +47,7 @@ function getClientId(s) {
 
         // Get client id
         var client_id_length = (data.charCodeAt(++bytes_pos) << 8) + (data.charCodeAt(++bytes_pos)); // client id length specified by first two bytes of payload
-        // connection is denied if the client does not connect with a client id
+        // Connection is denied if the client does not connect with a client id
         if (!client_id_length > 0) {
             s.deny();
             return;
@@ -52,14 +62,14 @@ function getClientId(s) {
         // Get client password
         bytes_pos += client_username_length;
         var client_password_length = (data.charCodeAt(bytes_pos) << 8) + (data.charCodeAt(++bytes_pos)); // client password length specified by next two bytes of payload after client username
-        // connection is denied if the client does not connect with a client password
+        // Connection is denied if the client does not connect with a client password
         if (!client_password_length > 0) {
             s.deny();
             return;
         }
         client_password = data.substring(++bytes_pos, bytes_pos + client_password_length);
 
-        // make request to client auth service and get upstream server
+        // Make request to client auth service and get upstream server
         if (client_id.length > 0) {
             s.off('upload');
             let reply = await ngx.fetch(mqtt_client_auth_endpoint + "?username=" + client_id + "&password=" + client_password);
@@ -71,6 +81,23 @@ function getClientId(s) {
             s.deny();
         }
     });
+}
+
+// Make request to client auth service and get upstream server for websocket connection
+async function getWsClientId(data) {
+
+    const usernameSubstr = '?username=';
+    const passwordSubstr = '&password=';
+
+    // Client id/username and password passed as parameters on initial request
+    let client_id = data.substring(data.indexOf(usernameSubstr) + usernameSubstr.length, data.indexOf(passwordSubstr));
+    let client_password = data.substring(data.indexOf(passwordSubstr) + passwordSubstr.length, data.indexOf(' ', data.indexOf(passwordSubstr)));
+
+    // Make request to client auth service and get upstream server
+    let reply = await ngx.fetch(mqtt_client_auth_endpoint + '?username=' + client_id + '&password=' + client_password);
+    let json = await reply.json();
+    upstream = json.server;
+    return reply.status == 200; // Return value indicates if authentication was successful
 }
 
 function getClientUpstream() {

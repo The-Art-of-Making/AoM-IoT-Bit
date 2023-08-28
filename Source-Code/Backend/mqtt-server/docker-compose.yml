@@ -7,6 +7,7 @@ services:
     ports:
       - "1883:1883"
       - "5672:5672"
+      - "9001:9001"
       # - "15672:15672"  # management port
     environment:
       - RABBITMQ_CONFIG_FILE=/etc/rabbitmq/rabbitmq.conf

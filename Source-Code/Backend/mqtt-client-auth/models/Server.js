@@ -28,6 +28,11 @@ const ServerSchema = new Schema(
         },
         port: {
             type: Number,
+            default: 1883
+        },
+        wsPort: {
+            type: Number,
+            default: 9001
         },
         client_count: {
             type: Number,

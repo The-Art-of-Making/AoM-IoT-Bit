@@ -6,11 +6,22 @@ import store from "./store"
 import setAuthToken from "./utils/setAuthToken"
 import { setCurrentUser, logoutUser } from "./actions/authActions"
 import PrivateRoute from "./components/private-route/PrivateRoute"
+import { ToastContainer } from "react-toastify"
 
+// Pages
 import Register from "./auth/Register"
 import Login from "./auth/Login"
 import Account from "./auth/Account"
 import Dashboard from "./pages/Dashboard"
+import Server from "./pages/Server"
+import Clients from "./pages/Clients/Clients"
+import AllClients from "./pages/Clients/AllClients"
+import NewClient from "./pages/Clients/NewClient"
+import Devices from "./pages/Devices"
+import Actions from "./pages/Actions/Actions"
+import AllActions from "./pages/Actions/AllActions"
+import NewAction from "./pages/Actions/NewAction"
+import Zones from "./pages/Zones"
 
 // Check for token to keep user logged in
 if (localStorage.jwtToken) {
@@ -36,11 +47,20 @@ export default class App extends Component {
   render() {
     return (
       <Provider store={store}>
+        <ToastContainer autoClose="3000" />
         <BrowserRouter>
           <Routes>
             <Route path="/" element={<Login />} />
             <Route path="/login" element={<Login />} />
             <Route path="/register" element={<Register />} />
+            <Route
+              path="/account"
+              element={
+                <PrivateRoute>
+                  <Account />
+                </PrivateRoute>
+              }
+            />
             <Route
               path="/dashboard"
               element={
@@ -50,10 +70,88 @@ export default class App extends Component {
               }
             />
             <Route
-              path="/account"
+              path="/server"
               element={
                 <PrivateRoute>
-                  <Account />
+                  <Server />
+                </PrivateRoute>
+              }
+            />
+            <Route
+              path="/clients"
+              element={
+                <PrivateRoute>
+                  <Clients />
+                </PrivateRoute>
+              }>
+              <Route
+                index element={
+                  <PrivateRoute>
+                    <AllClients />
+                  </PrivateRoute>
+                }
+              />
+              <Route
+                path="all_clients"
+                element={
+                  <PrivateRoute>
+                    <AllClients />
+                  </PrivateRoute>
+                }
+              />
+              <Route
+                path="new_client"
+                element={
+                  <PrivateRoute>
+                    <NewClient />
+                  </PrivateRoute>
+                }
+              />
+            </Route>
+            <Route
+              path="/devices"
+              element={
+                <PrivateRoute>
+                  <Devices />
+                </PrivateRoute>
+              }
+            />
+            <Route
+              path="/actions"
+              element={
+                <PrivateRoute>
+                  <Actions />
+                </PrivateRoute>
+              }>
+              <Route
+                index element={
+                  <PrivateRoute>
+                    <AllActions />
+                  </PrivateRoute>
+                }
+              />
+              <Route
+                path="all_actions"
+                element={
+                  <PrivateRoute>
+                    <AllActions />
+                  </PrivateRoute>
+                }
+              />
+              <Route
+                path="new_action"
+                element={
+                  <PrivateRoute>
+                    <NewAction />
+                  </PrivateRoute>
+                }
+              />
+            </Route>
+            <Route
+              path="/zones"
+              element={
+                <PrivateRoute>
+                  <Zones />
                 </PrivateRoute>
               }
             />

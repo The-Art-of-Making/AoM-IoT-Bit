@@ -20,6 +20,14 @@ __pycache__
 # Node.js
 node_modules
 
+# React Build
+Source-Code/Frontend/build
+Source-Code/Backend/web-user-auth/frontend
+
+# Sass / Css
+custom.css
+custom.css.map
+
 # Kubernetes
 *kubeconfig.yaml
 mongo_uri_secret.yaml

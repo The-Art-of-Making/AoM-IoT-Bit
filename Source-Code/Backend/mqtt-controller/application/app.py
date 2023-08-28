@@ -1,10 +1,12 @@
 from flask import Flask, jsonify, request
+from flask_cors import CORS
 from signal import signal, SIGTERM, SIGINT
 
 from controller import Controller
 from logger import logger
 
 app = Flask(__name__)
+CORS(app)
 controller = Controller()
 
 # TODO verify user in database
