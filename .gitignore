@@ -42,6 +42,7 @@ pb.h
 
 # cml
 Source-Code/Backend/mqtt-config/application/cml/**
+Source-Code/Frontend/src/cml/**
 
 # idf
 **/build

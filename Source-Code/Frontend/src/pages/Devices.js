@@ -98,6 +98,7 @@ class Devices extends Component {
             .then(() => {
                 const topic = clientTopicBuilder(user_uuid, client_uuid, clientTopics.config)
                 // this.mqttClient.publish(topic, 1)
+                // TODO publish device config directly?
                 this.getDevices()
                 toast.success("Successfully edited device")
             })
@@ -125,7 +126,7 @@ class Devices extends Component {
                                 this.state.devices.map(device =>
                                     <DeviceCard
                                         key={device.uuid}
-                                        ref={deviceTopicBuidler(device.user_uuid, device.client_uuid, device.uuid, deviceTopics.state)}
+                                        ref={this.state.refs[deviceTopicBuidler(device.user_uuid, device.client_uuid, device.uuid, deviceTopics.state)]}
                                         device={device}
                                         editDevice={this.editDevice}
                                         publish={this.mqttClient.publish}

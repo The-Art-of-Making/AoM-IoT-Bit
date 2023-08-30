@@ -1,17 +1,7 @@
 import { Component } from "react"
 import CardInfo from "./CardInfo"
-import { DeviceControl } from "./DeviceControl"
-import { deviceTopicBuidler, deviceTopics } from "./TopicBuilder"
+import { buildDeviceControls } from "./device-controls/DeviceControlsBuilder"
 import { editIcon, checkIcon, checkCircleIcon, xCircleIcon } from "../icons/icons"
-
-// Convert ArrayBuffer to value
-const convertToNumber = buffer => {
-    let value = 0
-    for (let i = 0; i < buffer.length; i++) {
-        value += buffer[i] << (8 * i)
-    }
-    return value
-}
 
 export default class DeviceCard extends Component {
 
@@ -19,7 +9,7 @@ export default class DeviceCard extends Component {
         edit: false,
         name: this.props.device.name,
         config_type: this.props.device.config_type,
-        cmdTopic: deviceTopicBuidler(this.props.device.user_uuid, this.props.device.client_uuid, this.props.device.device_uuid, deviceTopics.cmd),
+        deviceControls: buildDeviceControls(this.props.device.config_type, this.props.device, this.props.publish, !this.props.serverConnected),
         deviceState: "0"
     }
 
@@ -36,9 +26,7 @@ export default class DeviceCard extends Component {
     }
 
     setDeviceState = state => {
-        this.setState({
-            deviceState: convertToNumber(state)
-        })
+        this.state.deviceControls.handleStateMsg(state)
     }
 
     render() {
@@ -82,7 +70,7 @@ export default class DeviceCard extends Component {
                         </div>
                         : <CardInfo info="Configuration" value={device.config_type} textStyle="text-secondary" />
                     }
-                    {DeviceControl(this.state.config_type, this.state.deviceState, this.props.publish, this.state.cmdTopic, !this.props.serverConnected)}
+                    {this.state.deviceControls.getControls()}
                 </div>
             </div>
         )

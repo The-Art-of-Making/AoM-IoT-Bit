@@ -15,6 +15,7 @@ from topic_builder import (
     TOPICBUILDER_MQTT_DELIMITER,
     TopicBuilder_Route,
     TopicBuilder_ClientTopic,
+    TopicBuilder_DeviceTopic,
     TopicBuilder_Context,
 )
 from config_handler import get_time_ms
@@ -30,6 +31,33 @@ topic_builder = TopicBuilder_Context()
 
 count = 0
 
+CONFIG_TOPIC = (
+    topic_builder.clear_topic()
+    .set_delimiter(TOPICBUILDER_MQTT_DELIMITER)
+    .append_route(TopicBuilder_Route.TOPICBUILDER_ROUTE_USER, USER_UUID)
+    .append_route(TopicBuilder_Route.TOPICBUILDER_ROUTE_CLIENT, CLIENT_UUID)
+    .set_client_topic(TopicBuilder_ClientTopic.TOPICBUILDER_CLIENTTOPIC_CONFIG)
+    .get_topic()
+)
+CMD_TOPIC = (
+    topic_builder.clear_topic()
+    .set_delimiter(TOPICBUILDER_MQTT_DELIMITER)
+    .append_route(TopicBuilder_Route.TOPICBUILDER_ROUTE_USER, USER_UUID)
+    .append_route(TopicBuilder_Route.TOPICBUILDER_ROUTE_CLIENT, CLIENT_UUID)
+    .append_route(TopicBuilder_Route.TOPICBUILDER_ROUTE_DEVICE, DEVICE_UUID)
+    .set_device_topic(TopicBuilder_DeviceTopic.TOPICBUILDER_DEVICETOPIC_CMD)
+    .get_topic()
+)
+STATE_TOPIC = (
+    topic_builder.clear_topic()
+    .set_delimiter(TOPICBUILDER_MQTT_DELIMITER)
+    .append_route(TopicBuilder_Route.TOPICBUILDER_ROUTE_USER, USER_UUID)
+    .append_route(TopicBuilder_Route.TOPICBUILDER_ROUTE_CLIENT, CLIENT_UUID)
+    .append_route(TopicBuilder_Route.TOPICBUILDER_ROUTE_DEVICE, DEVICE_UUID)
+    .set_device_topic(TopicBuilder_DeviceTopic.TOPICBUILDER_DEVICETOPIC_STATE)
+    .get_topic()
+)
+
 
 def on_connect(client: mqtt.Client, userdata, flags, rc):
     """Callback for when the client receives a CONNACK response from the server"""
@@ -37,15 +65,8 @@ def on_connect(client: mqtt.Client, userdata, flags, rc):
 
     # Subscribing in on_connect() means that if we lose the connection and
     # reconnect then subscriptions will be renewed.
-    config_topic = (
-        topic_builder.clear_topic()
-        .set_delimiter(TOPICBUILDER_MQTT_DELIMITER)
-        .append_route(TopicBuilder_Route.TOPICBUILDER_ROUTE_USER, USER_UUID)
-        .append_route(TopicBuilder_Route.TOPICBUILDER_ROUTE_CLIENT, CLIENT_UUID)
-        .set_client_topic(TopicBuilder_ClientTopic.TOPICBUILDER_CLIENTTOPIC_CONFIG)
-        .get_topic()
-    )
-    client.subscribe(config_topic)
+    client.subscribe(CONFIG_TOPIC)
+    client.subscribe(CMD_TOPIC)
 
     # Get client config
     payload = payload_pb2.Payload()
@@ -66,10 +87,18 @@ def on_message(client, userdata, msg):
     # Parse response
     payload = payload_pb2.Payload()
     if payload.ParseFromString(msg.payload) != 0:
-        assert payload.type == payload_pb2.SET
-        assert payload.ack == payload_pb2.INBOUND
-        assert payload.inner_payload_type == payload_pb2.CLIENT
-        print(payload.client_inner_payload)
+        if msg.topic == CONFIG_TOPIC:
+            print(payload.client_inner_payload)
+            assert payload.type == payload_pb2.SET
+            assert payload.ack == payload_pb2.INBOUND
+            assert payload.inner_payload_type == payload_pb2.CLIENT
+        if msg.topic == CMD_TOPIC:
+            print(payload.device_inner_payload)
+            assert payload.type == payload_pb2.SET
+            assert payload.ack == payload_pb2.OUTBOUND
+            assert payload.inner_payload_type == payload_pb2.DEVICE
+            payload.type = payload_pb2.INBOUND
+            client.publish(STATE_TOPIC, payload.SerializeToString())
 
 
 client = mqtt.Client(client_id=CLIENT_UUID)

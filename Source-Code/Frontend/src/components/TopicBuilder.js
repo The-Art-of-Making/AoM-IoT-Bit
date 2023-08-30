@@ -1,7 +1,8 @@
 export const deviceTopics = {
+    status: "status",
+    config: "config",
     state: "state",
     cmd: "cmd",
-    status: "status"
 }
 
 export const clientTopics = {
@@ -15,8 +16,10 @@ class Topic {
         this.topic = (topic.length > 0) ? topic : ""
     }
     append = value => {
+        if (this.topic.length > 0) {
+            this.topic += "/"
+        }
         this.topic += value
-        this.topic += "/"
         return this
     }
     getTopic = () => {
