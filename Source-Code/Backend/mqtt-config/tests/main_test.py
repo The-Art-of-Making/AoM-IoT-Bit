@@ -97,8 +97,10 @@ def on_message(client, userdata, msg):
             assert payload.type == payload_pb2.SET
             assert payload.ack == payload_pb2.OUTBOUND
             assert payload.inner_payload_type == payload_pb2.DEVICE
-            payload.type = payload_pb2.INBOUND
-            client.publish(STATE_TOPIC, payload.SerializeToString())
+            response = payload_pb2.Payload()
+            response.CopyFrom(payload)
+            response.ack = payload_pb2.INBOUND
+            client.publish(STATE_TOPIC, response.SerializeToString(), 0, True)
 
 
 client = mqtt.Client(client_id=CLIENT_UUID)

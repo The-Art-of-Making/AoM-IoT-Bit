@@ -15,24 +15,20 @@ export class DeviceControls {
     }
 
     setState = state => {
-        this.state = state.getGenericDigitalValue()
+        this.state = + state.getGenericDigitalValue()
     }
 
     handleStateMsg = msgBytes => {
-        console.log(msgBytes)
-        // let payload = payload_pb.deserializeBinary(msgBytes)
-        // let payload = payload_pb.Payload.deserializeBinary()
+        let payload = payload_pb.Payload.deserializeBinary(msgBytes)
 
-        // console.log(payload.toObject())
-
-        // if (payload.getType() === payload_pb.Type.SET
-        //     && payload.getAck() === payload_pb.Ack.INBOUND
-        //     && payload.getInnerPayloadType() === payload_pb.InnerPayloadType.DEVICE) {
-        //     let device_inner_payload = payload.getDeviceInnerPayload()
-        //     if (device_inner_payload.getType() === device_inner_payload_pb.Type.STATE) {
-        //         this.setState(device_inner_payload)
-        //     }
-        // }
+        if (payload.getType() === payload_pb.Type.SET
+            && payload.getAck() === payload_pb.Ack.INBOUND
+            && payload.getInnerPayloadType() === payload_pb.InnerPayloadType.DEVICE) {
+            let device_inner_payload = payload.getDeviceInnerPayload()
+            if (device_inner_payload.getType() === device_inner_payload_pb.Type.STATE) {
+                this.setState(device_inner_payload)
+            }
+        }
     }
 
     buildDevicePayload = () => {

@@ -10,7 +10,7 @@ export default class DeviceCard extends Component {
         name: this.props.device.name,
         config_type: this.props.device.config_type,
         deviceControls: buildDeviceControls(this.props.device.config_type, this.props.device, this.props.publish, !this.props.serverConnected),
-        deviceState: "0"
+        deviceState: null
     }
 
     onChange = e => {
@@ -27,6 +27,9 @@ export default class DeviceCard extends Component {
 
     setDeviceState = state => {
         this.state.deviceControls.handleStateMsg(state)
+        this.setState({
+            deviceState: null
+        })
     }
 
     render() {
