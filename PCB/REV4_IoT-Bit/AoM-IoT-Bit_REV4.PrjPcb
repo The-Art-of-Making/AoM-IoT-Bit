@@ -116,6 +116,23 @@ DItemRevisionGUID=
 GenerateClassCluster=0
 DocumentUniqueId=HDKEFDPO
 
+[Document5]
+DocumentPath=AoM-IoT-Bit_REV4.BomDoc
+AnnotationEnabled=1
+AnnotateStartValue=1
+AnnotationIndexControlEnabled=0
+AnnotateSuffix=
+AnnotateScope=All
+AnnotateOrder=-1
+DoLibraryUpdate=1
+DoDatabaseUpdate=1
+ClassGenCCAutoEnabled=1
+ClassGenCCAutoRoomEnabled=1
+ClassGenNCAutoScope=None
+DItemRevisionGUID=
+GenerateClassCluster=0
+DocumentUniqueId=
+
 [Configuration1]
 Name=Sources
 ParameterCount=0
@@ -1047,10 +1064,10 @@ GlobalIndexSortOrder=3
 GlobalIndexSortLocation=0
 
 [PrjClassGen]
-CompClassManualEnabled=0
-CompClassManualRoomEnabled=0
+CompClassManualEnabled=1
+CompClassManualRoomEnabled=1
 NetClassAutoBusEnabled=1
-NetClassAutoCompEnabled=0
+NetClassAutoCompEnabled=1
 NetClassAutoNamedHarnessEnabled=0
 NetClassManualEnabled=1
 NetClassSeparateForBusSections=0
