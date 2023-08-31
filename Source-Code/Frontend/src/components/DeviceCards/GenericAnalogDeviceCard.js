@@ -1,4 +1,4 @@
-import { DeviceControls } from "./DeviceControls"
+import DeviceCard from "./DeviceCard"
 import classnames from "classnames"
 const device_inner_payload_pb = require("../../cml/js/device/inner_payload_pb")
 
@@ -49,8 +49,8 @@ const Gauge = (percent = 0, radius = 45, color = "#21c181") => {
     )
 }
 
-export class GenericAnalogControls extends DeviceControls {
-    setState = state => {
+export default class GenericAnalogDeviceCard extends DeviceCard {
+    setDeviceState = state => {
         this.state = state.getGenericAnalogValue()
     }
 
@@ -62,26 +62,24 @@ export class GenericAnalogControls extends DeviceControls {
         device_inner_payload.setGenericAnalogValue(Math.round(value))
         payload.setDeviceInnerPayload(device_inner_payload)
 
-        console.log(payload.toObject())
-
         return payload.serializeBinary()
     }
 
     getControls = () => {
-        const value = parseInt(this.state) / 4095
+        const value = parseInt(this.state.deviceState) / 4095
         return (
             <>
-                <div className={classnames((this.io === "input") ? "rounded pb-2" : "rounded-top", "bg-dark d-flex justify-content-center pt-3")}>
+                <div className={classnames((this.state.io === "input") ? "rounded pb-2" : "rounded-top", "bg-dark d-flex justify-content-center pt-3")}>
                     {Gauge((value * 100).toFixed(1))}
                 </div>
-                {(this.io === "output")
+                {(this.state.io === "output")
                     ? <div className="bg-dark d-flex justify-content-center px-2 rounded-bottom">
                         <input
                             type="range"
                             className="form-range"
                             value={value * 100}
-                            onChange={e => this.publish(this.cmdTopic, this.buildCmd(e.target.value / 100 * 4096))}
-                            disabled={this.disabled}
+                            onChange={e => this.props.publish(this.state.cmdTopic, this.buildCmd(e.target.value / 100 * 4096))}
+                            disabled={(this.state.connected !== "Connected")}
                         />
                     </div>
                     : null

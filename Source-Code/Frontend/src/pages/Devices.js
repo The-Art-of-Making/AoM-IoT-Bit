@@ -6,10 +6,12 @@ import { toast } from "react-toastify"
 import axios from "axios"
 import Header from "../components/Header"
 import Sidebar from "../components/Sidebar"
-import DeviceCard from "../components/DeviceCard"
 import { iotWebHandlerEndpts } from "../endpoints"
 import MQTTClient from "../components/MQTTClient"
 import { clientTopicBuilder, clientTopics, deviceTopicBuidler, deviceTopics } from "../components/TopicBuilder"
+import DeviceCard from "../components/DeviceCards/DeviceCard"
+import GenericDigitalDeviceCard from "../components/DeviceCards/GenericDigitalDeviceCard"
+import GenericAnalogDeviceCard from "../components/DeviceCards/GenericAnalogDeviceCard"
 
 class Devices extends Component {
 
@@ -27,7 +29,7 @@ class Devices extends Component {
     }
 
     messageHandler = message => {
-        this.state.refs[message.destinationName].current.setDeviceState(message.payloadBytes)
+        this.state.refs[message.destinationName].current.handleStateMsg(message.payloadBytes)
     }
 
     componentDidMount() {
@@ -74,13 +76,17 @@ class Devices extends Component {
                     devices: res.data
                 })
                 res.data.forEach(device => {
-                    const topic = deviceTopicBuidler(device.user_uuid, device.client_uuid, device.uuid, deviceTopics.state)
+                    const stateTopic = deviceTopicBuidler(device.user_uuid, device.client_uuid, device.uuid, deviceTopics.state)
+                    const statusTopic = deviceTopicBuidler(device.user_uuid, device.client_uuid, device.uuid, deviceTopics.status)
+                    // TODO create better way to route MQTT messages to correct component 
                     let updatedRefs = this.state.refs
-                    updatedRefs[topic] = createRef()
+                    updatedRefs[stateTopic] = createRef()
+                    updatedRefs[statusTopic] = updatedRefs[stateTopic]
                     this.setState({
                         refs: updatedRefs
                     })
-                    this.mqttClient.subscribe(topic)
+                    this.mqttClient.subscribe(stateTopic)
+                    this.mqttClient.subscribe(statusTopic)
                 })
             })
             .catch(err => {
@@ -111,8 +117,7 @@ class Devices extends Component {
     }
 
     render() {
-        // const disabledStyle = !this.state.connected ? { backgroundColor: "black", filter: "alpha(opacity=30)", opacity: 0.3 } : {}
-        const disabledStyle = {}
+        const disabledStyle = !this.state.connected ? { backgroundColor: "black", filter: "alpha(opacity=30)", opacity: 0.3 } : {}
         return (
             <div className="d-flex">
                 <Sidebar currentItem="Devices" />
@@ -123,15 +128,74 @@ class Devices extends Component {
                     <div className="container-fluid">
                         <div className="row justify-content-left p-1 gap-1" style={disabledStyle}>
                             {
-                                this.state.devices.map(device =>
-                                    <DeviceCard
+                                this.state.devices.map(device => {
+                                    let deviceCard = <DeviceCard
                                         key={device.uuid}
                                         ref={this.state.refs[deviceTopicBuidler(device.user_uuid, device.client_uuid, device.uuid, deviceTopics.state)]}
                                         device={device}
                                         editDevice={this.editDevice}
                                         publish={this.mqttClient.publish}
                                         serverConnected={this.state.connected}
+                                        initialDeviceState={0}
+                                        io="output"
                                     />
+                                    switch (device.config_type) {
+                                        case "Generic Digital Output":
+                                            deviceCard = <GenericDigitalDeviceCard
+                                                key={device.uuid}
+                                                ref={this.state.refs[deviceTopicBuidler(device.user_uuid, device.client_uuid, device.uuid, deviceTopics.state)]}
+                                                device={device}
+                                                editDevice={this.editDevice}
+                                                publish={this.mqttClient.publish}
+                                                serverConnected={this.state.connected}
+                                                initialDeviceState={0}
+                                                io="output"
+                                            />
+                                            break
+                                        case "Generic Digital Input":
+                                            deviceCard = <GenericDigitalDeviceCard
+                                                key={device.uuid}
+                                                ref={this.state.refs[deviceTopicBuidler(device.user_uuid, device.client_uuid, device.uuid, deviceTopics.state)]}
+                                                device={device}
+                                                editDevice={this.editDevice}
+                                                publish={this.mqttClient.publish}
+                                                serverConnected={this.state.connected}
+                                                initialDeviceState={0}
+                                                io="input"
+                                            />
+                                            break
+                                        case "Generic Analog Output":
+                                            deviceCard = deviceCard = <GenericAnalogDeviceCard
+                                                key={device.uuid}
+                                                ref={this.state.refs[deviceTopicBuidler(device.user_uuid, device.client_uuid, device.uuid, deviceTopics.state)]}
+                                                device={device}
+                                                editDevice={this.editDevice}
+                                                publish={this.mqttClient.publish}
+                                                serverConnected={this.state.connected}
+                                                initialDeviceState={0}
+                                                io="output"
+                                            />
+                                            break
+                                        case "Generic Analog Input":
+                                            deviceCard = <GenericAnalogDeviceCard
+                                                key={device.uuid}
+                                                ref={this.state.refs[deviceTopicBuidler(device.user_uuid, device.client_uuid, device.uuid, deviceTopics.state)]}
+                                                device={device}
+                                                editDevice={this.editDevice}
+                                                publish={this.mqttClient.publish}
+                                                serverConnected={this.state.connected}
+                                                initialDeviceState={0}
+                                                io="input"
+                                            />
+                                            break
+                                        default:
+                                            break
+                                    }
+                                    return (
+                                        deviceCard
+                                    )
+                                }
+
                                 )
                             }
                         </div>
