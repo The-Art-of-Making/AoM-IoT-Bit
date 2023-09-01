@@ -84,10 +84,6 @@ def on_connect(client: mqtt.Client, userdata, flags, rc):
     payload.client_inner_payload.CopyFrom(build_client_inner_payload_get_config())
     client.publish(MQTT_CONFIG_TOPIC, payload.SerializeToString())
 
-    # TODO
-    # Graceful disconnect behavior
-    # last will and testament
-
 
 def on_message(client, userdata, msg):
     """Callback for when message is received from the server"""
@@ -117,7 +113,7 @@ def on_message(client, userdata, msg):
             )
             device_status_payload.device_inner_payload.status.status = "Connected"
             client.publish(
-                STATUS_TOPIC, device_status_payload.SerializeToString(), 0, True
+                STATUS_TOPIC, device_status_payload.SerializeToString(), 1, True
             )
 
         if msg.topic == CMD_TOPIC:
@@ -129,7 +125,7 @@ def on_message(client, userdata, msg):
             response.CopyFrom(payload)
             response.ack = payload_pb2.INBOUND
             response.timestamp = get_time_ms()
-            client.publish(STATE_TOPIC, response.SerializeToString(), 0, True)
+            client.publish(STATE_TOPIC, response.SerializeToString(), 1, True)
 
 
 client = mqtt.Client(client_id=CLIENT_UUID)
@@ -139,6 +135,17 @@ client.username_pw_set(
 )
 client.on_connect = on_connect
 client.on_message = on_message
+
+# Set last will
+device_status_payload = payload_pb2.Payload()
+device_status_payload.type = payload_pb2.SET
+device_status_payload.ack = payload_pb2.OUTBOUND
+device_status_payload.inner_payload_type = payload_pb2.DEVICE
+device_status_payload.timestamp = get_time_ms()
+device_status_payload.device_inner_payload.type = device_inner_payload_pb2.STATUS
+device_status_payload.device_inner_payload.status.status = "Disconnected"
+client.will_set(STATUS_TOPIC, device_status_payload.SerializeToString(), 1, True)
+
 client.connect(SERVER_IP, 1883, 60)
 
 client.loop_forever()
