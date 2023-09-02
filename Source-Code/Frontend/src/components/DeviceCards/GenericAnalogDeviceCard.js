@@ -78,7 +78,7 @@ export default class GenericAnalogDeviceCard extends DeviceCard {
                             type="range"
                             className="form-range"
                             value={value * 100}
-                            onChange={e => this.props.publish(this.state.cmdTopic, this.buildCmd(e.target.value / 100 * 4096))}
+                            onChange={e => this.props.publish(this.state.cmdTopic, this.buildCmd(e.target.value / 100 * 4096), 1, true)}
                             disabled={(this.state.connected !== "Connected")}
                         />
                     </div>

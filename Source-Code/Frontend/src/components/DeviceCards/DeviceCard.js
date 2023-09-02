@@ -94,7 +94,7 @@ export default class DeviceCard extends Component {
                                 type="checkbox"
                                 checked={(parseInt(this.state.deviceState) === 1) ? true : false}
                                 onChange={() =>
-                                    this.props.publish(this.state.cmdTopic, (parseInt(this.state.deviceState) === 1) ? this.buildCmd(0) : this.buildCmd(1))
+                                    this.props.publish(this.state.cmdTopic, (parseInt(this.state.deviceState) === 1) ? this.buildCmd(0) : this.buildCmd(1), 1, true)
                                 }
                                 disabled={(this.state.connected !== "Connected")}
                             />

@@ -64,10 +64,11 @@ export default class MQTTClient {
         }
     }
 
-    publish = (topic, msg) => {
-        console.log("topic: ", topic, " message: ", msg)
+    publish = (topic, msg, qos, retain) => {
         let message = new Paho.MQTT.Message(msg)
         message.destinationName = topic
+        message.qos = qos
+        message.retained = retain
         if (this.connected) {
             this.client.send(message)
         }
