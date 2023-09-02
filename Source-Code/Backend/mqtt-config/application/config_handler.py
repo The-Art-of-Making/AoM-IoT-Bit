@@ -9,13 +9,13 @@ PROD_DEV_ENV = environ.get("PROD_DEV_ENV", "DEV_ENV")
 if PROD_DEV_ENV == "PROD_ENV":
     path.append("cml/out/python")
     from cml.out.python import payload_pb2
-    from cml.out.python.client import inner_payload_pb2 as client_inner_payload_pb2
-    from cml.out.python.device import inner_payload_pb2 as device_inner_payload_pb2
+    from cml.out.python.client import client_inner_payload_pb2
+    from cml.out.python.device import device_inner_payload_pb2
 else:
     path.append("../../../cml/out/python")
     import payload_pb2
-    from client import inner_payload_pb2 as client_inner_payload_pb2
-    from device import inner_payload_pb2 as device_inner_payload_pb2
+    from client import client_inner_payload_pb2
+    from device import device_inner_payload_pb2
 
 MS_PER_S = 1000
 CONFIG_ACK_VALUES = (payload_pb2.OUTBOUND, payload_pb2.RETRY)

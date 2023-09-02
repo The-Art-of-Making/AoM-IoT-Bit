@@ -1,6 +1,6 @@
 import DeviceCard from "./DeviceCard"
 import classnames from "classnames"
-const device_inner_payload_pb = require("../../cml/js/device/inner_payload_pb")
+const device_inner_payload_pb = require("../../cml/js/device/device_inner_payload_pb")
 
 const Gauge = (percent = 0, radius = 45, color = "#21c181") => {
     const strokeWidth = radius * 0.25

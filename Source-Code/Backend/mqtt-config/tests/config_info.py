@@ -6,7 +6,7 @@ from secrets import token_hex
 from uuid import uuid4
 
 path.append("../../../cml/out/python")
-from device import config_pb2 as device_config_pb2
+from device import device_config_pb2
 
 SERVER_IP = environ.get("TEST_SERVER_IP", "localhost")
 SERVER_PORT = int(environ.get("TEST_SERVER_PORT", "1883"))

@@ -32,13 +32,13 @@ PROD_DEV_ENV = environ.get("PROD_DEV_ENV", "DEV_ENV")
 if PROD_DEV_ENV == "PROD_ENV":
     path.append("cml/out/python")
     from cml.out.python import payload_pb2
-    from cml.out.python.client import config_pb2 as client_config_pb2
-    from cml.out.python.device import config_pb2 as device_config_pb2, action_pb2
+    from cml.out.python.client import client_config_pb2
+    from cml.out.python.device import device_config_pb2, device_action_pb2
 else:
     path.append("../../../cml/out/python")
     import payload_pb2
-    from client import config_pb2 as client_config_pb2
-    from device import config_pb2 as device_config_pb2, action_pb2
+    from client import client_config_pb2
+    from device import device_config_pb2, device_action_pb2
 
 UUID = "service-" + str(uuid4())
 TOKEN = token_hex()
@@ -77,7 +77,7 @@ def get_device_config(uuid: str) -> device_config_pb2:
 
     if device.uuid in actions:
         for action in actions[device.uuid]:
-            action_config = action_pb2.Action()
+            action_config = device_action_pb2.Action()
             action_config.common_config.name = action.name
             action_config.common_config.uuid = action.uuid
             action_config.user_uuid = action.user_uuid

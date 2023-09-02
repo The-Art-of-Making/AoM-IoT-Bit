@@ -4,7 +4,7 @@ import { editIcon, checkIcon, checkCircleIcon, xCircleIcon } from "../../icons/i
 import classnames from "classnames"
 import { deviceTopicBuidler, deviceTopics } from "../TopicBuilder"
 const payload_pb = require("../../cml/js/payload_pb")
-const device_inner_payload_pb = require("../../cml/js/device/inner_payload_pb")
+const device_inner_payload_pb = require("../../cml/js/device/device_inner_payload_pb")
 
 
 export default class DeviceCard extends Component {

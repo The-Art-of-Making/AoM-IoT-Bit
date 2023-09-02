@@ -22,10 +22,8 @@ from config_handler import get_time_ms
 
 path.append("../../../cml/out/python")
 import payload_pb2
-from client import inner_payload_pb2 as client_inner_payload_pb2
-from client import config_pb2 as client_config_pb2
-from device import inner_payload_pb2 as device_inner_payload_pb2
-from device import config_pb2 as device_config_pb2
+from client import client_inner_payload_pb2, client_config_pb2
+from device import device_inner_payload_pb2, device_config_pb2
 
 topic_builder = TopicBuilder_Context()
 
