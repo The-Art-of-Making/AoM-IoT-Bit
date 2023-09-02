@@ -11,7 +11,7 @@
 #include "TopicBuilder.h"
 #include "Wifi.h"
 #include "pb_decode.h"
-#include "service_message.pb.h"
+#include "payload.pb.h"
 
 #define CONFIG_BROKER_URL "localhost:1883"
 
@@ -190,9 +190,9 @@ static void mqttLogNonZeroError(const char *message, int error_code)
 
 static void handleServiceMessage(const char *data, const unsigned int length)
 {
-    aom_iot_service_ServiceMessage serviceMessage = aom_iot_service_ServiceMessage_init_zero;
+    cml_payload_Payload payload = cml_payload_Payload_init_zero;
     pb_istream_t stream = pb_istream_from_buffer((unsigned char *)data, length);
-    bool decoded = pb_decode(&stream, aom_iot_service_ServiceMessage_fields, &serviceMessage);
+    bool decodedPayload = pb_decode(&stream, cml_payload_Payload_fields, &payload);
     aom_iot_client_Client client;
     if (decoded)
     {

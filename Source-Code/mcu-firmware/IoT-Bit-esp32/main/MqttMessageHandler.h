@@ -1,0 +1,1 @@
+void MqttMessageHandler_HandleMessage(const char *data, const unsigned int length);
