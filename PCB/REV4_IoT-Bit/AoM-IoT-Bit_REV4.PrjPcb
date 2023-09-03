@@ -1314,11 +1314,13 @@ Net116=NetName=SD_STAT_LED|NetColor=$0000BE00
 Net117=NetName=SHIFT_DATA_CLK|NetColor=$00FF6EFF
 Net118=NetName=SHIFT_DATA_IN|NetColor=$00FF6EFF
 Net119=NetName=SHIFT_STORE_CLK|NetColor=$00FF6EFF
-Net120=NetName=TXD0|NetColor=$00FFFF6E
-Net121=NetName=USB_D_N|NetColor=$00FFFF6E
-Net122=NetName=USB_D_P|NetColor=$00FFFF6E
-Net123=NetName=VCC|NetColor=$000083FD
-Net124=NetName=WIFI_STAT_LED|NetColor=$0000BE00
+Net120=NetName=TERM_USB_D_N|NetColor=$00FFFF6E
+Net121=NetName=TERM_USB_D_P|NetColor=$00FFFF6E
+Net122=NetName=TXD0|NetColor=$00FFFF6E
+Net123=NetName=USB_D_N|NetColor=$00FFFF6E
+Net124=NetName=USB_D_P|NetColor=$00FFFF6E
+Net125=NetName=VCC|NetColor=$000083FD
+Net126=NetName=WIFI_STAT_LED|NetColor=$0000BE00
 
 [Comparison Options]
 ComparisonOptions0=Kind=Net|MinPercent=75|MinMatch=3|ShowMatch=0|UseName=-1|InclAllRules=0
