@@ -8,10 +8,9 @@
 #include "esp_netif.h"
 #include "mqtt_client.h"
 
+#include "CmlHandler.h"
 #include "TopicBuilder.h"
 #include "Wifi.h"
-#include "pb_decode.h"
-#include "payload.pb.h"
 
 #define CONFIG_BROKER_URL "localhost:1883"
 
@@ -28,7 +27,6 @@ static void app_init(void);
 static void mqttStart(void);
 static void mqttEventHandler(void *handlerArgs, esp_event_base_t base, int32_t eventId, void *eventData);
 static void mqttLogNonZeroError(const char *message, int error_code);
-static void handleServiceMessage(const char *data, const unsigned int length);
 
 /* Function definitions
 ****************************************************************************************************/
@@ -127,9 +125,11 @@ static void mqttStart()
 static void mqttEventHandler(void *handlerArgs, esp_event_base_t base, int32_t eventId, void *eventData)
 {
     ESP_LOGD(MQTT_TAG, "Event dispatched from event loop base=%s, eventId=%" PRIi32 "", base, eventId);
+
     esp_mqtt_event_handle_t event = eventData;
     esp_mqtt_client_handle_t client = event->client;
     int msg_id;
+
     switch ((esp_mqtt_event_id_t)eventId)
     {
     case MQTT_EVENT_CONNECTED:
@@ -157,11 +157,11 @@ static void mqttEventHandler(void *handlerArgs, esp_event_base_t base, int32_t e
         ESP_LOGD(MQTT_TAG, "MQTT_EVENT_PUBLISHED, msg_id=%d", event->msg_id);
         break;
     case MQTT_EVENT_DATA:
-        ESP_LOGI(MQTT_TAG, "MQTT_EVENT_DATA");
-        printf("TOPIC=%.*s\r\n", event->topic_len, event->topic);
-        printf("DATA=%.*s\r\n", event->data_len, event->data);
+        ESP_LOGD(MQTT_TAG, "MQTT_EVENT_DATA");
+        ESP_LOGD(MQTT_TAG, "TOPIC=%.*s\r\n", event->topic_len, event->topic);
+        ESP_LOGD(MQTT_TAG, "DATA=%.*s\r\n", event->data_len, event->data);
 
-        handleServiceMessage(event->data, event->data_len);
+        CmlHandler_HandleMessage(event->data, event->data_len);
 
         break;
     case MQTT_EVENT_ERROR:
@@ -185,31 +185,5 @@ static void mqttLogNonZeroError(const char *message, int error_code)
     if (error_code != 0)
     {
         ESP_LOGE(MQTT_TAG, "Last error %s: 0x%x", message, error_code);
-    }
-}
-
-static void handleServiceMessage(const char *data, const unsigned int length)
-{
-    cml_payload_Payload payload = cml_payload_Payload_init_zero;
-    pb_istream_t stream = pb_istream_from_buffer((unsigned char *)data, length);
-    bool decodedPayload = pb_decode(&stream, cml_payload_Payload_fields, &payload);
-    aom_iot_client_Client client;
-    if (decoded)
-    {
-        switch (serviceMessage.type)
-        {
-        case (aom_iot_service_Type_CLIENT_CONFIG):
-            ESP_LOGI(APP_TAG, "Decoded CLIENT_CONFIG message");
-            client = serviceMessage.client;
-            // TODO active device and subscribe to device topics
-            // TODO publish to device topics
-            break;
-        default:
-            break;
-        }
-    }
-    else
-    {
-        ESP_LOGE(APP_TAG, "Failed to decode service message.\nDecode Error: %s", PB_GET_ERROR(&stream));
     }
 }
