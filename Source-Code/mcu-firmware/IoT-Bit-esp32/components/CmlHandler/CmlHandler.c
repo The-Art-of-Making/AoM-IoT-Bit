@@ -25,10 +25,12 @@ void CmlHandler_HandleMessage(const char *data, const unsigned int length)
         case cml_payload_InnerPayloadType_LOG:
             break;
         case cml_payload_InnerPayloadType_CLIENT:
-            EPS_LOGD(CML_HANDLER_TAG, "Decoded CML CLIENT payload");
+            ESP_LOGD(CML_HANDLER_TAG, "Decoded CML CLIENT payload");
+            CmlHandler_HandleClientInnerPayload();
             break;
         case cml_payload_InnerPayloadType_DEVICE:
-            EPS_LOGD(CML_HANDLER_TAG, "Decoded CML DEVICE payload");
+            ESP_LOGD(CML_HANDLER_TAG, "Decoded CML DEVICE payload");
+            CmlHandler_HandlerDeviceInnerPayload();
             break;
         default:
             break;
@@ -36,7 +38,7 @@ void CmlHandler_HandleMessage(const char *data, const unsigned int length)
     }
     else
     {
-        ESP_LOGE(CML_HANDLER_TAG, "Failed to decode CML payload.\nDecode Error: %s", PB_GET_ERROR(&stream));
+        ESP_LOGE(CML_HANDLER_TAG, "Failed to decode CML payload.\nDecode Error: %s", PB_GET_ERROR(&pbStream));
     }
 }
 
