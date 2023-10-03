@@ -2,13 +2,14 @@
 ****************************************************************************************************/
 #include <stddef.h>
 #include <string.h>
+#include <stdio.h>
 #include "TopicBuilder.h"
 
 /* Defines
 ****************************************************************************************************/
 
-#define TOPICBUILDER_TOPIC_DELIMITER '/'
-#define TOPICBUILDER_TOPIC_DELIMITER_SIZE (0x01U)
+static char *TopicBuilder_TopicDelimiter = "/";
+static char *TopicBuilder_NullTerminator = "\0";
 
 /* Constants
 ****************************************************************************************************/
@@ -29,7 +30,12 @@ void TopicBuilder_init(TopicBuilder_Context_t *const context)
 {
     if (context != NULL)
     {
-        context->Size = 0;
+        context->Size = 0U;
+
+        if (context->BufferSize > 0U)
+        {
+            *context->Buffer = *TopicBuilder_NullTerminator;
+        }
     }
 }
 
@@ -77,20 +83,13 @@ static void TopicBuilder_append(TopicBuilder_Context_t *const context, const cha
 {
     if (context != NULL && data != NULL)
     {
-        uint16_t totalSize = context->Size + size;
-        if (context->Size != 0)
+        if (context->Size > 0U)
         {
-            totalSize += TOPICBUILDER_TOPIC_DELIMITER_SIZE;
+            strncat(context->Buffer, TopicBuilder_TopicDelimiter, context->BufferSize - context->Size);
+            context->Size = strlen(context->Buffer);
         }
-        if (totalSize <= context->BufferSize)
-        {
-            if (context->Size != 0)
-            {
-                *(context->Buffer + context->Size) = TOPICBUILDER_TOPIC_DELIMITER;
-                context->Size++;
-            }
-            memcpy(context->Buffer, data, size);
-            context->Size += size;
-        }
+
+        strncat(context->Buffer, data, context->BufferSize - context->Size);
+        context->Size = strlen(context->Buffer);
     }
 }
