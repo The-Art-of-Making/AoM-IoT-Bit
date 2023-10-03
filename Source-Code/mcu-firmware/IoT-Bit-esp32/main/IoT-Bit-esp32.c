@@ -12,12 +12,27 @@
 #include "TopicBuilder.h"
 #include "Wifi.h"
 
-#define CONFIG_BROKER_URL "localhost:1883"
+/* Defines and globals
+****************************************************************************************************/
+#define MQTT_TOPIC_BUFFER_SIZE (1024U)
+#define MQTT_PAYLOAD_BUFFER_SIZE (1024U)
+#define MQTT_RETAIN_FALSE (0U)
+#define MQTT_RETAIN_TRUE (1U)
+#define MQTT_QOS_0 (0U)
+#define MQTT_QOS_1 (1U)
+#define MQTT_QOS_2 (2U)
 
 static const char *APP_TAG = "APP";
 static const char *MQTT_TAG = "MQTT";
 static const char *CONFIG_TOPIC = "config/mqtt";
+
 static esp_mqtt_client_handle_t mqttClient;
+static char mqttTopicBuffer[MQTT_TOPIC_BUFFER_SIZE];
+static TopicBuilder_Context_t mqttTopicBuilder = {
+    .Buffer = mqttTopicBuffer,
+    .BufferSize = MQTT_TOPIC_BUFFER_SIZE,
+};
+static uint8_t mqttPayloadBuffer[MQTT_PAYLOAD_BUFFER_SIZE];
 
 /* Function prototypes
 ****************************************************************************************************/
@@ -27,6 +42,7 @@ static void app_init(void);
 static void mqttStart(void);
 static void mqttEventHandler(void *handlerArgs, esp_event_base_t base, int32_t eventId, void *eventData);
 static void mqttLogNonZeroError(const char *message, int error_code);
+static void mqttHandleEventConnected(esp_mqtt_event_handle_t event);
 
 /* Function definitions
 ****************************************************************************************************/
@@ -64,6 +80,9 @@ static void mqttStart()
 {
     esp_mqtt_client_config_t mqttCfg = {
         .broker.address.uri = CONFIG_BROKER_URL,
+        .credentials.username = CONFIG_CLIENT_UUID,
+        .credentials.client_id = CONFIG_CLIENT_UUID,
+        .credentials.authentication.password = CONFIG_CLIENT_TOKEN,
     };
 #if CONFIG_BROKER_URL_FROM_STDIN
     char line[128];
@@ -127,19 +146,13 @@ static void mqttEventHandler(void *handlerArgs, esp_event_base_t base, int32_t e
     ESP_LOGD(MQTT_TAG, "Event dispatched from event loop base=%s, eventId=%" PRIi32 "", base, eventId);
 
     esp_mqtt_event_handle_t event = eventData;
-    esp_mqtt_client_handle_t client = event->client;
-    int msg_id;
+    // esp_mqtt_client_handle_t client = event->client;
 
     switch ((esp_mqtt_event_id_t)eventId)
     {
     case MQTT_EVENT_CONNECTED:
         ESP_LOGI(MQTT_TAG, "MQTT connected");
-
-        // TODO subscribe to client topics and get config
-        // then subscribe to device topics
-        // publish client status
-
-        msg_id = esp_mqtt_client_subscribe(client, CONFIG_TOPIC, 1);
+        mqttHandleEventConnected(event);
         break;
     case MQTT_EVENT_DISCONNECTED:
         // TODO reconnect
@@ -161,7 +174,8 @@ static void mqttEventHandler(void *handlerArgs, esp_event_base_t base, int32_t e
         ESP_LOGD(MQTT_TAG, "TOPIC=%.*s\r\n", event->topic_len, event->topic);
         ESP_LOGD(MQTT_TAG, "DATA=%.*s\r\n", event->data_len, event->data);
 
-        CmlHandler_HandleMessage(event->data, event->data_len);
+        /* TODO subscribe to device topics after recevining client config */
+        CmlHandler_HandlePayload(event->data, event->data_len);
 
         break;
     case MQTT_EVENT_ERROR:
@@ -186,4 +200,34 @@ static void mqttLogNonZeroError(const char *message, int error_code)
     {
         ESP_LOGE(MQTT_TAG, "Last error %s: 0x%x", message, error_code);
     }
+}
+
+static void mqttHandleEventConnected(esp_mqtt_event_handle_t event)
+{
+    esp_mqtt_client_handle_t client = event->client;
+    size_t size;
+
+    /* Set client status */
+    TopicBuilder_init(&mqttTopicBuilder);
+    TopicBuilder_appendRoute(&mqttTopicBuilder, TOPICBUILDER_ROUTE_USER, CONFIG_USER_UUID, sizeof(CONFIG_USER_UUID));
+    TopicBuilder_appendRoute(&mqttTopicBuilder, TOPICBUILDER_ROUTE_CLIENT, CONFIG_CLIENT_UUID, sizeof(CONFIG_CLIENT_UUID));
+    TopicBuilder_setClientTopic(&mqttTopicBuilder, TOPICBUILDER_CLIENTTOPIC_STATUS);
+    size = CmlHandler_BuildSetClientStatusPayload(mqttPayloadBuffer, MQTT_PAYLOAD_BUFFER_SIZE);
+    esp_mqtt_client_publish(client, mqttTopicBuilder.Buffer, (const char *)mqttPayloadBuffer, size, MQTT_QOS_1, MQTT_RETAIN_TRUE);
+    ESP_LOGI(MQTT_TAG, "Set client status on topic %s", mqttTopicBuilder.Buffer);
+
+    /* TODO set last will and testament */
+
+    /* Subscribe to client config topic */
+    TopicBuilder_init(&mqttTopicBuilder);
+    TopicBuilder_appendRoute(&mqttTopicBuilder, TOPICBUILDER_ROUTE_USER, CONFIG_USER_UUID, sizeof(CONFIG_USER_UUID));
+    TopicBuilder_appendRoute(&mqttTopicBuilder, TOPICBUILDER_ROUTE_CLIENT, CONFIG_CLIENT_UUID, sizeof(CONFIG_CLIENT_UUID));
+    TopicBuilder_setClientTopic(&mqttTopicBuilder, TOPICBUILDER_CLIENTTOPIC_CONFIG);
+    esp_mqtt_client_subscribe(client, mqttTopicBuilder.Buffer, MQTT_QOS_1);
+    ESP_LOGI(MQTT_TAG, "Subscribed to client config topic %s", mqttTopicBuilder.Buffer);
+
+    /* Get client config */
+    size = CmlHandler_BuildGetClientConfigPayload(mqttPayloadBuffer, MQTT_PAYLOAD_BUFFER_SIZE, CONFIG_CLIENT_UUID, CONFIG_CLIENT_TOKEN);
+    esp_mqtt_client_publish(client, CONFIG_TOPIC, (const char *)mqttPayloadBuffer, size, MQTT_QOS_1, MQTT_RETAIN_FALSE);
+    ESP_LOGI(MQTT_TAG, "Getting client config from topic %s", CONFIG_TOPIC);
 }
