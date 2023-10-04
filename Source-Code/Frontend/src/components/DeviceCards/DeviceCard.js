@@ -4,8 +4,8 @@ import { editIcon, checkIcon, checkCircleIcon, xCircleIcon } from "../../icons/i
 import classnames from "classnames"
 import { deviceTopicBuidler, deviceTopics } from "../TopicBuilder"
 const payload_pb = require("../../cml/js/payload_pb")
+const client_inner_payload_pb = require("../../cml/js/client/client_inner_payload_pb")
 const device_inner_payload_pb = require("../../cml/js/device/device_inner_payload_pb")
-
 
 export default class DeviceCard extends Component {
 
@@ -39,21 +39,25 @@ export default class DeviceCard extends Component {
 
     setDeviceStatus = status => {
         this.setState({
-            connected: status.getStatus().getStatus()
+            connected: status.getStatus().getCommonStatus().getStatus()
         })
     }
 
-    handleStateMsg = msgBytes => {
+    handleMsg = msgBytes => {
         let payload = payload_pb.Payload.deserializeBinary(msgBytes)
 
-        if (payload.getType() === payload_pb.Type.SET
-            && payload.getInnerPayloadType() === payload_pb.InnerPayloadType.DEVICE) {
-            let device_inner_payload = payload.getDeviceInnerPayload()
-            if (payload.getAck() === payload_pb.Ack.INBOUND && device_inner_payload.getType() === device_inner_payload_pb.Type.STATE) {
-                this.setDeviceState(device_inner_payload)
+        if (payload.getType() === payload_pb.Type.SET) {
+            if (payload.getInnerPayloadType() === payload_pb.InnerPayloadType.CLIENT) {
+                let client_inner_payload = payload.getClientInnerPayload()
+                if (payload.getAck() === payload_pb.Ack.OUTBOUND && client_inner_payload.getType() === client_inner_payload_pb.Type.STATUS) {
+                    this.setDeviceStatus(client_inner_payload)
+                }
             }
-            if (payload.getAck() === payload_pb.Ack.OUTBOUND && device_inner_payload.getType() === device_inner_payload_pb.Type.STATUS) {
-                this.setDeviceStatus(device_inner_payload)
+            if (payload.getInnerPayloadType() === payload_pb.InnerPayloadType.DEVICE) {
+                let device_inner_payload = payload.getDeviceInnerPayload()
+                if (payload.getAck() === payload_pb.Ack.INBOUND && device_inner_payload.getType() === device_inner_payload_pb.Type.STATE) {
+                    this.setDeviceState(device_inner_payload)
+                }
             }
         }
     }

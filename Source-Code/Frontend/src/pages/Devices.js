@@ -12,15 +12,19 @@ import { clientTopicBuilder, clientTopics, deviceTopicBuidler, deviceTopics } fr
 import DeviceCard from "../components/DeviceCards/DeviceCard"
 import GenericDigitalDeviceCard from "../components/DeviceCards/GenericDigitalDeviceCard"
 import GenericAnalogDeviceCard from "../components/DeviceCards/GenericAnalogDeviceCard"
+import { Subscriber, Broker } from "../components/PubSub"
 
 class Devices extends Component {
+
+    broker = new Broker()
 
     state = {
         devices: [],
         errors: {},
         connected: false,
         reconnectTimeout: 1500,
-        refs: {}
+        refs: {},
+        subscribers: {}
     }
 
     onLogoutClick = e => {
@@ -29,7 +33,7 @@ class Devices extends Component {
     }
 
     messageHandler = message => {
-        this.state.refs[message.destinationName].current.handleStateMsg(message.payloadBytes)
+        this.broker.publish(message.destinationName, message.payloadBytes)
     }
 
     componentDidMount() {
@@ -77,16 +81,24 @@ class Devices extends Component {
                 })
                 res.data.forEach(device => {
                     const stateTopic = deviceTopicBuidler(device.user_uuid, device.client_uuid, device.uuid, deviceTopics.state)
-                    const statusTopic = deviceTopicBuidler(device.user_uuid, device.client_uuid, device.uuid, deviceTopics.status)
-                    // TODO create better way to route MQTT messages to correct component 
+                    const statusTopic = clientTopicBuilder(device.user_uuid, device.client_uuid, clientTopics.status)
+
                     let updatedRefs = this.state.refs
-                    updatedRefs[stateTopic] = createRef()
-                    updatedRefs[statusTopic] = updatedRefs[stateTopic]
+                    updatedRefs[device.uuid] = createRef()
                     this.setState({
                         refs: updatedRefs
                     })
-                    this.mqttClient.subscribe(stateTopic)
-                    this.mqttClient.subscribe(statusTopic)
+
+                    let updateSubscribers = this.state.subscribers
+                    updateSubscribers[device.uuid] = new Subscriber((topic, data) => updatedRefs[device.uuid].current.handleMsg(data))
+                    this.setState({
+                        subscribers: updateSubscribers
+                    }, () => {
+                        this.broker.subscribe(this.state.subscribers[device.uuid], stateTopic)
+                        this.broker.subscribe(this.state.subscribers[device.uuid], statusTopic)
+                        this.mqttClient.subscribe(stateTopic)
+                        this.mqttClient.subscribe(statusTopic)
+                    })
                 })
             })
             .catch(err => {
@@ -131,7 +143,7 @@ class Devices extends Component {
                                 this.state.devices.map(device => {
                                     let deviceCard = <DeviceCard
                                         key={device.uuid}
-                                        ref={this.state.refs[deviceTopicBuidler(device.user_uuid, device.client_uuid, device.uuid, deviceTopics.state)]}
+                                        ref={this.state.refs[device.uuid]}
                                         device={device}
                                         editDevice={this.editDevice}
                                         publish={this.mqttClient.publish}
@@ -143,7 +155,7 @@ class Devices extends Component {
                                         case "Generic Digital Output":
                                             deviceCard = <GenericDigitalDeviceCard
                                                 key={device.uuid}
-                                                ref={this.state.refs[deviceTopicBuidler(device.user_uuid, device.client_uuid, device.uuid, deviceTopics.state)]}
+                                                ref={this.state.refs[device.uuid]}
                                                 device={device}
                                                 editDevice={this.editDevice}
                                                 publish={this.mqttClient.publish}
@@ -155,7 +167,7 @@ class Devices extends Component {
                                         case "Generic Digital Input":
                                             deviceCard = <GenericDigitalDeviceCard
                                                 key={device.uuid}
-                                                ref={this.state.refs[deviceTopicBuidler(device.user_uuid, device.client_uuid, device.uuid, deviceTopics.state)]}
+                                                ref={this.state.refs[device.uuid]}
                                                 device={device}
                                                 editDevice={this.editDevice}
                                                 publish={this.mqttClient.publish}
@@ -167,7 +179,7 @@ class Devices extends Component {
                                         case "Generic Analog Output":
                                             deviceCard = deviceCard = <GenericAnalogDeviceCard
                                                 key={device.uuid}
-                                                ref={this.state.refs[deviceTopicBuidler(device.user_uuid, device.client_uuid, device.uuid, deviceTopics.state)]}
+                                                ref={this.state.refs[device.uuid]}
                                                 device={device}
                                                 editDevice={this.editDevice}
                                                 publish={this.mqttClient.publish}
@@ -179,7 +191,7 @@ class Devices extends Component {
                                         case "Generic Analog Input":
                                             deviceCard = <GenericAnalogDeviceCard
                                                 key={device.uuid}
-                                                ref={this.state.refs[deviceTopicBuidler(device.user_uuid, device.client_uuid, device.uuid, deviceTopics.state)]}
+                                                ref={this.state.refs[device.uuid]}
                                                 device={device}
                                                 editDevice={this.editDevice}
                                                 publish={this.mqttClient.publish}

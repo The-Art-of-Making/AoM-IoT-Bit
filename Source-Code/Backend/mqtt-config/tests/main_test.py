@@ -55,7 +55,15 @@ STATE_TOPIC = (
     .set_device_topic(TopicBuilder_DeviceTopic.TOPICBUILDER_DEVICETOPIC_STATE)
     .get_topic()
 )
-STATUS_TOPIC = (
+CLIENT_STATUS_TOPIC = (
+    topic_builder.clear_topic()
+    .set_delimiter(TOPICBUILDER_MQTT_DELIMITER)
+    .append_route(TopicBuilder_Route.TOPICBUILDER_ROUTE_USER, USER_UUID)
+    .append_route(TopicBuilder_Route.TOPICBUILDER_ROUTE_CLIENT, CLIENT_UUID)
+    .set_client_topic(TopicBuilder_ClientTopic.TOPICBUILDER_CLIENTTOPIC_STATUS)
+    .get_topic()
+)
+DEVICE_STATUS_TOPIC = (
     topic_builder.clear_topic()
     .set_delimiter(TOPICBUILDER_MQTT_DELIMITER)
     .append_route(TopicBuilder_Route.TOPICBUILDER_ROUTE_USER, USER_UUID)
@@ -100,18 +108,20 @@ def on_message(client, userdata, msg):
             assert payload.ack == payload_pb2.INBOUND
             assert payload.inner_payload_type == payload_pb2.CLIENT
 
-            # Set device status
-            device_status_payload = payload_pb2.Payload()
-            device_status_payload.type = payload_pb2.SET
-            device_status_payload.ack = payload_pb2.OUTBOUND
-            device_status_payload.inner_payload_type = payload_pb2.DEVICE
-            device_status_payload.timestamp = get_time_ms()
-            device_status_payload.device_inner_payload.type = (
-                device_inner_payload_pb2.STATUS
+            # Set client status
+            client_status_payload = payload_pb2.Payload()
+            client_status_payload.type = payload_pb2.SET
+            client_status_payload.ack = payload_pb2.OUTBOUND
+            client_status_payload.inner_payload_type = payload_pb2.CLIENT
+            client_status_payload.timestamp = get_time_ms()
+            client_status_payload.client_inner_payload.type = (
+                client_inner_payload_pb2.STATUS
             )
-            device_status_payload.device_inner_payload.status.status = "Connected"
+            client_status_payload.client_inner_payload.status.common_status.status = (
+                "Connected"
+            )
             client.publish(
-                STATUS_TOPIC, device_status_payload.SerializeToString(), 1, True
+                CLIENT_STATUS_TOPIC, client_status_payload.SerializeToString(), 1, True
             )
 
         if msg.topic == CMD_TOPIC:
@@ -135,14 +145,14 @@ client.on_connect = on_connect
 client.on_message = on_message
 
 # Set last will
-device_status_payload = payload_pb2.Payload()
-device_status_payload.type = payload_pb2.SET
-device_status_payload.ack = payload_pb2.OUTBOUND
-device_status_payload.inner_payload_type = payload_pb2.DEVICE
-device_status_payload.timestamp = get_time_ms()
-device_status_payload.device_inner_payload.type = device_inner_payload_pb2.STATUS
-device_status_payload.device_inner_payload.status.status = "Disconnected"
-client.will_set(STATUS_TOPIC, device_status_payload.SerializeToString(), 1, True)
+client_status_payload = payload_pb2.Payload()
+client_status_payload.type = payload_pb2.SET
+client_status_payload.ack = payload_pb2.OUTBOUND
+client_status_payload.inner_payload_type = payload_pb2.CLIENT
+client_status_payload.timestamp = get_time_ms()
+client_status_payload.client_inner_payload.type = client_inner_payload_pb2.STATUS
+client_status_payload.client_inner_payload.status.common_status.status = "Disconnected"
+client.will_set(CLIENT_STATUS_TOPIC, client_status_payload.SerializeToString(), 1, True)
 
 client.connect(SERVER_IP, 1883, 60)
 
